@@ -1,0 +1,30 @@
+{
+  "fecha": "2026-06-18",
+  "red": "Sepolia",
+  "sprint": "Sprint 1",
+  "bloque_despliegue": null,
+  "contratos": {
+    "addresses": {
+      "PublicationRegistry": null,
+      "ValidationRegistry": null,
+      "ReputationSystem": null
+    },
+    "gas": {
+      "registerPublication": null,
+      "submitValidation": null,
+      "increaseReputation": null,
+      "decreaseReputation": null,
+      "media": null
+    },
+    "cobertura": null
+  },
+  "tests": {
+    "pasados": null,
+    "totales": null
+  },
+  "loc": {
+    "solidity": null,
+    "backend": null,
+    "frontend": null
+  }
+}

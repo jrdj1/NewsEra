@@ -1,0 +1,11 @@
+node_modules/
+.env*
+*.local
+dist/
+build/
+blockchain/artifacts/
+blockchain/cache/
+blockchain/deployments/localhost/
+coverage/
+gas-report.json
+# docs/metricas.json NO se ignora — se versiona y lo lee el repo de memoria

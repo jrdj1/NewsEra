@@ -1,0 +1,44 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Publication {
+  id            Int          @id @default(autoincrement())
+  contentHash   String       @unique
+  title         String
+  body          String
+  authorAddress String
+  tags          String[]
+  ipfsCid       String?
+  createdAt     DateTime     @default(now())
+  validations   Validation[]
+
+  @@map("publications")
+}
+
+model Validation {
+  id               Int         @id @default(autoincrement())
+  contentHash      String
+  validatorAddress String
+  vote             String
+  txHash           String?
+  createdAt        DateTime    @default(now())
+  publication      Publication @relation(fields: [contentHash], references: [contentHash])
+
+  @@unique([contentHash, validatorAddress])
+  @@map("validations")
+}
+
+model Validator {
+  address         String   @id
+  reputationScore Int      @default(0)
+  lastSyncBlock   BigInt   @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@map("validators")
+}

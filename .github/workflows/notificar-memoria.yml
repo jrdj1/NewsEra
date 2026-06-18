@@ -1,0 +1,66 @@
+name: Notificar memoria
+
+on:
+  push:
+    tags:
+      - "sprint-*"
+  workflow_dispatch:
+    inputs:
+      sprint:
+        description: "Número de sprint (ej: Sprint 2)"
+        required: true
+        type: string
+      ref:
+        description: "Referencia de rama o tag"
+        required: false
+        default: "main"
+        type: string
+
+jobs:
+  notificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependencias blockchain
+        working-directory: blockchain
+        run: npm ci
+
+      - name: Ejecutar tests con gas report
+        working-directory: blockchain
+        run: REPORT_GAS=true npx hardhat test
+        env:
+          REPORT_GAS: "true"
+
+      - name: Generar cobertura
+        working-directory: blockchain
+        run: npx hardhat coverage
+
+      - name: Generar metricas.json
+        run: node scripts/generar-metricas.js
+
+      - name: Commit metricas.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/metricas.json
+          git diff --staged --quiet || git commit -m "chore: actualizar metricas.json [skip ci]"
+          git push
+
+      - name: Notificar al repo de memoria
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.MEMORIA_PAT }}
+          repository: jrdj1/TFG-NewsEra-memoria
+          event-type: sprint-completado
+          client-payload: >-
+            {
+              "sprint": "${{ inputs.sprint || github.ref_name }}",
+              "ref": "${{ inputs.ref || github.ref_name }}"
+            }
