@@ -1,7 +1,7 @@
 {
-  "fecha": "2026-06-18",
+  "fecha": "2026-06-21",
   "red": "Sepolia",
-  "sprint": "Sprint 1",
+  "sprint": "Sprint 5",
   "bloque_despliegue": null,
   "contratos": {
     "addresses": {

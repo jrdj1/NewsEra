@@ -1,1 +1,8 @@
-{}
+{
+  "sprint": "Sprint 1",
+  "network": "sepolia",
+  "deployBlock": null,
+  "PublicationRegistry": null,
+  "ValidationRegistry": null,
+  "ReputationSystem": null
+}

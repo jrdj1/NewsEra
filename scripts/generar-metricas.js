@@ -79,8 +79,9 @@ const loc = {
 
 // ── Sprint actual ─────────────────────────────────────────────────────────────
 
-// Lee desde deployments si existe, si no usa un valor base
-const sprintActual = deployments?.sprint ?? "Sprint 1";
+// Lee desde la variable de entorno SPRINT, luego del campo sprint en sepolia.json,
+// luego fallback a "Sprint 1". En CI el workflow pasa SPRINT="Sprint N".
+const sprintActual = process.env.SPRINT ?? deployments?.sprint ?? "Sprint 1";
 
 // ── Output ────────────────────────────────────────────────────────────────────
 
