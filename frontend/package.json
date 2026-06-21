@@ -1,27 +1,34 @@
 {
-  "name": "frontend",
+  "name": "newsera-frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
-    "@rainbow-me/rainbowkit": "^2.2.11",
-    "@tanstack/react-query": "^5.101.0",
-    "next": "16.2.9",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "viem": "^2.52.2",
-    "wagmi": "^3.6.17"
+    "@rainbow-me/rainbowkit": "^2.2.0",
+    "@tanstack/react-query": "^5.0.0",
+    "clsx": "^2.1.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.27.0",
+    "tailwind-merge": "^2.5.0",
+    "viem": "^2.21.0",
+    "wagmi": "^2.12.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^26.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
   }
 }
