@@ -23,7 +23,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget -qO- --post-data='{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}' --header='Content-Type: application/json' http://localhost:8545 | grep -q result",
+          "node -e \"const h=require('http');const r=h.request({hostname:'localhost',port:8545,method:'POST',headers:{'Content-Type':'application/json'}},res=>{let d='';res.on('data',c=>d+=c);res.on('end',()=>process.exit(d.includes('result')?0:1))});r.write('{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"method\\\":\\\"eth_blockNumber\\\",\\\"params\\\":[],\\\"id\\\":1}');r.end()\"",
         ]
       interval: 5s
       timeout: 5s
