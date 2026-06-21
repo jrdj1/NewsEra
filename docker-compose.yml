@@ -12,5 +12,23 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  hardhat-node:
+    build:
+      context: ./blockchain
+      dockerfile: Dockerfile.node
+    container_name: newsera-hardhat
+    ports:
+      - "8545:8545"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- --post-data='{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}' --header='Content-Type: application/json' http://localhost:8545 | grep -q result",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
 volumes:
   postgres_data:

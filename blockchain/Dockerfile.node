@@ -1,0 +1,15 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Instalar dependencias primero (capa cacheable)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copiar fuentes y compilar contratos
+COPY . .
+RUN npx hardhat compile
+
+EXPOSE 8545
+
+# Escucha en todas las interfaces para que el host pueda conectarse
+CMD ["npx", "hardhat", "node", "--hostname", "0.0.0.0"]

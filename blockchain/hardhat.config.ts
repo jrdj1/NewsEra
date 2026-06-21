@@ -3,8 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 
-const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL ?? "";
-const PRIVATE_KEY     = process.env.PRIVATE_KEY     ?? "0x" + "0".repeat(64);
+const SEPOLIA_RPC_URL   = process.env.RPC_URL_SEPOLIA   ?? "";
+const PRIVATE_KEY       = process.env.PRIVATE_KEY       ?? "0x" + "0".repeat(64);
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY ?? "";
 
 const config: HardhatUserConfig = {
@@ -19,6 +19,10 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {},
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+    },
     sepolia: {
       url: SEPOLIA_RPC_URL,
       accounts: [PRIVATE_KEY],
