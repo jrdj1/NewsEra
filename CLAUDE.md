@@ -308,11 +308,19 @@ struct Publication {
 mapping(bytes32 => Publication) public publications;
 ```
 
+**HU-2.3** — Como visitante, quiero ver una landing page con la propuesta de valor del proyecto y poder conectar mi cartera MetaMask, así como acceder a una página "Sobre el proyecto" con el resumen de la plataforma, descripción de la DAO y enlace público a la memoria del TFG (whitepaper).
+- Layout global: cabecera fija con logo, navegación y `ConnectButton` de RainbowKit
+- `/` — Hero + tres pilares (Inmutabilidad, Validación colectiva, Resistencia a la captura)
+- `/about` — Resumen del proyecto, cómo funciona, quién lo construye y enlace a la memoria
+
 Definition of done:
-- [ ] Contrato compilado sin warnings
-- [ ] Tests: registro exitoso, duplicado (revert), consulta existente, consulta inexistente, evento emitido
-- [ ] Cobertura ≥ 80%
-- [ ] `npx hardhat ignition deploy` exitoso en red local Hardhat
+- [x] Contrato compilado sin warnings
+- [x] Tests: registro exitoso, duplicado (revert), consulta existente, consulta inexistente, evento emitido
+- [x] Cobertura ≥ 80%
+- [x] `npx hardhat ignition deploy` exitoso en red local Hardhat
+- [ ] Landing page `/` con hero y tres pilares, visible sin cartera conectada
+- [ ] Página `/about` con resumen del proyecto y enlace a la memoria
+- [ ] `ConnectButton` funcional con MetaMask en red local
 
 ---
 
