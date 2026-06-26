@@ -1,6 +1,6 @@
 # Changelog — NewsEra
 
-Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/).  
+Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).  
 Versiones alineadas con sprints del TFG (Sprint 2 = v0.2.0, etc.).
 
 ---

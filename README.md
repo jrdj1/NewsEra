@@ -1,7 +1,5 @@
 # NewsEra
 
-![Notificar memoria](https://github.com/jrdj1/TFG-NewsEra-NewsEra/actions/workflows/notificar-memoria.yml/badge.svg)
-
 Plataforma descentralizada para la validación y difusión de información veraz.
 
 NewsEra construye una infraestructura alternativa estructuralmente resistente a la captura por
@@ -11,7 +9,6 @@ desplegados en una blockchain pública.
 
 **TFG** — Jorge Rafael de Julián Vicedo · GII, EPS, Universidad de Alicante · 2026
 **Tutor** — Dr. Higinio Mora Mora (DTIC)
-**Repo de memoria (LaTeX):** [jrdj1/TFG-NewsEra-memoria](https://github.com/jrdj1/TFG-NewsEra-memoria)
 
 ---
 
