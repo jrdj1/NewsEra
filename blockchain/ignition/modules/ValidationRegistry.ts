@@ -1,6 +1,7 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-const QUORUM_THRESHOLD = 3n;
+const QUORUM_THRESHOLD   = 3n;
+const SUPER_MAJORITY_BPS = 6667n; // 66.67%
 
 const ValidationRegistryModule = buildModule("ValidationRegistryModule", (m) => {
   // 1. Desplegar ReputationSystem
@@ -10,6 +11,7 @@ const ValidationRegistryModule = buildModule("ValidationRegistryModule", (m) => 
   const validationRegistry = m.contract("ValidationRegistry", [
     reputationSystem,
     QUORUM_THRESHOLD,
+    SUPER_MAJORITY_BPS,
   ]);
 
   // 3. Conceder VALIDATOR_ROLE al ValidationRegistry en el ReputationSystem

@@ -225,10 +225,19 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 - Struct packed: `address author` + `uint96 timestamp` + `bool exists` en un slot
 
 ### ValidationRegistry
-- Gestiona votos (`VoteType { TRUE, FALSE, UNVERIFIABLE }`).
-- Interactúa con `ReputationSystem` via `REPUTATION_UPDATER_ROLE`.
-- `submitValidation(bytes32 contentHash, uint8 vote)`: verifica reputación → registra → comprueba quórum → actualiza reputaciones.
-- Parámetros de gobernanza en constructor: `quorumThreshold`, `minReputationToValidate`.
+- Gestiona votos (`VoteType { TRUE, FALSE, UNVERIFIABLE }`). **UNVERIFIABLE es veredicto de primera clase**, no abstención.
+- Estado de consenso: `ConsensusState { PENDING, DEFINITIVE, DISPUTED }`.
+  - `PENDING`: votos < `quorumThreshold`. Sigue abierto.
+  - `DEFINITIVE`: quórum alcanzado Y opción ganadora ≥ `superMajorityBps` (ej. 6667 = 66,67%). Efectos reputacionales completos.
+  - `DISPUTED`: quórum alcanzado pero ninguna opción alcanza supermayoría. Sin efectos reputacionales.
+- Parámetros de gobernanza en constructor: `quorumThreshold`, `superMajorityBps`, `minReputationToValidate`.
+- Mappings: `consensusState(bytes32 → ConsensusState)`, `consensusResult(bytes32 → VoteType)`.
+- `submitValidation(bytes32 contentHash, uint8 vote)`: verifica reputación → registra → evalúa quórum → si DEFINITIVE: actualiza reputaciones simétricamente.
+- **Efectos reputacionales simétricos (solo en DEFINITIVE):**
+  - Votó la opción ganadora (TRUE, FALSE o UNVERIFIABLE): `+REPUTATION_REWARD`
+  - Votó cualquier otra opción (incluido UNVERIFIABLE cuando gana TRUE o FALSE): `−REPUTATION_PENALTY`
+- Evento: `ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state)`.
+- Interactúa con `ReputationSystem` via `VALIDATOR_ROLE`.
 
 ### ReputationSystem
 - Solo `ValidationRegistry` puede modificar reputaciones (`AccessControl`).
@@ -336,11 +345,14 @@ Definition of done:
 - Revert `ConsensusAlreadyReached` si el consenso está cerrado
 - Emite `ValidationSubmitted(bytes32 indexed contentHash, address indexed validator, uint8 vote)`
 
-**HU-3.2** — Cuando se alcanza el quórum, el contrato determina el consenso por mayoría (TRUE vs FALSE; UNVERIFIABLE no cuenta) y actualiza reputaciones.
-- Emite `ConsensusReached(bytes32 indexed contentHash, uint8 result)`
-- Llama a `ReputationSystem.increaseReputation` para quienes acertaron
-- Llama a `ReputationSystem.decreaseReputation` para quienes fallaron
-- Validadores UNVERIFIABLE: sin penalización ni recompensa
+**HU-3.2** — Cuando se alcanza el quórum, el contrato evalúa si hay supermayoría y actúa según el estado resultante.
+- Si opción ganadora ≥ `superMajorityBps` → consenso `DEFINITIVE`:
+  - Emite `ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state)`
+  - Todos los que votaron la opción ganadora: `increaseReputation` (+REWARD)
+  - Todos los que votaron cualquier otra opción (incluido UNVERIFIABLE): `decreaseReputation` (−PENALTY)
+- Si quórum alcanzado pero ninguna opción ≥ `superMajorityBps` → consenso `DISPUTED`:
+  - Emite `ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state)` con state=DISPUTED
+  - Sin efectos reputacionales para nadie
 
 **HU-3.3** — Consultas públicas:
 - `getValidations(bytes32 contentHash) external view returns (Validation[] memory)`
@@ -348,10 +360,15 @@ Definition of done:
 
 Parámetros de gobernanza (configurables en constructor):
 - `uint256 public quorumThreshold`
+- `uint256 public superMajorityBps` (ej. 6667 = 66,67%)
 - `uint256 public minReputationToValidate`
 
 Definition of done:
-- [ ] Tests: voto exitoso, duplicado (revert), sin reputación (revert), quórum alcanzado, consenso calculado, reputación actualizada, empate (sin consenso), todos UNVERIFIABLE (sin consenso)
+- [ ] Tests: voto exitoso, duplicado (revert), sin reputación (revert)
+- [ ] Tests DEFINITIVE: supermayoría TRUE → TRUE voters +rep, FALSE/UNVERIFIABLE voters −rep
+- [ ] Tests DEFINITIVE: supermayoría UNVERIFIABLE → UNVERIFIABLE voters +rep, TRUE/FALSE voters −rep
+- [ ] Tests DISPUTED: quórum sin supermayoría → ningún cambio de reputación
+- [ ] Tests PENDING: votos < quórum → sin consenso
 - [ ] Tests de integración con ReputationSystem desplegado localmente
 - [ ] Cobertura ≥ 80%
 - [ ] Deploy en red local con los 3 contratos interconectados

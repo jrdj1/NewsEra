@@ -35,12 +35,14 @@ export declare namespace ValidationRegistry {
 export interface ValidationRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "consensusReached"
       | "consensusResult"
+      | "consensusState"
       | "getValidations"
+      | "hasValidated"
       | "quorumThreshold"
       | "reputationSystem"
       | "submitValidation"
+      | "superMajorityBps"
   ): FunctionFragment;
 
   getEvent(
@@ -48,16 +50,20 @@ export interface ValidationRegistryInterface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "consensusReached",
+    functionFragment: "consensusResult",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "consensusResult",
+    functionFragment: "consensusState",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getValidations",
     values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasValidated",
+    values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "quorumThreshold",
@@ -71,17 +77,25 @@ export interface ValidationRegistryInterface extends Interface {
     functionFragment: "submitValidation",
     values: [BytesLike, BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "superMajorityBps",
+    values?: undefined
+  ): string;
 
-  decodeFunctionResult(
-    functionFragment: "consensusReached",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "consensusResult",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "consensusState",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getValidations",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "hasValidated",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -96,14 +110,27 @@ export interface ValidationRegistryInterface extends Interface {
     functionFragment: "submitValidation",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "superMajorityBps",
+    data: BytesLike
+  ): Result;
 }
 
 export namespace ConsensusReachedEvent {
-  export type InputTuple = [contentHash: BytesLike, result: BigNumberish];
-  export type OutputTuple = [contentHash: string, result: bigint];
+  export type InputTuple = [
+    contentHash: BytesLike,
+    result: BigNumberish,
+    state: BigNumberish
+  ];
+  export type OutputTuple = [
+    contentHash: string,
+    result: bigint,
+    state: bigint
+  ];
   export interface OutputObject {
     contentHash: string;
     result: bigint;
+    state: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -176,13 +203,19 @@ export interface ValidationRegistry extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  consensusReached: TypedContractMethod<[arg0: BytesLike], [boolean], "view">;
-
   consensusResult: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+
+  consensusState: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
 
   getValidations: TypedContractMethod<
     [contentHash: BytesLike],
     [ValidationRegistry.ValidationStructOutput[]],
+    "view"
+  >;
+
+  hasValidated: TypedContractMethod<
+    [contentHash: BytesLike, validator: AddressLike],
+    [boolean],
     "view"
   >;
 
@@ -196,21 +229,30 @@ export interface ValidationRegistry extends BaseContract {
     "nonpayable"
   >;
 
+  superMajorityBps: TypedContractMethod<[], [bigint], "view">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "consensusReached"
-  ): TypedContractMethod<[arg0: BytesLike], [boolean], "view">;
-  getFunction(
     nameOrSignature: "consensusResult"
+  ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "consensusState"
   ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "getValidations"
   ): TypedContractMethod<
     [contentHash: BytesLike],
     [ValidationRegistry.ValidationStructOutput[]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasValidated"
+  ): TypedContractMethod<
+    [contentHash: BytesLike, validator: AddressLike],
+    [boolean],
     "view"
   >;
   getFunction(
@@ -226,6 +268,9 @@ export interface ValidationRegistry extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "superMajorityBps"
+  ): TypedContractMethod<[], [bigint], "view">;
 
   getEvent(
     key: "ConsensusReached"
@@ -243,7 +288,7 @@ export interface ValidationRegistry extends BaseContract {
   >;
 
   filters: {
-    "ConsensusReached(bytes32,uint8)": TypedContractEvent<
+    "ConsensusReached(bytes32,uint8,uint8)": TypedContractEvent<
       ConsensusReachedEvent.InputTuple,
       ConsensusReachedEvent.OutputTuple,
       ConsensusReachedEvent.OutputObject

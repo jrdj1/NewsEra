@@ -8,43 +8,50 @@ interface IReputationSystem {
 }
 
 contract ValidationRegistry {
-    enum VoteType { TRUE, FALSE, UNVERIFIABLE }
+    enum VoteType      { TRUE, FALSE, UNVERIFIABLE }
+    enum ConsensusState { PENDING, DEFINITIVE, DISPUTED }
 
     struct Validation {
-        address  validator; // 20b ─┐ slot 1 (21b total)
+        address  validator; // 20b ─┐ slot 1 (21b total, packed)
         VoteType vote;      //  1b ─┘
     }
 
     IReputationSystem public immutable reputationSystem;
     uint256           public immutable quorumThreshold;
+    uint256           public immutable superMajorityBps; // e.g. 6667 = 66.67%
 
     uint256 private constant REPUTATION_REWARD  = 5;
     uint256 private constant REPUTATION_PENALTY = 3;
 
-    mapping(bytes32 => Validation[])              private _validations;
-    mapping(bytes32 => mapping(address => bool))  private _hasVoted;
+    mapping(bytes32 => Validation[])             private _validations;
+    mapping(bytes32 => mapping(address => bool)) private _hasVoted;
 
-    mapping(bytes32 => bool)     public consensusReached;
-    mapping(bytes32 => VoteType) public consensusResult;
+    mapping(bytes32 => ConsensusState) public consensusState;
+    mapping(bytes32 => VoteType)       public consensusResult;
 
     event ValidationSubmitted(
         bytes32 indexed contentHash,
         address indexed validator,
         uint8           vote
     );
-    event ConsensusReached(bytes32 indexed contentHash, uint8 result);
+    event ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state);
 
     error InsufficientReputation(address validator);
     error AlreadyValidated(bytes32 contentHash, address validator);
     error ConsensusAlreadyReached(bytes32 contentHash);
 
-    constructor(address reputationSystem_, uint256 quorumThreshold_) {
+    constructor(
+        address reputationSystem_,
+        uint256 quorumThreshold_,
+        uint256 superMajorityBps_
+    ) {
         reputationSystem = IReputationSystem(reputationSystem_);
         quorumThreshold  = quorumThreshold_;
+        superMajorityBps = superMajorityBps_;
     }
 
     function submitValidation(bytes32 contentHash, uint8 vote) external {
-        if (consensusReached[contentHash])
+        if (consensusState[contentHash] != ConsensusState.PENDING)
             revert ConsensusAlreadyReached(contentHash);
         if (!reputationSystem.canValidate(msg.sender))
             revert InsufficientReputation(msg.sender);
@@ -62,31 +69,52 @@ contract ValidationRegistry {
 
     function _checkConsensus(bytes32 contentHash) internal {
         Validation[] storage vals = _validations[contentHash];
-        if (vals.length < quorumThreshold) return;
+        uint256 total = vals.length;
+        if (total < quorumThreshold) return;
 
         uint256 trueVotes;
         uint256 falseVotes;
-        for (uint256 i; i < vals.length; i++) {
-            if      (vals[i].vote == VoteType.TRUE)  trueVotes++;
-            else if (vals[i].vote == VoteType.FALSE) falseVotes++;
+        uint256 unverifiableVotes;
+        for (uint256 i; i < total; i++) {
+            if      (vals[i].vote == VoteType.TRUE)          trueVotes++;
+            else if (vals[i].vote == VoteType.FALSE)         falseVotes++;
+            else                                             unverifiableVotes++;
         }
 
-        // Empate (incl. todos UNVERIFIABLE: 0 == 0) → sin consenso todavía
-        if (trueVotes == falseVotes) return;
+        // Determinar opción ganadora (mayor número de votos)
+        uint256 winnerVotes;
+        VoteType result;
+        if (trueVotes >= falseVotes && trueVotes >= unverifiableVotes) {
+            winnerVotes = trueVotes;
+            result = VoteType.TRUE;
+        } else if (falseVotes >= trueVotes && falseVotes >= unverifiableVotes) {
+            winnerVotes = falseVotes;
+            result = VoteType.FALSE;
+        } else {
+            winnerVotes = unverifiableVotes;
+            result = VoteType.UNVERIFIABLE;
+        }
 
-        VoteType result = trueVotes > falseVotes ? VoteType.TRUE : VoteType.FALSE;
-        consensusReached[contentHash] = true;
-        consensusResult[contentHash]  = result;
+        uint256 winnerBps = (winnerVotes * 10_000) / total;
 
-        emit ConsensusReached(contentHash, uint8(result));
+        if (winnerBps >= superMajorityBps) {
+            consensusState[contentHash]  = ConsensusState.DEFINITIVE;
+            consensusResult[contentHash] = result;
+            emit ConsensusReached(contentHash, uint8(result), uint8(ConsensusState.DEFINITIVE));
 
-        for (uint256 i; i < vals.length; i++) {
-            if (vals[i].vote == VoteType.UNVERIFIABLE) continue;
-            if (vals[i].vote == result) {
-                reputationSystem.increaseReputation(vals[i].validator, REPUTATION_REWARD);
-            } else {
-                reputationSystem.decreaseReputation(vals[i].validator, REPUTATION_PENALTY);
+            // Efectos reputacionales simétricos: todos los que no votaron result son penalizados
+            for (uint256 i; i < total; i++) {
+                if (vals[i].vote == result) {
+                    reputationSystem.increaseReputation(vals[i].validator, REPUTATION_REWARD);
+                } else {
+                    reputationSystem.decreaseReputation(vals[i].validator, REPUTATION_PENALTY);
+                }
             }
+        } else {
+            consensusState[contentHash]  = ConsensusState.DISPUTED;
+            consensusResult[contentHash] = result;
+            emit ConsensusReached(contentHash, uint8(result), uint8(ConsensusState.DISPUTED));
+            // Sin efectos reputacionales en DISPUTED
         }
     }
 
@@ -94,5 +122,11 @@ contract ValidationRegistry {
         external view returns (Validation[] memory)
     {
         return _validations[contentHash];
+    }
+
+    function hasValidated(bytes32 contentHash, address validator)
+        external view returns (bool)
+    {
+        return _hasVoted[contentHash][validator];
     }
 }
