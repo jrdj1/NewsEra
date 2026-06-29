@@ -8,7 +8,9 @@
     "test": "hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "hardhat coverage",
-    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia"
+    "deploy:local": "hardhat ignition deploy ignition/modules/NewsEra.ts --network localhost",
+    "deploy:sepolia": "hardhat ignition deploy ignition/modules/NewsEra.ts --network sepolia",
+    "export-abis": "hardhat run scripts/export-abis.ts"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
