@@ -320,7 +320,7 @@ Esta línea está documentada en la memoria como ítem 7 del capítulo de Trabaj
 
 ---
 
-### Sprint 2 — PublicationRegistry (OE3) `[ TODO ]`
+### Sprint 2 — PublicationRegistry (OE3) `[DONE]`
 
 **Objetivo:** contrato de registro inmutable de publicaciones funcionando con tests en red local.
 
@@ -353,55 +353,76 @@ Definition of done:
 - [x] Tests: registro exitoso, duplicado (revert), consulta existente, consulta inexistente, evento emitido
 - [x] Cobertura ≥ 80%
 - [x] `npx hardhat ignition deploy` exitoso en red local Hardhat
-- [ ] Landing page `/` con hero y tres pilares, visible sin cartera conectada
-- [ ] Página `/about` con resumen del proyecto y enlace a la memoria
-- [ ] `ConnectButton` funcional con MetaMask en red local
+- [x] Landing page `/` con hero y tres pilares, visible sin cartera conectada
+- [x] Página `/about` con resumen del proyecto y enlace a la memoria
+- [x] `ConnectButton` funcional con MetaMask en red local
 
 ---
 
-### Sprint 3 — ValidationRegistry (OE3) `[ TODO ]`
+### Sprint 3 — ValidationRegistry (OE3) `[DONE]`
 
-**Objetivo:** contrato de validación con quórum y actualización de reputación.
+**Objetivo:** contrato de validación multironda con quórum, supermayoría, reapertura y reputación retroactiva.
 
-**HU-3.1** — Como validador con reputación suficiente, quiero emitir un voto sobre una publicación (TRUE / FALSE / UNVERIFIABLE).
+**HU-3.1** — Como validador con reputación suficiente, quiero emitir un voto sobre una publicación (TRUE / FALSE / UNVERIFIABLE) en la ronda activa.
 - `submitValidation(bytes32 contentHash, uint8 vote) external`
 - vote: 0=TRUE, 1=FALSE, 2=UNVERIFIABLE
-- Verifica `ReputationSystem.canValidate(msg.sender)` → revert si no cumple
-- Revert `AlreadyValidated` si el validador ya votó esa publicación
-- Revert `ConsensusAlreadyReached` si el consenso está cerrado
-- Emite `ValidationSubmitted(bytes32 indexed contentHash, address indexed validator, uint8 vote)`
+- Verifica `ReputationSystem.canValidate(msg.sender)` → revert `InsufficientReputation` si no cumple
+- Revert `AlreadyValidated` si el validador ya votó ese artículo (en cualquier ronda)
+- Revert `VotingNotOpen` si el estado actual no es PENDING
+- Emite `ValidationSubmitted(bytes32 indexed contentHash, address indexed validator, uint8 vote, uint256 round)`
 
-**HU-3.2** — Cuando se alcanza el quórum, el contrato evalúa si hay supermayoría y actúa según el estado resultante.
-- Si opción ganadora ≥ `superMajorityBps` → consenso `DEFINITIVE`:
-  - Emite `ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state)`
-  - Todos los que votaron la opción ganadora: `increaseReputation` (+REWARD)
-  - Todos los que votaron cualquier otra opción (incluido UNVERIFIABLE): `decreaseReputation` (−PENALTY)
-- Si quórum alcanzado pero ninguna opción ≥ `superMajorityBps` → consenso `DISPUTED`:
-  - Emite `ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state)` con state=DISPUTED
-  - Sin efectos reputacionales para nadie
+**HU-3.2** — Cuando se alcanza el quórum, el contrato evalúa supermayoría y cierra la ronda.
+- Si opción ganadora ≥ `superMajorityBps` → ronda `DEFINITIVE`:
+  - Emite `ConsensusReached(..., uint256 round)` con state=DEFINITIVE
+  - Votantes de la opción ganadora: `increaseReputation` (+5)
+  - Resto de votantes de esa ronda: `decreaseReputation` (−3)
+- Si quórum pero ninguna opción ≥ `superMajorityBps` → ronda `DISPUTED`:
+  - Emite `ConsensusReached(..., uint256 round)` con state=DISPUTED
+  - Sin efectos reputacionales
 
-**HU-3.3** — Consultas públicas:
-- `getValidations(bytes32 contentHash) external view returns (Validation[] memory)`
-- `consensusReached(bytes32) public` y `consensusResult(bytes32) public`
+**HU-3.3** — Como validador que aún no ha votado un artículo concluido, quiero solicitar su reapertura.
+- `requestReopen(bytes32 contentHash) external`
+- Revert `ReopenNotAvailable` si el estado no es DEFINITIVE ni DISPUTED
+- Revert `AlreadyValidated` si ya votó; revert `AlreadyRequestedReopen` si ya solicitó
+- Revert `InsufficientReputation` si no cumple el umbral
+- Al acumular `reopenThreshold` solicitudes: abre nueva ronda, emite `VotingReopened(..., uint256 newRound)`
+- Emite `ReopenRequested(bytes32 indexed, address indexed, uint256 count)`
 
-Parámetros de gobernanza (configurables en constructor):
-- `uint256 public quorumThreshold`
-- `uint256 public superMajorityBps` (ej. 6667 = 66,67%)
-- `uint256 public minReputationToValidate`
+**HU-3.4** — Como validador con rondas posteriores a la mía sobre un artículo, quiero reclamar ajustes retroactivos de reputación.
+- `claimRetroactiveReputation(bytes32 contentHash) external`
+- Revert `NothingToClaim` si no votó o no hay rondas nuevas
+- Por cada ronda DEFINITIVE posterior: ±`RETROACTIVE_DELTA` (1) según confirme o contradiga mi ronda; cap ±`RETROACTIVE_CAP` (3)
+- Emite `RetroactiveClaimed(bytes32 indexed, address indexed, int256 netDelta)`
+
+**HU-3.5** — Consultas públicas:
+- `hasVoted(bytes32, address) external view returns (bool)`
+- `getVote(bytes32, address) external view returns (VoteType, uint256 round)`
+- `getRoundVoters(bytes32, uint256) external view returns (address[])`
+- `rounds(bytes32, uint256) public` → `RoundInfo { result, state, completed }`
+- `currentRound(bytes32) public`, `roundVoteCount(bytes32, uint256) public`
+
+Parámetros de gobernanza (constructor):
+- `address reputationSystem_`
+- `uint256 quorumThreshold_`
+- `uint256 superMajorityBps_` (6667 = 66,67%)
+- `uint256 reopenThreshold_` (3)
+
+Constantes: `REPUTATION_REWARD=5`, `REPUTATION_PENALTY=3`, `RETROACTIVE_DELTA=1`, `RETROACTIVE_CAP=3`
 
 Definition of done:
-- [ ] Tests: voto exitoso, duplicado (revert), sin reputación (revert)
-- [ ] Tests DEFINITIVE: supermayoría TRUE → TRUE voters +rep, FALSE/UNVERIFIABLE voters −rep
-- [ ] Tests DEFINITIVE: supermayoría UNVERIFIABLE → UNVERIFIABLE voters +rep, TRUE/FALSE voters −rep
-- [ ] Tests DISPUTED: quórum sin supermayoría → ningún cambio de reputación
-- [ ] Tests PENDING: votos < quórum → sin consenso
-- [ ] Tests de integración con ReputationSystem desplegado localmente
-- [ ] Cobertura ≥ 80%
-- [ ] Deploy en red local con los 3 contratos interconectados
+- [x] Tests: voto exitoso, duplicado (revert), sin reputación (revert), VotingNotOpen (revert)
+- [x] Tests DEFINITIVE: supermayoría → efectos reputacionales +5/−3 correctos
+- [x] Tests DISPUTED: quórum sin supermayoría → sin efectos reputacionales
+- [x] Tests PENDING: votos < quórum → sin consenso
+- [x] Tests requestReopen: acumula hasta threshold → nueva ronda; falla si ya votó / ya solicitó / estado PENDING
+- [x] Tests claimRetroactiveReputation: +1 confirmatoria, −1 contradictoria, cap ±3 respetado
+- [x] Tests E2E multironda: ronda 1 → reapertura → ronda 2 → claim retroactivo
+- [x] 32 tests, 96.25% de cobertura
+- [x] Módulo Ignition con 4 parámetros (incluyendo reopenThreshold=3)
 
 ---
 
-### Sprint 4 — ReputationSystem (OE4) `[ TODO ]`
+### Sprint 4 — ReputationSystem (OE4) `[DONE]`
 
 **Objetivo:** contrato de reputación con control de acceso por roles (OpenZeppelin AccessControl).
 
@@ -430,10 +451,10 @@ bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
 ```
 
 Definition of done:
-- [ ] Tests: incremento, decremento, suelo en 0, registro, consultas, acceso denegado sin rol (revert)
-- [ ] Escenario Sybil: dirección nueva sin reputación no puede validar
-- [ ] Cobertura ≥ 80%
-- [ ] VALIDATOR_ROLE asignado a ValidationRegistry en el script de deploy
+- [x] Tests: incremento, decremento, suelo en 0, registro, consultas, acceso denegado sin rol (revert)
+- [x] Escenario Sybil: dirección nueva sin reputación no puede validar
+- [x] 22 tests, 100% de cobertura
+- [x] VALIDATOR_ROLE asignado a ValidationRegistry en el script de deploy
 
 ---
 
@@ -478,18 +499,19 @@ Definition of done:
 - `prisma/schema.prisma` con modelos Publication, Validation, Validator
 - Servidor Hono arrancando en `localhost:3001`
 
-Schema Prisma:
+Schema Prisma (ya implementado):
 ```prisma
 model Publication {
-  id            Int          @id @default(autoincrement())
-  contentHash   String       @unique
+  id            Int            @id @default(autoincrement())
+  contentHash   String         @unique
   title         String
   body          String
   authorAddress String
   tags          String[]
   ipfsCid       String?
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime       @default(now())
   validations   Validation[]
+  reopenReqs    ReopenRequest[]
   @@map("publications")
 }
 
@@ -498,6 +520,7 @@ model Validation {
   contentHash      String
   validatorAddress String
   vote             String      // "TRUE" | "FALSE" | "UNVERIFIABLE"
+  round            Int         @default(0)
   txHash           String?
   createdAt        DateTime    @default(now())
   publication      Publication @relation(fields: [contentHash], references: [contentHash])
@@ -512,20 +535,47 @@ model Validator {
   updatedAt       DateTime @updatedAt
   @@map("validators")
 }
+
+model ReopenRequest {
+  id               Int         @id @default(autoincrement())
+  contentHash      String
+  requesterAddress String
+  count            Int
+  txHash           String?
+  createdAt        DateTime    @default(now())
+  publication      Publication @relation(fields: [contentHash], references: [contentHash])
+  @@map("reopen_requests")
+}
+
+model RetroactiveClaim {
+  id               Int      @id @default(autoincrement())
+  contentHash      String
+  validatorAddress String
+  netDelta         Int
+  txHash           String?
+  claimedAt        DateTime @default(now())
+  @@map("retroactive_claims")
+}
 ```
 
 **HU-6.2** — Endpoints:
 - `GET /api/v1/publications` — lista con paginación (`page`, `limit`)
-- `GET /api/v1/publications/:hash` — detalle con validaciones
+- `GET /api/v1/publications/:hash` — detalle con validaciones por ronda
 - `POST /api/v1/publications` — registra contenido + `ipfsCid`; verifica que el hash existe on-chain
 - `GET /api/v1/validators` — ranking por reputación descendente
 - `GET /api/v1/validators/:address` — perfil: reputación, nº validaciones, % aciertos
-- `GET /api/v1/validators/:address/history` — historial de validaciones
+- `GET /api/v1/validators/:address/history` — historial de validaciones con ronda
+- `POST /api/v1/articles/:hash/reopen-request` — registra solicitud de reapertura
+- `POST /api/v1/articles/:hash/claim-retroactive` — registra reclamación retroactiva
 
 **HU-6.3** — Indexador de eventos (viem `watchContractEvent`):
 - `PublicationRegistered` → upsert en publications
-- `ValidationSubmitted` → insert en validations
+- `ValidationSubmitted` → insert en validations (incluye `round`)
+- `ConsensusReached` → update estado consenso en publications (incluye `round`)
 - `ReputationUpdated` → update reputationScore en validators
+- `ReopenRequested` → insert en reopen_requests
+- `VotingReopened` → update currentRound en publications
+- `RetroactiveClaimed` → insert en retroactive_claims
 - Al arrancar: procesa eventos históricos desde `deployBlock`
 
 **HU-6.4** — IPFS/Pinata: `POST /api/v1/publications` acepta `ipfsCid` opcional.
@@ -557,16 +607,20 @@ Setup: React 18 + Vite + TypeScript, wagmi v2, viem, @tanstack/react-query, @rai
 4. `useWaitForTransactionReceipt` espera confirmación on-chain
 5. `POST /api/v1/publications` con `{contentHash, ipfsCid, title, body, tags}`
 
-**HU-7.4** — Ruta `/article/:hash` — Detalle y validación:
-- Carga artículo del backend
-- Si `canValidate(address)` es true: botones TRUE / FALSE / UNVERIFIABLE
-- `useWriteContract` → `ValidationRegistry.submitValidation(contentHash, vote)`
+**HU-7.4** — Ruta `/article/:hash` — Detalle y validación multironda:
+- Carga artículo del backend con historial de rondas (resultado y estado de cada una)
+- Si estado es PENDING y `canValidate(address)` y no ha votado: botones TRUE / FALSE / UNVERIFIABLE
+- `useWriteContract` → `ValidationRegistry.submitValidation(contentHash, vote)`; maneja error `VotingNotOpen`
+- Si estado es DEFINITIVE o DISPUTED y no ha votado ni solicitado reapertura: botón "Solicitar reapertura"
+- `useWriteContract` → `ValidationRegistry.requestReopen(contentHash)`; muestra contador de solicitudes acumuladas
 
 **HU-7.5** — Ruta `/validators` — Ranking por reputación.
 
-**HU-7.6** — Ruta `/validators/:address` — Perfil público: reputación, nº validaciones, % aciertos, historial.
+**HU-7.6** — Ruta `/validators/:address` — Perfil público: reputación, nº validaciones, % aciertos, historial por ronda.
 
-**HU-7.7** — Ruta `/profile` — Panel personal (requiere cartera): reputación propia, historial de validaciones.
+**HU-7.7** — Ruta `/profile` — Panel personal (requiere cartera): reputación propia, historial de validaciones por ronda, botón "Reclamar reputación retroactiva" para artículos con rondas posteriores no reclamadas.
+- `useWriteContract` → `ValidationRegistry.claimRetroactiveReputation(contentHash)`
+- Muestra el delta neto estimado antes de reclamar
 
 Definition of done:
 - [ ] Todas las rutas renderizan sin errores con Sepolia conectado
@@ -597,11 +651,13 @@ Definition of done:
       "ReputationSystem":    "0x..."
     },
     "gas": {
-      "registerPublication": 0,
-      "submitValidation":    0,
-      "increaseReputation":  0,
-      "decreaseReputation":  0,
-      "media":               0
+      "registerPublication":          0,
+      "submitValidation":             0,
+      "requestReopen":                0,
+      "claimRetroactiveReputation":   0,
+      "increaseReputation":           0,
+      "decreaseReputation":           0,
+      "media":                        0
     },
     "cobertura": 0
   },
