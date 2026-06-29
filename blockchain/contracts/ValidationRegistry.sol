@@ -8,124 +8,280 @@ interface IReputationSystem {
 }
 
 contract ValidationRegistry {
-    enum VoteType      { TRUE, FALSE, UNVERIFIABLE }
-    enum ConsensusState { PENDING, DEFINITIVE, DISPUTED }
+    enum VoteType       { TRUE, FALSE, UNVERIFIABLE }
+    enum ConsensusState { PENDING, DEFINITIVE, DISPUTED, PENDING_REOPEN }
 
-    struct Validation {
-        address  validator; // 20b ─┐ slot 1 (21b total, packed)
-        VoteType vote;      //  1b ─┘
+    struct RoundInfo {
+        VoteType       result;
+        ConsensusState state;
+        bool           completed;
     }
 
     IReputationSystem public immutable reputationSystem;
     uint256           public immutable quorumThreshold;
-    uint256           public immutable superMajorityBps; // e.g. 6667 = 66.67%
+    uint256           public immutable superMajorityBps;  // e.g. 6667 = 66.67%
+    uint256           public immutable reopenThreshold;
 
     uint256 private constant REPUTATION_REWARD  = 5;
     uint256 private constant REPUTATION_PENALTY = 3;
+    uint256 private constant RETROACTIVE_DELTA  = 1;
+    uint256 private constant RETROACTIVE_CAP    = 3;
 
-    mapping(bytes32 => Validation[])             private _validations;
-    mapping(bytes32 => mapping(address => bool)) private _hasVoted;
-
+    // Current article state
     mapping(bytes32 => ConsensusState) public consensusState;
-    mapping(bytes32 => VoteType)       public consensusResult;
+    mapping(bytes32 => uint256)        public currentRound;
+
+    // Per-round data
+    mapping(bytes32 => mapping(uint256 => RoundInfo))                    public  rounds;
+    mapping(bytes32 => mapping(uint256 => uint256))                      public  roundVoteCount;
+    mapping(bytes32 => mapping(uint256 => address[]))                    private _roundVoters;
+    mapping(bytes32 => mapping(uint256 => mapping(VoteType => uint256))) private _roundVoteCounts;
+
+    // Per-voter (immutable once cast)
+    mapping(bytes32 => mapping(address => bool))     private _hasVoted;
+    mapping(bytes32 => mapping(address => VoteType)) private _vote;
+    mapping(bytes32 => mapping(address => uint256))  public  voterRound;
+
+    // Re-open requests
+    mapping(bytes32 => uint256)                  public reopenRequestCount;
+    mapping(bytes32 => mapping(address => bool)) public hasRequestedReopen;
+
+    // Retroactive reputation tracking (pull model)
+    mapping(bytes32 => mapping(address => uint256)) private _retroLastRound;
+    mapping(bytes32 => mapping(address => uint256)) private _retroPositive;
+    mapping(bytes32 => mapping(address => uint256)) private _retroNegative;
 
     event ValidationSubmitted(
         bytes32 indexed contentHash,
         address indexed validator,
-        uint8           vote
+        uint8           vote,
+        uint256         round
     );
-    event ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state);
+    event ConsensusReached(
+        bytes32 indexed contentHash,
+        uint8           result,
+        uint8           state,
+        uint256         round
+    );
+    event ReopenRequested(
+        bytes32 indexed contentHash,
+        address indexed requester,
+        uint256         count
+    );
+    event VotingReopened(bytes32 indexed contentHash, uint256 newRound);
+    event RetroactiveClaimed(
+        bytes32 indexed contentHash,
+        address indexed validator,
+        int256          netDelta
+    );
 
     error InsufficientReputation(address validator);
     error AlreadyValidated(bytes32 contentHash, address validator);
-    error ConsensusAlreadyReached(bytes32 contentHash);
+    error VotingNotOpen(bytes32 contentHash);
+    error ReopenNotAvailable(bytes32 contentHash);
+    error AlreadyRequestedReopen(bytes32 contentHash, address requester);
+    error NothingToClaim(bytes32 contentHash, address validator);
 
     constructor(
         address reputationSystem_,
         uint256 quorumThreshold_,
-        uint256 superMajorityBps_
+        uint256 superMajorityBps_,
+        uint256 reopenThreshold_
     ) {
         reputationSystem = IReputationSystem(reputationSystem_);
         quorumThreshold  = quorumThreshold_;
         superMajorityBps = superMajorityBps_;
+        reopenThreshold  = reopenThreshold_;
     }
+
+    // -----------------------------------------------------------------------
+    // Voting
+    // -----------------------------------------------------------------------
 
     function submitValidation(bytes32 contentHash, uint8 vote) external {
         if (consensusState[contentHash] != ConsensusState.PENDING)
-            revert ConsensusAlreadyReached(contentHash);
+            revert VotingNotOpen(contentHash);
         if (!reputationSystem.canValidate(msg.sender))
             revert InsufficientReputation(msg.sender);
         if (_hasVoted[contentHash][msg.sender])
             revert AlreadyValidated(contentHash, msg.sender);
 
         VoteType voteType = VoteType(vote);
-        _validations[contentHash].push(Validation({ validator: msg.sender, vote: voteType }));
-        _hasVoted[contentHash][msg.sender] = true;
+        uint256  round    = currentRound[contentHash];
 
-        emit ValidationSubmitted(contentHash, msg.sender, vote);
+        _hasVoted[contentHash][msg.sender]  = true;
+        _vote[contentHash][msg.sender]      = voteType;
+        voterRound[contentHash][msg.sender] = round;
+        _roundVoters[contentHash][round].push(msg.sender);
+        _roundVoteCounts[contentHash][round][voteType]++;
+        roundVoteCount[contentHash][round]++;
 
-        _checkConsensus(contentHash);
+        emit ValidationSubmitted(contentHash, msg.sender, vote, round);
+        _checkConsensus(contentHash, round);
     }
 
-    function _checkConsensus(bytes32 contentHash) internal {
-        Validation[] storage vals = _validations[contentHash];
-        uint256 total = vals.length;
-        if (total < quorumThreshold) return;
+    // -----------------------------------------------------------------------
+    // Re-opening
+    // -----------------------------------------------------------------------
 
-        uint256 trueVotes;
-        uint256 falseVotes;
-        uint256 unverifiableVotes;
-        for (uint256 i; i < total; i++) {
-            if      (vals[i].vote == VoteType.TRUE)          trueVotes++;
-            else if (vals[i].vote == VoteType.FALSE)         falseVotes++;
-            else                                             unverifiableVotes++;
+    /// @notice Request to reopen voting on a concluded article.
+    ///         Only validators who have not yet voted on this article may request.
+    ///         Once `reopenThreshold` requests accumulate, a new voting round opens.
+    function requestReopen(bytes32 contentHash) external {
+        ConsensusState state = consensusState[contentHash];
+        if (state != ConsensusState.DEFINITIVE && state != ConsensusState.DISPUTED)
+            revert ReopenNotAvailable(contentHash);
+        if (_hasVoted[contentHash][msg.sender])
+            revert AlreadyValidated(contentHash, msg.sender);
+        if (hasRequestedReopen[contentHash][msg.sender])
+            revert AlreadyRequestedReopen(contentHash, msg.sender);
+        if (!reputationSystem.canValidate(msg.sender))
+            revert InsufficientReputation(msg.sender);
+
+        hasRequestedReopen[contentHash][msg.sender] = true;
+        uint256 count = ++reopenRequestCount[contentHash];
+        emit ReopenRequested(contentHash, msg.sender, count);
+
+        if (count >= reopenThreshold) {
+            reopenRequestCount[contentHash] = 0;
+            uint256 newRound = ++currentRound[contentHash];
+            consensusState[contentHash] = ConsensusState.PENDING;
+            emit VotingReopened(contentHash, newRound);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Retroactive reputation (pull model)
+    // -----------------------------------------------------------------------
+
+    /// @notice Claim retroactive reputation adjustments for all rounds completed
+    ///         after the caller's voting round. Each subsequent DEFINITIVE round
+    ///         that confirms or contradicts the caller's original round result
+    ///         applies ±RETROACTIVE_DELTA, capped at ±RETROACTIVE_CAP total.
+    ///         Caller pays gas; this keeps _checkConsensus O(voters) not O(all_voters).
+    function claimRetroactiveReputation(bytes32 contentHash) external {
+        if (!_hasVoted[contentHash][msg.sender])
+            revert NothingToClaim(contentHash, msg.sender);
+
+        uint256 myRound     = voterRound[contentHash][msg.sender];
+        uint256 latestRound = currentRound[contentHash];
+        uint256 startRound  = _retroLastRound[contentHash][msg.sender];
+        if (startRound == 0) startRound = myRound + 1;
+
+        if (startRound > latestRound)
+            revert NothingToClaim(contentHash, msg.sender);
+
+        RoundInfo storage myRI = rounds[contentHash][myRound];
+        bool wasCorrect = myRI.completed &&
+                          myRI.state == ConsensusState.DEFINITIVE &&
+                          _vote[contentHash][msg.sender] == myRI.result;
+
+        uint256 posUsed = _retroPositive[contentHash][msg.sender];
+        uint256 negUsed = _retroNegative[contentHash][msg.sender];
+        int256  net     = 0;
+
+        for (uint256 r = startRound; r <= latestRound; r++) {
+            RoundInfo storage ri = rounds[contentHash][r];
+            if (!ri.completed || ri.state != ConsensusState.DEFINITIVE) continue;
+
+            bool confirms = ri.result == myRI.result;
+
+            if (confirms) {
+                if (wasCorrect && posUsed < RETROACTIVE_CAP) {
+                    reputationSystem.increaseReputation(msg.sender, RETROACTIVE_DELTA);
+                    posUsed++;
+                    net += int256(RETROACTIVE_DELTA);
+                } else if (!wasCorrect && negUsed < RETROACTIVE_CAP) {
+                    reputationSystem.decreaseReputation(msg.sender, RETROACTIVE_DELTA);
+                    negUsed++;
+                    net -= int256(RETROACTIVE_DELTA);
+                }
+            } else {
+                // contradicts
+                if (wasCorrect && negUsed < RETROACTIVE_CAP) {
+                    reputationSystem.decreaseReputation(msg.sender, RETROACTIVE_DELTA);
+                    negUsed++;
+                    net -= int256(RETROACTIVE_DELTA);
+                } else if (!wasCorrect && posUsed < RETROACTIVE_CAP) {
+                    reputationSystem.increaseReputation(msg.sender, RETROACTIVE_DELTA);
+                    posUsed++;
+                    net += int256(RETROACTIVE_DELTA);
+                }
+            }
         }
 
-        // Determinar opción ganadora (mayor número de votos)
-        uint256 winnerVotes;
-        VoteType result;
-        if (trueVotes >= falseVotes && trueVotes >= unverifiableVotes) {
-            winnerVotes = trueVotes;
-            result = VoteType.TRUE;
-        } else if (falseVotes >= trueVotes && falseVotes >= unverifiableVotes) {
-            winnerVotes = falseVotes;
-            result = VoteType.FALSE;
+        _retroPositive[contentHash][msg.sender]  = posUsed;
+        _retroNegative[contentHash][msg.sender]  = negUsed;
+        _retroLastRound[contentHash][msg.sender] = latestRound;
+
+        emit RetroactiveClaimed(contentHash, msg.sender, net);
+    }
+
+    // -----------------------------------------------------------------------
+    // Internal
+    // -----------------------------------------------------------------------
+
+    function _checkConsensus(bytes32 contentHash, uint256 round) internal {
+        if (roundVoteCount[contentHash][round] < quorumThreshold) return;
+
+        uint256 trueV  = _roundVoteCounts[contentHash][round][VoteType.TRUE];
+        uint256 falseV = _roundVoteCounts[contentHash][round][VoteType.FALSE];
+        uint256 unverV = _roundVoteCounts[contentHash][round][VoteType.UNVERIFIABLE];
+        uint256 total  = roundVoteCount[contentHash][round];
+
+        VoteType winner;
+        uint256  winnerVotes;
+        if (trueV >= falseV && trueV >= unverV) {
+            winner = VoteType.TRUE;         winnerVotes = trueV;
+        } else if (falseV >= trueV && falseV >= unverV) {
+            winner = VoteType.FALSE;        winnerVotes = falseV;
         } else {
-            winnerVotes = unverifiableVotes;
-            result = VoteType.UNVERIFIABLE;
+            winner = VoteType.UNVERIFIABLE; winnerVotes = unverV;
         }
 
         uint256 winnerBps = (winnerVotes * 10_000) / total;
+        RoundInfo storage ri = rounds[contentHash][round];
 
         if (winnerBps >= superMajorityBps) {
-            consensusState[contentHash]  = ConsensusState.DEFINITIVE;
-            consensusResult[contentHash] = result;
-            emit ConsensusReached(contentHash, uint8(result), uint8(ConsensusState.DEFINITIVE));
+            ri.result = winner; ri.state = ConsensusState.DEFINITIVE; ri.completed = true;
+            consensusState[contentHash] = ConsensusState.DEFINITIVE;
+            emit ConsensusReached(contentHash, uint8(winner), uint8(ConsensusState.DEFINITIVE), round);
 
-            // Efectos reputacionales simétricos: todos los que no votaron result son penalizados
-            for (uint256 i; i < total; i++) {
-                if (vals[i].vote == result) {
-                    reputationSystem.increaseReputation(vals[i].validator, REPUTATION_REWARD);
-                } else {
-                    reputationSystem.decreaseReputation(vals[i].validator, REPUTATION_PENALTY);
-                }
+            address[] storage voters = _roundVoters[contentHash][round];
+            for (uint256 i; i < voters.length; i++) {
+                if (_vote[contentHash][voters[i]] == winner)
+                    reputationSystem.increaseReputation(voters[i], REPUTATION_REWARD);
+                else
+                    reputationSystem.decreaseReputation(voters[i], REPUTATION_PENALTY);
             }
         } else {
-            consensusState[contentHash]  = ConsensusState.DISPUTED;
-            consensusResult[contentHash] = result;
-            emit ConsensusReached(contentHash, uint8(result), uint8(ConsensusState.DISPUTED));
-            // Sin efectos reputacionales en DISPUTED
+            ri.result = winner; ri.state = ConsensusState.DISPUTED; ri.completed = true;
+            consensusState[contentHash] = ConsensusState.DISPUTED;
+            emit ConsensusReached(contentHash, uint8(winner), uint8(ConsensusState.DISPUTED), round);
         }
     }
 
-    function getValidations(bytes32 contentHash)
-        external view returns (Validation[] memory)
+    // -----------------------------------------------------------------------
+    // View helpers
+    // -----------------------------------------------------------------------
+
+    function getVote(bytes32 contentHash, address validator)
+        external view
+        returns (VoteType vote_, uint256 round_)
     {
-        return _validations[contentHash];
+        return (_vote[contentHash][validator], voterRound[contentHash][validator]);
     }
 
-    function hasValidated(bytes32 contentHash, address validator)
-        external view returns (bool)
+    function getRoundVoters(bytes32 contentHash, uint256 round)
+        external view
+        returns (address[] memory)
+    {
+        return _roundVoters[contentHash][round];
+    }
+
+    function hasVoted(bytes32 contentHash, address validator)
+        external view
+        returns (bool)
     {
         return _hasVoted[contentHash][validator];
     }

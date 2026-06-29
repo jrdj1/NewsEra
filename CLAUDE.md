@@ -227,18 +227,25 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 ### ValidationRegistry
 - Gestiona votos (`VoteType { TRUE, FALSE, UNVERIFIABLE }`). **UNVERIFIABLE es veredicto de primera clase**, no abstención.
 - **Importante:** los contratos NO verifican la veracidad del contenido automáticamente. Solo agregan votos humanos y aplican las reglas de consenso de forma determinista. La extensión zkML (trabajo futuro) añadiría un cuarto tipo de voto automatizado verificable; no implementar en este TFG.
-- Estado de consenso: `ConsensusState { PENDING, DEFINITIVE, DISPUTED }`.
-  - `PENDING`: votos < `quorumThreshold`. Sigue abierto.
-  - `DEFINITIVE`: quórum alcanzado Y opción ganadora ≥ `superMajorityBps` (ej. 6667 = 66,67%). Efectos reputacionales completos.
+- Estado de consenso: `ConsensusState { PENDING, DEFINITIVE, DISPUTED, PENDING_REOPEN }`.
+  - `PENDING`: votación activa en la ronda actual.
+  - `DEFINITIVE`: quórum alcanzado Y opción ganadora ≥ `superMajorityBps` (ej. 6667 = 66,67%). Efectos reputacionales inmediatos para la ronda.
   - `DISPUTED`: quórum alcanzado pero ninguna opción alcanza supermayoría. Sin efectos reputacionales.
-- Parámetros de gobernanza en constructor: `quorumThreshold`, `superMajorityBps`, `minReputationToValidate`.
-- Mappings: `consensusState(bytes32 → ConsensusState)`, `consensusResult(bytes32 → VoteType)`.
-- `submitValidation(bytes32 contentHash, uint8 vote)`: verifica reputación → registra → evalúa quórum → si DEFINITIVE: actualiza reputaciones simétricamente.
-- **Efectos reputacionales simétricos (solo en DEFINITIVE):**
-  - Votó la opción ganadora (TRUE, FALSE o UNVERIFIABLE): `+REPUTATION_REWARD`
-  - Votó cualquier otra opción (incluido UNVERIFIABLE cuando gana TRUE o FALSE): `−REPUTATION_PENALTY`
-- Evento: `ConsensusReached(bytes32 indexed contentHash, uint8 result, uint8 state)`.
-- Interactúa con `ReputationSystem` via `VALIDATOR_ROLE`.
+  - `PENDING_REOPEN`: estado transitorio interno cuando se alcanza `reopenThreshold` solicitudes; pasa a `PENDING` de inmediato.
+- **Sistema multironda:** cada ronda tiene su propio `RoundInfo { result, state, completed }` y los datos de votos son independientes por ronda. Los votos son inmutables una vez emitidos.
+- **Mecanismo de reapertura:** `requestReopen(bytes32 contentHash)` — solo validadores que aún no han votado en ese artículo y tienen reputación suficiente. Al acumular `reopenThreshold` solicitudes se abre una nueva ronda. Solicitudes por artículo se reinician a 0 tras cada reapertura. Sin límite de rondas.
+- Parámetros de gobernanza en constructor: `quorumThreshold`, `superMajorityBps`, `reopenThreshold`.
+- Mappings clave: `currentRound(bytes32)`, `rounds(bytes32 → uint256 → RoundInfo)`, `roundVoteCount(bytes32 → uint256 → uint256)`, `voterRound(bytes32 → address → uint256)`.
+- `submitValidation(bytes32 contentHash, uint8 vote)`: verifica reputación → voto inmutable → evalúa quórum → si DEFINITIVE aplica rep. inmediata a votantes de esta ronda.
+- **Efectos reputacionales de ronda propia (solo en DEFINITIVE):**
+  - Votó la opción ganadora: `+REPUTATION_REWARD` (+5)
+  - Votó cualquier otra opción: `−REPUTATION_PENALTY` (−3)
+- **Reputación retroactiva (pull model):** `claimRetroactiveReputation(bytes32)` — aplica ±`RETROACTIVE_DELTA` (+1) por cada ronda DEFINITIVE posterior a la del votante que confirma/contradice el resultado de su ronda. Cap total: ±`RETROACTIVE_CAP` (±3) por artículo. El votante paga el gas (O(rondas desde su última reclamación)).
+  - Ronda posterior confirma tu ronda → acertaste: +1 / fallaste: −1
+  - Ronda posterior contradice tu ronda → acertaste: −1 / fallaste: +1
+- Constantes: `REPUTATION_REWARD=5`, `REPUTATION_PENALTY=3`, `RETROACTIVE_DELTA=1`, `RETROACTIVE_CAP=3`.
+- Eventos: `ValidationSubmitted(..., uint256 round)`, `ConsensusReached(..., uint256 round)`, `ReopenRequested(...)`, `VotingReopened(..., uint256 newRound)`, `RetroactiveClaimed(..., int256 netDelta)`.
+- Interactúa con `ReputationSystem` via interfaz `IReputationSystem`.
 
 ### ReputationSystem
 - Solo `ValidationRegistry` puede modificar reputaciones (`AccessControl`).
