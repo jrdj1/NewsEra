@@ -104,16 +104,16 @@ coverage: ## Cobertura de contratos (objetivo >= 80%)
 	$(HARDHAT) coverage
 
 .PHONY: deploy-local
-deploy-local: ## Desplegar PublicationRegistry en el nodo local Docker
-	$(HARDHAT) ignition deploy ignition/modules/PublicationRegistry.ts --network localhost
-
-.PHONY: verify-local
-verify-local: ## Verificar contrato en el nodo local (requiere deploy-local previo)
-	$(HARDHAT) run scripts/verify.ts --network localhost
+deploy-local: ## Desplegar los 3 contratos en el nodo Hardhat Docker (requiere: make hardhat)
+	$(HARDHAT) ignition deploy ignition/modules/NewsEra.ts --network localhost
 
 .PHONY: deploy-sepolia
 deploy-sepolia: ## Desplegar en Sepolia (requiere .env con PRIVATE_KEY y RPC_URL_SEPOLIA)
-	$(HARDHAT) ignition deploy ignition/modules/PublicationRegistry.ts --network sepolia
+	$(HARDHAT) ignition deploy ignition/modules/NewsEra.ts --network sepolia
+
+.PHONY: export-abis
+export-abis: ## Exportar ABIs a docs/abis/ (requiere compilacion previa)
+	$(HARDHAT) run scripts/export-abis.ts
 
 # ─── Frontend (host) ──────────────────────────────────────────────────────────
 
