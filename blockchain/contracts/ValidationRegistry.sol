@@ -212,7 +212,9 @@ contract ValidationRegistry {
 
         _retroPositive[contentHash][msg.sender]  = posUsed;
         _retroNegative[contentHash][msg.sender]  = negUsed;
-        _retroLastRound[contentHash][msg.sender] = latestRound;
+        // latestRound + 1: la siguiente llamada arranca en la ronda genuinamente nueva,
+        // evitando el re-procesado de la última ronda ya contabilizada.
+        _retroLastRound[contentHash][msg.sender] = latestRound + 1;
 
         emit RetroactiveClaimed(contentHash, msg.sender, net);
     }

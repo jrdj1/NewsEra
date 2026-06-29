@@ -428,13 +428,13 @@ describe("ValidationRegistry", () => {
       await doReopen(registry, HASH, [v[6], v[7], v[8]]);
       await doVotes(registry, HASH, [v[6], v[7], v[8]], TRUE_VOTE);
 
-      // Segunda reclamación: _retroLastRound=1, latestRound=2 → loop de r=1 a r=2
-      // Ronda 1 se re-procesa (posUsed 1→2, +1) + ronda 2 nueva (posUsed 2→3, +1) → net=+2
+      // Segunda reclamación: _retroLastRound=2 (latestRound+1 tras primera claim),
+      // latestRound=2 → startRound=2 <= latestRound=2 → solo procesa ronda 2 → net=+1
       await expect(registry.connect(v[0]).claimRetroactiveReputation(HASH))
         .to.emit(registry, "RetroactiveClaimed")
-        .withArgs(HASH, v[0].address, 2n);
+        .withArgs(HASH, v[0].address, 1n);
 
-      expect(await reputation.getReputation(v[0].address)).to.equal(repAfterFirst + 2n);
+      expect(await reputation.getReputation(v[0].address)).to.equal(repAfterFirst + RETRO_DELTA);
     });
   });
 
