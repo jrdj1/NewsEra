@@ -226,6 +226,7 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 
 ### ValidationRegistry
 - Gestiona votos (`VoteType { TRUE, FALSE, UNVERIFIABLE }`). **UNVERIFIABLE es veredicto de primera clase**, no abstención.
+- **Importante:** los contratos NO verifican la veracidad del contenido automáticamente. Solo agregan votos humanos y aplican las reglas de consenso de forma determinista. La extensión zkML (trabajo futuro) añadiría un cuarto tipo de voto automatizado verificable; no implementar en este TFG.
 - Estado de consenso: `ConsensusState { PENDING, DEFINITIVE, DISPUTED }`.
   - `PENDING`: votos < `quorumThreshold`. Sigue abierto.
   - `DEFINITIVE`: quórum alcanzado Y opción ganadora ≥ `superMajorityBps` (ej. 6667 = 66,67%). Efectos reputacionales completos.
@@ -283,6 +284,24 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 
 **The Graph Protocol**: migración del indexador del backend a un subgrafo descentralizado,
 eliminando la dependencia del servidor off-chain. No implementar durante el TFG.
+
+**Veredicto automatizado verificable on-chain (zkML + oráculos)**: extensión del diseño
+de `ValidationRegistry` para admitir un cuarto tipo de voto emitido por un modelo de IA
+verificado criptográficamente. El mecanismo previsto es:
+- Un oracle descentralizado (Chainlink Functions) o una prueba zkML (EZKL, Modulus Labs,
+  Ora Protocol) ejecuta un clasificador de desinformación off-chain sobre el contenido del
+  artículo y genera una prueba criptográfica de que ese resultado es correcto.
+- El contrato verifica la prueba y registra el resultado como `AI_VERDICT` (cuarto valor de
+  `VoteType`), con peso ponderado configurable en el cómputo del consenso.
+- El modelo utilizado es público y su hash forma parte del protocolo; cambiarlo requeriría
+  el mismo consenso explícito que cualquier modificación de los contratos.
+
+```solidity
+// Extensión futura — NO implementar en el TFG
+enum VoteType { TRUE, FALSE, UNVERIFIABLE, AI_VERDICT }
+```
+
+Esta línea está documentada en la memoria como ítem 7 del capítulo de Trabajo futuro.
 
 ---
 
@@ -632,5 +651,6 @@ ETHERSCAN_API_KEY=...
 
 - **The Graph Protocol** — sustituir el indexador centralizado por un subgrafo descentralizado
 - **DIDs / VCs W3C** — resistencia Sybil de nivel producción
-- **Layer 2 (Optimism / Arbitrum)** — reducir costes de gas en uno o dos órdenes de magnitud
+- **Layer 2 (Arbitrum / Polygon)** — reducir costes de gas en uno o dos órdenes de magnitud
 - **Rotación de quórum / decaimiento de reputación** — mitigar concentración de poder por validadores con alta reputación coordinados
+- **zkML / oracle veredicto automatizado** — `AI_VERDICT` como cuarto tipo de voto verificado on-chain; ver Sección 14
