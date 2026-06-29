@@ -8,15 +8,16 @@ generator client {
 }
 
 model Publication {
-  id            Int          @id @default(autoincrement())
-  contentHash   String       @unique
+  id            Int             @id @default(autoincrement())
+  contentHash   String          @unique
   title         String
   body          String
   authorAddress String
   tags          String[]
   ipfsCid       String?
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime        @default(now())
   validations   Validation[]
+  reopenRequests ReopenRequest[]
 
   @@map("publications")
 }
@@ -25,7 +26,8 @@ model Validation {
   id               Int         @id @default(autoincrement())
   contentHash      String
   validatorAddress String
-  vote             String
+  vote             String      // "TRUE" | "FALSE" | "UNVERIFIABLE"
+  round            Int         @default(0)
   txHash           String?
   createdAt        DateTime    @default(now())
   publication      Publication @relation(fields: [contentHash], references: [contentHash])
@@ -41,4 +43,28 @@ model Validator {
   updatedAt       DateTime @updatedAt
 
   @@map("validators")
+}
+
+model ReopenRequest {
+  id               Int         @id @default(autoincrement())
+  contentHash      String
+  requesterAddress String
+  txHash           String?
+  createdAt        DateTime    @default(now())
+  publication      Publication @relation(fields: [contentHash], references: [contentHash])
+
+  @@unique([contentHash, requesterAddress])
+  @@map("reopen_requests")
+}
+
+model RetroactiveClaim {
+  id               Int      @id @default(autoincrement())
+  contentHash      String
+  validatorAddress String
+  netDelta         Int
+  txHash           String?
+  createdAt        DateTime @default(now())
+
+  @@unique([contentHash, validatorAddress, txHash])
+  @@map("retroactive_claims")
 }
