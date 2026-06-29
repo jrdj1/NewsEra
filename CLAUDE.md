@@ -458,35 +458,33 @@ Definition of done:
 
 ---
 
-### Sprint 5 — Integración de contratos + auditoría (OE4) `[ TODO ]`
+### Sprint 5 — Integración y auditoría de contratos (OE4) `[ TODO ]`
 
-**Objetivo:** los 3 contratos integrados, testeados exhaustivamente y desplegados en Sepolia.
+**Objetivo:** los 3 contratos integrados y testeados exhaustivamente en red local; auditoría estática superada; ABIs listos para backend y frontend.
 
-**HU-5.1** — Flujo E2E on-chain: publicar → 3 validadores votan TRUE → consenso → reputación actualizada, verificable en Sepolia.
+**HU-5.1** — Módulo Ignition unificado: un solo `deploy` levanta los 3 contratos en el orden correcto y configura el `VALIDATOR_ROLE`.
+- `blockchain/ignition/modules/NewsEra.ts` despliega PublicationRegistry → ReputationSystem → ValidationRegistry y llama `grantRole(VALIDATOR_ROLE, validationRegistry.address)`
 
-**HU-5.2** — Ataque Sybil: 5 direcciones nuevas intentan validar sin reputación → todas revierten.
+**HU-5.2** — Flujo E2E on-chain en Hardhat Network: publicar → N validadores votan → quórum → consenso DEFINITIVE → reputación actualizada correctamente.
 
-**HU-5.3** — Whitewashing: validador penalizado abandona dirección → nueva dirección empieza en 0, no puede validar hasta acumular 10 puntos.
+**HU-5.3** — Flujo E2E multironda: ronda 1 DEFINITIVE → requestReopen × `reopenThreshold` → ronda 2 → claimRetroactiveReputation → delta correcto.
 
-**HU-5.4** — Análisis estático: `slither blockchain/contracts/ --exclude-dependencies` sin findings High/Critical.
+**HU-5.4** — Escenarios de ataque:
+- Sybil: 5 direcciones nuevas intentan validar sin reputación → todas revierten con `InsufficientReputation`
+- Whitewashing: validador penalizado abandona dirección → nueva dirección empieza en 0, no puede validar
 
-**HU-5.5** — Deploy en Sepolia con Hardhat Ignition. Guardar en `blockchain/deployments/sepolia.json`:
-```json
-{
-  "PublicationRegistry": "0x...",
-  "ValidationRegistry":  "0x...",
-  "ReputationSystem":    "0x...",
-  "deployBlock":         0,
-  "network":             "sepolia"
-}
-```
+**HU-5.5** — Análisis estático: `slither blockchain/contracts/ --exclude-dependencies` sin findings High/Critical.
+
+**HU-5.6** — ABIs exportados a `blockchain/artifacts/` en formato JSON consumible por el backend y el frontend.
 
 Definition of done:
+- [ ] Módulo Ignition unificado funcional en red local
+- [ ] Tests E2E flujo básico (publicar → votar → consenso → reputación)
+- [ ] Tests E2E flujo multironda (requestReopen → nueva ronda → claimRetroactiveReputation)
+- [ ] Tests de ataque Sybil y whitewashing
 - [ ] Cobertura global contratos ≥ 80% (`npx hardhat coverage`)
 - [ ] Slither sin findings High/Critical
-- [ ] 3 contratos desplegados y verificados en Etherscan Sepolia
-- [ ] `blockchain/deployments/sepolia.json` actualizado
-- [ ] ABIs exportados a `blockchain/artifacts/` para el backend y el frontend
+- [ ] ABIs exportados a `blockchain/artifacts/`
 
 ---
 
@@ -584,7 +582,7 @@ model RetroactiveClaim {
 
 Definition of done:
 - [ ] `docker compose up -d && npm run dev` sin errores
-- [ ] Todos los endpoints responden con datos reales de Sepolia
+- [ ] Todos los endpoints responden con datos reales de Hardhat Network local
 - [ ] Indexador procesa eventos históricos desde `deployBlock` al arrancar
 - [ ] Tests de integración con base de datos real (no mocks)
 
@@ -596,7 +594,7 @@ Definition of done:
 
 Setup: React 18 + Vite + TypeScript, wagmi v2, viem, @tanstack/react-query, @rainbow-me/rainbowkit, react-router-dom, tailwindcss, shadcn/ui.
 
-**HU-7.1** — Layout raíz: RainbowKit `ConnectButton` + React Router `<Outlet>`. wagmi config con Sepolia. Dirección activa disponible en toda la app via `useAccount()`.
+**HU-7.1** — Layout raíz: RainbowKit `ConnectButton` + React Router `<Outlet>`. wagmi config con Hardhat Network local (se actualizará a Sepolia en Sprint 8). Dirección activa disponible en toda la app via `useAccount()`.
 
 **HU-7.2** — Ruta `/` — Feed: lista de publicaciones del backend, paginación, estado de consenso y nº de votos por tarjeta.
 
@@ -623,7 +621,7 @@ Setup: React 18 + Vite + TypeScript, wagmi v2, viem, @tanstack/react-query, @rai
 - Muestra el delta neto estimado antes de reclamar
 
 Definition of done:
-- [ ] Todas las rutas renderizan sin errores con Sepolia conectado
+- [ ] Todas las rutas renderizan sin errores con Hardhat Network local
 - [ ] Flujo de publicación E2E funcional
 - [ ] Flujo de validación E2E funcional
 - [ ] Estados de carga y error manejados (no pantallas en blanco)
@@ -631,13 +629,25 @@ Definition of done:
 
 ---
 
-### Sprint 8 — Integración y métricas (OE7) `[ TODO ]`
+### Sprint 8 — Integración, despliegue Sepolia y métricas (OE7) `[ TODO ]`
 
-**Objetivo:** sistema integrado en Sepolia con métricas listas para la memoria del TFG.
+**Objetivo:** sistema completo integrado y verificable en Sepolia; métricas reales listas para la memoria del TFG.
 
-**HU-8.1** — Flujo E2E completo verificado manualmente: publicar → IPFS → on-chain → visible en feed → validar → reputación actualizada.
+**HU-8.1** — Despliegue en Sepolia con Hardhat Ignition. Guardar en `blockchain/deployments/sepolia.json`:
+```json
+{
+  "PublicationRegistry": "0x...",
+  "ValidationRegistry":  "0x...",
+  "ReputationSystem":    "0x...",
+  "deployBlock":         0,
+  "network":             "sepolia"
+}
+```
+Verificar los contratos en Etherscan Sepolia. Actualizar wagmi config del frontend para apuntar a Sepolia.
 
-**HU-8.2** — Exportar `docs/metricas.json` con valores reales (generado con `node scripts/generar-metricas.js`):
+**HU-8.2** — Flujo E2E completo verificado manualmente sobre Sepolia: publicar → IPFS → on-chain → visible en feed → validar → reputación actualizada.
+
+**HU-8.3** — Exportar `docs/metricas.json` con valores reales (generado con `node scripts/generar-metricas.js`):
 ```json
 {
   "fecha": "YYYY-MM-DD",
@@ -673,14 +683,16 @@ Definition of done:
 }
 ```
 
-**HU-8.3** — `hardhat-gas-reporter` configurado; costes de cada función capturados en `docs/metricas.json`.
+**HU-8.4** — `hardhat-gas-reporter` configurado; costes de cada función capturados en `docs/metricas.json`.
 
-**HU-8.4** — `README.md` con instrucciones de arranque + `.env.example` con todas las variables.
+**HU-8.5** — `README.md` con instrucciones de arranque local y de Sepolia + `.env.example` con todas las variables.
 
 Definition of done:
-- [ ] Flujo E2E sin errores en Sepolia
-- [ ] `metricas.json` relleno con valores reales
-- [ ] `README.md` operativo
+- [ ] 3 contratos desplegados y verificados en Etherscan Sepolia
+- [ ] `blockchain/deployments/sepolia.json` actualizado con addresses y deployBlock reales
+- [ ] Flujo E2E completo sin errores sobre Sepolia
+- [ ] `metricas.json` relleno con valores reales de Sepolia
+- [ ] `README.md` operativo (instrucciones local + Sepolia)
 - [ ] `.env.example` completo
 
 ---
