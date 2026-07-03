@@ -5,17 +5,32 @@ Versiones alineadas con sprints del TFG (Sprint 2 = v0.2.0, etc.).
 
 ---
 
-## [Unreleased] — Sprint 5+
+## [Unreleased] — Sprint 6+
 
 ### Pendiente
-- Módulo Ignition unificado para los 3 contratos (PublicationRegistry + ValidationRegistry + ReputationSystem)
-- Análisis estático con Slither (objetivo: sin findings High/Critical)
-- Deploy en Sepolia + fichero `blockchain/deployments/sepolia.json`
-- ABIs exportados a `blockchain/artifacts/` para backend y frontend
-- Backend: API REST con Hono + Prisma + PostgreSQL (Sprint 6)
-- Indexador de eventos on-chain con viem `watchContractEvent` (Sprint 6)
-- Frontend completo: feed, publicación, detalle, validación, perfiles (Sprint 7)
-- `docs/metricas.json` con valores reales + README operativo (Sprint 8)
+- Recompensa/penalización de reputación por publicación con consenso TRUE/FALSE/UNVERIFIABLE (Sprint 6)
+- `submitPrediction` — acceso meritocrático a validador sin publicar (Sprint 6)
+- Backend: API REST con Hono + Prisma + PostgreSQL (Sprint 7)
+- Indexador de eventos on-chain con viem `watchContractEvent` (Sprint 7)
+- Frontend completo: feed, publicación, detalle, validación, perfiles (Sprint 8)
+- Deploy en Sepolia + fichero `blockchain/deployments/sepolia.json` (Sprint 9)
+- `docs/metricas.json` con valores reales + README operativo (Sprint 9)
+
+---
+
+## [0.5.0] — Sprint 5 (integración y auditoría de contratos)
+
+### Añadido
+- `blockchain/ignition/modules/NewsEra.ts` — módulo Ignition unificado: despliega PublicationRegistry → ReputationSystem → ValidationRegistry y concede `VALIDATOR_ROLE`
+- `blockchain/test/e2e/NewsEra.e2e.ts` — tests E2E integrados: flujo básico (publicar → votar → consenso → reputación), flujo multironda con `claimRetroactiveReputation`, resistencia Sybil, degradación de validadores
+- `.github/workflows/slither.yml` — análisis estático en CI
+- `scripts/export-abis.ts` — exporta ABIs de los 3 contratos a `docs/abis/`
+
+### Corregido
+- `claimRetroactiveReputation` — doble procesado de la última ronda ya contabilizada al reclamar en llamadas separadas (`_retroLastRound` guardaba `latestRound` en vez de `latestRound + 1`)
+
+### Métricas
+- **Total tests:** 75 passing
 
 ---
 

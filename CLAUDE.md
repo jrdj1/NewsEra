@@ -28,7 +28,7 @@ NewsEra/
 ├── backend/      → Node.js + TypeScript + Hono + Prisma + PostgreSQL
 ├── frontend/     → React + Vite (SPA) + TypeScript + Tailwind CSS v4 + shadcn/ui
 │                   + wagmi v2 + viem + RainbowKit + React Router v6
-├── docs/         → metricas.json (auto-generado), documentación técnica
+├── docs/         → metricas.json (auto-generado), ERS.md, casos-de-uso.md, abis/, prompts/
 ├── scripts/      → generar-metricas.js y utilidades de automatización
 └── .github/      → GitHub Actions workflows
 ```
@@ -83,7 +83,7 @@ node scripts/generar-metricas.js   # genera docs/metricas.json
 | Contratos | OpenZeppelin Contracts | ^5.x |
 | Red local | Hardhat Network | — |
 | Testnet | Ethereum Sepolia | — |
-| Producción futura | Polygon PoS o Arbitrum One | (a decidir en Sprint 8) |
+| Producción futura | Polygon PoS o Arbitrum One | (a decidir en Sprint 9) |
 | Runtime | Node.js | 20 LTS |
 | Lenguaje | TypeScript | ^5.x (strict mode, ESM nativo) |
 | Backend | Hono | ^4.x |
@@ -181,11 +181,14 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
       "ReputationSystem":    "0x..."
     },
     "gas": {
-      "registerPublication": "<number|null>",
-      "submitValidation":    "<number|null>",
-      "increaseReputation":  "<number|null>",
-      "decreaseReputation":  "<number|null>",
-      "media":               "<number|null>"
+      "registerPublication":        "<number|null>",
+      "submitValidation":           "<number|null>",
+      "requestReopen":              "<number|null>",
+      "claimRetroactiveReputation": "<number|null>",
+      "submitPrediction":           "<number|null>",
+      "increaseReputation":         "<number|null>",
+      "decreaseReputation":         "<number|null>",
+      "media":                      "<number|null>"
     },
     "cobertura": "<number|null>"
   },
@@ -243,9 +246,16 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 - **Reputación retroactiva (pull model):** `claimRetroactiveReputation(bytes32)` — aplica ±`RETROACTIVE_DELTA` (+1) por cada ronda DEFINITIVE posterior a la del votante que confirma/contradice el resultado de su ronda. Cap total: ±`RETROACTIVE_CAP` (±3) por artículo. El votante paga el gas (O(rondas desde su última reclamación)).
   - Ronda posterior confirma tu ronda → acertaste: +1 / fallaste: −1
   - Ronda posterior contradice tu ronda → acertaste: −1 / fallaste: +1
-- Constantes: `REPUTATION_REWARD=5`, `REPUTATION_PENALTY=3`, `RETROACTIVE_DELTA=1`, `RETROACTIVE_CAP=3`.
-- Eventos: `ValidationSubmitted(..., uint256 round)`, `ConsensusReached(..., uint256 round)`, `ReopenRequested(...)`, `VotingReopened(..., uint256 newRound)`, `RetroactiveClaimed(..., int256 netDelta)`.
-- Interactúa con `ReputationSystem` via interfaz `IReputationSystem`.
+- **Recompensa por publicación (Sprint 6):** la primera vez que la ronda de un artículo alcanza `DEFINITIVE`, el autor (leído de `PublicationRegistry.getPublication(contentHash).author`) recibe un efecto reputacional. Se aplica una sola vez por artículo (reaperturas posteriores no lo reevalúan) y en el mismo punto donde ya se resuelven los efectos de los votantes — sin recorrido adicional, coste de gas constante.
+  - `TRUE` → `+PUBLISH_REPUTATION_REWARD` (+8)
+  - `UNVERIFIABLE` → `-PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE` (−8)
+  - `FALSE` → `-PUBLISH_REPUTATION_PENALTY_FALSE` (−15)
+  - `DISPUTED` → sin efecto
+- **Predicciones — acceso meritocrático sin publicar (Sprint 6):** `submitPrediction(bytes32 contentHash, uint8 vote)` — solo si `canValidate(msg.sender) == false`; estado `PENDING`; una dirección no puede predecir ni votar dos veces el mismo artículo. No cuenta para `roundVoteCount` ni para el quórum/supermayoría. Se resuelve **automáticamente** (no *pull*) en el mismo momento en que la ronda alcanza `DEFINITIVE`, junto con los votantes reales: acierto `+PREDICTION_REWARD` (+1), fallo `-PREDICTION_PENALTY` (−1), `DISPUTED` sin efecto.
+  - **Por qué no es *pull* como lo retroactivo:** si el propio predictor decidiera cuándo reclamar, nunca reclamaría sus fallos (el suelo en 0 ya lo protege de perder lo que no tiene), convirtiendo el ±1 simétrico en una recompensa unilateral. Al resolverse junto con los votantes de la misma ronda —conjunto acotado, del orden de `quorumThreshold`— se cierra esa vía sin reintroducir el coste de gas no acotado que motivó el modelo *pull* para lo retroactivo.
+- Constantes: `REPUTATION_REWARD=5`, `REPUTATION_PENALTY=3`, `RETROACTIVE_DELTA=1`, `RETROACTIVE_CAP=3`, `PUBLISH_REPUTATION_REWARD=8`, `PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE=8`, `PUBLISH_REPUTATION_PENALTY_FALSE=15`, `PREDICTION_REWARD=1`, `PREDICTION_PENALTY=1`.
+- Eventos: `ValidationSubmitted(..., uint256 round)`, `ConsensusReached(..., uint256 round)`, `ReopenRequested(...)`, `VotingReopened(..., uint256 newRound)`, `RetroactiveClaimed(..., int256 netDelta)`, `PredictionSubmitted(bytes32 indexed contentHash, address indexed predictor, uint8 vote, uint256 round)`.
+- Interactúa con `ReputationSystem` via interfaz `IReputationSystem`, y con `PublicationRegistry` (lectura del autor, única dependencia de solo lectura).
 
 ### ReputationSystem
 - Solo `ValidationRegistry` puede modificar reputaciones (`AccessControl`).
@@ -277,7 +287,8 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 | `/article/:hash` | Detalle de artículo + votos |
 | `/validators` | Ranking de validadores por reputación |
 | `/validators/:address` | Perfil público de un validador |
-| `/profile` | Panel personal: reputación propia + historial de validaciones |
+| `/profile` | Panel personal: reputación propia, historial de validaciones, perfil enriquecido, favoritos y solicitudes de reapertura |
+| `/about` | Información sobre el proyecto y enlace a la memoria del TFG |
 
 ---
 
@@ -315,8 +326,8 @@ Esta línea está documentada en la memoria como ítem 7 del capítulo de Trabaj
 ## Backlog de sprints
 
 > Sprints 0–1 (fundamentos y diseño de arquitectura) completados en la memoria del TFG.
-> Sprint 9 (evaluación y memoria) no produce código en este repositorio.
-> Este backlog cubre los sprints de implementación: 2–8.
+> Sprint 10 (evaluación y memoria) no produce código en este repositorio.
+> Este backlog cubre los sprints de implementación: 2–9.
 
 ---
 
@@ -458,9 +469,16 @@ Definition of done:
 
 ---
 
-### Sprint 5 — Integración y auditoría de contratos (OE4) `[ TODO ]`
+### Sprint 5 — Integración y auditoría de contratos (OE4) `[DONE]`
 
 **Objetivo:** los 3 contratos integrados y testeados exhaustivamente en red local; auditoría estática superada; ABIs listos para backend y frontend.
+
+**HU-5.0** — Corrección de bug en `claimRetroactiveReputation` (detectado en revisión Sprint 3):
+- En `ValidationRegistry.sol`, cambiar `_retroLastRound[contentHash][msg.sender] = latestRound;`
+  por `_retroLastRound[contentHash][msg.sender] = latestRound + 1;` para que la siguiente
+  reclamación arranque en la ronda genuinamente nueva y no re-procese la última ya contabilizada.
+- Actualizar el test «segunda reclamación procesa solo las rondas nuevas» en
+  `test/ValidationRegistry.ts`: el `netDelta` esperado pasa de 2 a 1 (solo la ronda nueva).
 
 **HU-5.1** — Módulo Ignition unificado: un solo `deploy` levanta los 3 contratos en el orden correcto y configura el `VALIDATOR_ROLE`.
 - `blockchain/ignition/modules/NewsEra.ts` despliega PublicationRegistry → ReputationSystem → ValidationRegistry y llama `grantRole(VALIDATOR_ROLE, validationRegistry.address)`
@@ -478,39 +496,110 @@ Definition of done:
 **HU-5.6** — ABIs exportados a `blockchain/artifacts/` en formato JSON consumible por el backend y el frontend.
 
 Definition of done:
-- [ ] Módulo Ignition unificado funcional en red local
-- [ ] Tests E2E flujo básico (publicar → votar → consenso → reputación)
-- [ ] Tests E2E flujo multironda (requestReopen → nueva ronda → claimRetroactiveReputation)
-- [ ] Tests de ataque Sybil y whitewashing
-- [ ] Cobertura global contratos ≥ 80% (`npx hardhat coverage`)
-- [ ] Slither sin findings High/Critical
-- [ ] ABIs exportados a `blockchain/artifacts/`
+- [x] Módulo Ignition unificado funcional en red local
+- [x] Tests E2E flujo básico (publicar → votar → consenso → reputación)
+- [x] Tests E2E flujo multironda (requestReopen → nueva ronda → claimRetroactiveReputation)
+- [x] Tests de ataque Sybil y whitewashing
+- [x] Cobertura global contratos ≥ 80% (`npx hardhat coverage`) — 75 tests pasando en total
+- [x] Workflow de Slither configurado en CI (`.github/workflows/slither.yml`)
+- [x] Script `export-abis` disponible (`npm run export-abis`)
 
 ---
 
-### Sprint 6 — Backend: API REST + indexador (OE2) `[ TODO ]`
+### Sprint 6 — Reputación (II): recompensa por publicación y acceso meritocrático (OE3/OE4) `[ TODO ]`
 
-**Objetivo:** API Hono + Prisma + PostgreSQL en Docker con indexador de eventos on-chain.
+**Objetivo:** ampliar `ValidationRegistry` para que la reputación también se gane publicando contenido veraz, y ofrecer una vía de acceso a validador sin necesidad de publicar ni de bootstrapping manual del administrador.
 
-**HU-6.1** — Infraestructura base:
+**HU-6.1** — Recompensa/penalización por publicación:
+- En el mismo punto donde `_checkConsensus` resuelve `DEFINITIVE`, si es la primera vez que ese `contentHash` lo alcanza, leer el autor con `PublicationRegistry.getPublication(contentHash).author` y aplicar:
+  - `TRUE` → `increaseReputation(author, PUBLISH_REPUTATION_REWARD)` (+8)
+  - `UNVERIFIABLE` → `decreaseReputation(author, PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE)` (−8)
+  - `FALSE` → `decreaseReputation(author, PUBLISH_REPUTATION_PENALTY_FALSE)` (−15)
+  - `DISPUTED` → sin efecto
+- Nuevo flag `mapping(bytes32 => bool) private _authorRewarded` para que reaperturas posteriores no reevalúen el efecto.
+- `ValidationRegistry` necesita una nueva dependencia de solo lectura hacia `PublicationRegistry` (parámetro adicional en el constructor).
+
+**HU-6.2** — Predicciones (acceso meritocrático sin publicar):
+- `submitPrediction(bytes32 contentHash, uint8 vote) external` — revert `NotEligibleForPrediction` si `canValidate(msg.sender) == true`; revert `VotingNotOpen` si el estado no es `PENDING`; revert `AlreadyValidated` si ya predijo o votó ese artículo.
+- No incrementa `roundVoteCount` ni participa en el cálculo de quórum/supermayoría.
+- Emite `PredictionSubmitted(bytes32 indexed contentHash, address indexed predictor, uint8 vote, uint256 round)`.
+- Se resuelve **automáticamente** (no *pull*) en el mismo bloque en que su ronda alcanza `DEFINITIVE`, junto con los votantes reales: acierto `+PREDICTION_REWARD` (+1), fallo `-PREDICTION_PENALTY` (−1), `DISPUTED` sin efecto. Ver razonamiento de por qué no es *pull* en la memoria (§ValidationRegistry) — evita que el predictor solo reclame sus aciertos.
+
+**HU-6.3** — Nuevas constantes: `PUBLISH_REPUTATION_REWARD=8`, `PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE=8`, `PUBLISH_REPUTATION_PENALTY_FALSE=15`, `PREDICTION_REWARD=1`, `PREDICTION_PENALTY=1`.
+
+**HU-6.4** — Actualizar el módulo Ignition (`NewsEra.ts`) para pasar la dirección de `PublicationRegistry` al constructor de `ValidationRegistry`.
+
+Definition of done:
+- [ ] Tests: recompensa `+8` al autor cuando la ronda resuelve `TRUE`
+- [ ] Tests: penalización `−8` al autor cuando resuelve `UNVERIFIABLE`
+- [ ] Tests: penalización `−15` al autor cuando resuelve `FALSE`
+- [ ] Tests: sin efecto sobre el autor cuando resuelve `DISPUTED`
+- [ ] Tests: la recompensa/penalización no se reaplica en una reapertura posterior del mismo artículo
+- [ ] Tests: `submitPrediction` revierte si el predictor ya puede votar (`canValidate == true`)
+- [ ] Tests: predicción resuelta automáticamente al alcanzar `DEFINITIVE`, con efecto simétrico ±1
+- [ ] Tests: una dirección que solo predice puede acumular reputación hasta alcanzar `MIN_REPUTATION_TO_VALIDATE` y pasar a `submitValidation`
+- [ ] Cobertura ≥ 80% mantenida tras la ampliación
+- [ ] Módulo Ignition actualizado con la nueva dependencia entre contratos
+
+---
+
+### Sprint 7 — Backend: API REST + indexador (OE2) `[ TODO ]`
+
+**Objetivo:** API Hono + Prisma + PostgreSQL en Docker con indexador de eventos on-chain,
+con la superficie completa definida en el ERS de la memoria (Capítulo 4, §4.1 y
+Anexo A — 42 casos de uso).
+
+**HU-7.0** — Corrección y ampliación del schema Prisma (alinear con el ERS):
+- `Publication`: añadir `consensusState` (`"PENDING"|"DEFINITIVE"|"DISPUTED"`,
+  default `"PENDING"`), `currentRound` (default `1`), `reopenRequestCount`
+  (default `0`), relación `rounds Round[]`
+- `Validator`: añadir `registeredAt DateTime @default(now())`
+- Nuevo modelo `Round` — historial de rondas por publicación
+- Nuevo modelo `UserProfile` — perfil enriquecido, sin contraseña
+- Nuevo modelo `Favorite` — artículos guardados por el usuario
+- Nuevo modelo `Follow` — artículos seguidos para recibir notificaciones (distinto
+  de `Favorite`: seguir no implica guardar como favorito ni viceversa)
+- Nuevo modelo `Notification` — generada por el indexador (HU-7.3)
+- El bloque de esquema de HU-7.1 sustituye por completo al anterior; no mantener
+  los campos `ReopenRequest.count` ni `RetroactiveClaim.claimedAt` que aparecían
+  en versiones previas de este documento — no existían en el `schema.prisma` real
+  y han quedado eliminados de la definición.
+
+**HU-7.1** — Infraestructura base:
 - `docker-compose.yml` con PostgreSQL 16
-- `prisma/schema.prisma` con modelos Publication, Validation, Validator
+- `prisma/schema.prisma` con el esquema completo (tras HU-7.0)
 - Servidor Hono arrancando en `localhost:3001`
 
-Schema Prisma (ya implementado):
+Schema Prisma objetivo (tras HU-7.0):
 ```prisma
 model Publication {
-  id            Int            @id @default(autoincrement())
-  contentHash   String         @unique
-  title         String
-  body          String
-  authorAddress String
-  tags          String[]
-  ipfsCid       String?
-  createdAt     DateTime       @default(now())
-  validations   Validation[]
-  reopenReqs    ReopenRequest[]
+  id                 Int             @id @default(autoincrement())
+  contentHash        String          @unique
+  title              String
+  body               String
+  authorAddress      String
+  tags               String[]
+  ipfsCid            String?
+  consensusState     String          @default("PENDING")
+  currentRound       Int             @default(1)
+  reopenRequestCount Int             @default(0)
+  createdAt          DateTime        @default(now())
+  validations        Validation[]
+  reopenRequests     ReopenRequest[]
+  rounds             Round[]
   @@map("publications")
+}
+
+model Round {
+  id          Int         @id @default(autoincrement())
+  contentHash String
+  round       Int
+  state       String      @default("PENDING")
+  result      String?
+  completed   Boolean     @default(false)
+  publication Publication @relation(fields: [contentHash], references: [contentHash])
+  @@unique([contentHash, round])
+  @@map("rounds")
 }
 
 model Validation {
@@ -530,6 +619,7 @@ model Validator {
   address         String   @id
   reputationScore Int      @default(0)
   lastSyncBlock   BigInt   @default(0)
+  registeredAt    DateTime @default(now())
   updatedAt       DateTime @updatedAt
   @@map("validators")
 }
@@ -538,10 +628,10 @@ model ReopenRequest {
   id               Int         @id @default(autoincrement())
   contentHash      String
   requesterAddress String
-  count            Int
   txHash           String?
   createdAt        DateTime    @default(now())
   publication      Publication @relation(fields: [contentHash], references: [contentHash])
+  @@unique([contentHash, requesterAddress])
   @@map("reopen_requests")
 }
 
@@ -551,89 +641,199 @@ model RetroactiveClaim {
   validatorAddress String
   netDelta         Int
   txHash           String?
-  claimedAt        DateTime @default(now())
+  createdAt        DateTime @default(now())
+  @@unique([contentHash, validatorAddress, txHash])
   @@map("retroactive_claims")
+}
+
+model UserProfile {
+  address     String   @id
+  displayName String?
+  avatarUrl   String?
+  email       String?
+  updatedAt   DateTime @updatedAt
+  @@map("user_profiles")
+}
+
+model Favorite {
+  id          Int      @id @default(autoincrement())
+  userAddress String
+  contentHash String
+  createdAt   DateTime @default(now())
+  @@unique([userAddress, contentHash])
+  @@map("favorites")
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  userAddress String
+  contentHash String
+  createdAt   DateTime @default(now())
+  @@unique([userAddress, contentHash])
+  @@map("follows")
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userAddress String
+  contentHash String
+  type        String   // "REOPENED" | "CONSENSUS_REACHED" | "RETROACTIVE_APPLIED"
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  @@map("notifications")
 }
 ```
 
-**HU-6.2** — Endpoints:
-- `GET /api/v1/publications` — lista con paginación (`page`, `limit`)
-- `GET /api/v1/publications/:hash` — detalle con validaciones por ronda
-- `POST /api/v1/publications` — registra contenido + `ipfsCid`; verifica que el hash existe on-chain
+**HU-7.2** — Endpoints núcleo de publicaciones y validadores:
+- `GET /api/v1/publications` — lista con paginación (`page`, `limit`) y filtros
+  opcionales `state` (consensusState), `tags`, `author`, `sort` (`recent`|`votes`|`state`)
+- `GET /api/v1/publications/:hash` — detalle con historial de rondas (`rounds`)
+  y validaciones agrupadas por ronda
+- `POST /api/v1/publications` — registra contenido + `ipfsCid`; verifica que el
+  hash existe on-chain
 - `GET /api/v1/validators` — ranking por reputación descendente
 - `GET /api/v1/validators/:address` — perfil: reputación, nº validaciones, % aciertos
-- `GET /api/v1/validators/:address/history` — historial de validaciones con ronda
-- `POST /api/v1/articles/:hash/reopen-request` — registra solicitud de reapertura
-- `POST /api/v1/articles/:hash/claim-retroactive` — registra reclamación retroactiva
+- `GET /api/v1/validators/:address/history` — historial de validaciones con ronda,
+  clasificado en ganada/perdida/sin resolver (DISPUTED nunca cuenta como ganada
+  ni perdida)
+- `GET /api/v1/validators/:address/reputation-history` — serie temporal de
+  variaciones de reputación (evento `ReputationUpdated` con bloque y delta)
+- `POST /api/v1/publications/:hash/reopen-request` — registra solicitud de reapertura
+- `POST /api/v1/publications/:hash/claim-retroactive` — registra reclamación retroactiva
 
-**HU-6.3** — Indexador de eventos (viem `watchContractEvent`):
+**HU-7.3** — Indexador de eventos (viem `watchContractEvent`):
 - `PublicationRegistered` → upsert en publications
 - `ValidationSubmitted` → insert en validations (incluye `round`)
-- `ConsensusReached` → update estado consenso en publications (incluye `round`)
+- `ConsensusReached` → update `consensusState`/crea o cierra fila en `rounds`
+  (incluye `round`); genera `Notification` (`type: "CONSENSUS_REACHED"`) para
+  cada dirección con `Follow` o `Validation` sobre ese `contentHash`
 - `ReputationUpdated` → update reputationScore en validators
-- `ReopenRequested` → insert en reopen_requests
-- `VotingReopened` → update currentRound en publications
-- `RetroactiveClaimed` → insert en retroactive_claims
+- `ReopenRequested` → insert en reopen_requests; actualiza `reopenRequestCount`
+- `VotingReopened` → update `currentRound` en publications, abre nueva fila en
+  `rounds`; genera `Notification` (`type: "REOPENED"`) para cada dirección con
+  `Follow` o `Validation` sobre ese `contentHash`
+- `RetroactiveClaimed` → insert en retroactive_claims; genera `Notification`
+  (`type: "RETROACTIVE_APPLIED"`) para el validador que reclamó
 - Al arrancar: procesa eventos históricos desde `deployBlock`
 
-**HU-6.4** — IPFS/Pinata: `POST /api/v1/publications` acepta `ipfsCid` opcional.
+**HU-7.4** — IPFS/Pinata: `POST /api/v1/publications` acepta `ipfsCid` opcional.
+
+**HU-7.6** — Re-sincronización manual del indexador (uso interno, protegido):
+- `POST /api/v1/sync/events` — dispara una re-indexación desde `lastSyncBlock` hasta el bloque actual; requiere `Authorization: Bearer <SERVICE_TOKEN>`. Uso interno (no expuesto en el cliente).
+
+**HU-7.5** — Perfil enriquecido, favoritos, notificaciones y seguimiento:
+- `GET /api/v1/profile/:address` — perfil enriquecido público (`displayName`,
+  `avatarUrl`; el `email` nunca se expone en lectura pública)
+- `PUT /api/v1/profile/:address` — actualiza `displayName`/`avatarUrl`/`email`;
+  requiere `{ signature, message }` firmado con `personal_sign` por la propia
+  dirección; responde `403 FORBIDDEN` si la firma no corresponde
+- `GET /api/v1/profile/:address/favorites` — lista de artículos favoritos
+- `POST /api/v1/favorites/:hash` — añade a favoritos (`{ userAddress }`)
+- `DELETE /api/v1/favorites/:hash` — quita de favoritos (`{ userAddress }`)
+- `POST /api/v1/publications/:hash/follow` — sigue un artículo (`{ userAddress }`)
+- `DELETE /api/v1/publications/:hash/follow` — deja de seguir un artículo
+- `GET /api/v1/profile/:address/notifications` — lista de notificaciones
+- `PATCH /api/v1/notifications/:id/read` — marca una notificación como leída
 
 > **Crítico:** el backend NO firma transacciones. Las escrituras on-chain las ejecuta el frontend con la cartera del usuario.
 
 Definition of done:
 - [ ] `docker compose up -d && npm run dev` sin errores
-- [ ] Todos los endpoints responden con datos reales de Hardhat Network local
-- [ ] Indexador procesa eventos históricos desde `deployBlock` al arrancar
+- [ ] `prisma migrate dev` aplica el esquema de HU-7.0 sin errores
+- [ ] Todos los endpoints (HU-7.2 y HU-7.5) responden con datos reales de Hardhat Network local
+- [ ] Indexador procesa eventos históricos desde `deployBlock` al arrancar, incluyendo generación de notificaciones
+- [ ] `PUT /api/v1/profile/:address` rechaza firmas inválidas o de otra dirección
 - [ ] Tests de integración con base de datos real (no mocks)
 
 ---
 
-### Sprint 7 — Frontend: SPA React + Vite (OE5) `[ TODO ]`
+### Sprint 8 — Frontend: SPA React + Vite (OE5) `[ TODO ]`
 
 **Objetivo:** interfaz SPA funcional conectada a la blockchain y al backend.
 
 Setup: React 18 + Vite + TypeScript, wagmi v2, viem, @tanstack/react-query, @rainbow-me/rainbowkit, react-router-dom, tailwindcss, shadcn/ui.
 
-**HU-7.1** — Layout raíz: RainbowKit `ConnectButton` + React Router `<Outlet>`. wagmi config con Hardhat Network local (se actualizará a Sepolia en Sprint 8). Dirección activa disponible en toda la app via `useAccount()`.
+**HU-8.1** — Layout raíz: RainbowKit `ConnectButton` + React Router `<Outlet>`. wagmi config con Hardhat Network local (se actualizará a Sepolia en Sprint 9). Dirección activa disponible en toda la app via `useAccount()`.
 
-**HU-7.2** — Ruta `/` — Feed: lista de publicaciones del backend, paginación, estado de consenso y nº de votos por tarjeta.
+**HU-8.2** — Ruta `/` — Feed: lista de publicaciones del backend, paginación, estado de consenso y nº de votos por tarjeta.
 
-**HU-7.3** — Ruta `/publish` — Formulario de publicación (requiere cartera):
-1. Calcular `keccak256(body)` con viem
-2. Subir cuerpo a IPFS via Pinata → obtener `ipfsCid`
-3. `useWriteContract` → `PublicationRegistry.registerPublication(contentHash)`
-4. `useWaitForTransactionReceipt` espera confirmación on-chain
-5. `POST /api/v1/publications` con `{contentHash, ipfsCid, title, body, tags}`
+**HU-8.3** — Ruta `/publish` — Formulario de publicación (requiere cartera), plantilla
+estándar de redacción (UC~12):
+1. Campos: título, cuerpo, etiquetas libres (UC~14), enlaces internos a otros
+   artículos de NewsEra (UC~15), referencias bibliográficas (UC~16)
+2. Guardar borrador localmente sin publicar (UC~13); recuperarlo al reabrir la ruta
+3. Vista previa con el formato final antes de confirmar (UC~17)
+4. Calcular `keccak256(body)` con viem y mostrarlo al usuario antes de firmar (UC~18)
+5. Subir cuerpo a IPFS via Pinata → obtener `ipfsCid`
+6. `useWriteContract` → `PublicationRegistry.registerPublication(contentHash)`
+7. `useWaitForTransactionReceipt` espera confirmación on-chain; si revierte con
+   `PublicationAlreadyExists`, informar sin perder el borrador
+8. `POST /api/v1/publications` con `{contentHash, ipfsCid, title, body, tags}`
 
-**HU-7.4** — Ruta `/article/:hash` — Detalle y validación multironda:
+**HU-8.4** — Ruta `/article/:hash` — Detalle, validación multironda y herramientas
+de verificación:
 - Carga artículo del backend con historial de rondas (resultado y estado de cada una)
-- Si estado es PENDING y `canValidate(address)` y no ha votado: botones TRUE / FALSE / UNVERIFIABLE
+- Bibliografía y enlaces internos citados, con acceso directo (UC~32)
+- Artículos relacionados por etiqueta compartida (UC~33)
+- Progreso hacia el quórum: votos emitidos / `quorumThreshold` (UC~38)
+- Lista de validadores que ya han votado en la ronda actual, sin revelar el
+  sentido del voto (`getRoundVoters`, UC~39)
+- Si estado es PENDING y `canValidate(address)` y no ha votado: botones TRUE / FALSE / UNVERIFIABLE,
+  con el efecto reputacional estimado antes de confirmar (UC~40)
 - `useWriteContract` → `ValidationRegistry.submitValidation(contentHash, vote)`; maneja error `VotingNotOpen`
 - Si estado es DEFINITIVE o DISPUTED y no ha votado ni solicitado reapertura: botón "Solicitar reapertura"
 - `useWriteContract` → `ValidationRegistry.requestReopen(contentHash)`; muestra contador de solicitudes acumuladas
+- Botón de favorito (`POST`/`DELETE /api/v1/favorites/:hash`, UC~31) y de
+  seguir artículo (`POST`/`DELETE /api/v1/publications/:hash/follow`, UC~29)
+- Botón de compartir enlace directo (UC~30)
 
-**HU-7.5** — Ruta `/validators` — Ranking por reputación.
+**HU-8.5** — Ruta `/validators` — Ranking por reputación, con ordenación (UC~28) y
+búsqueda/filtro básico.
 
-**HU-7.6** — Ruta `/validators/:address` — Perfil público: reputación, nº validaciones, % aciertos, historial por ronda.
+**HU-8.6** — Ruta `/validators/:address` — Perfil público: reputación, nº validaciones,
+% aciertos, historial por ronda, `displayName`/`avatarUrl` del perfil enriquecido
+(si existe) y artículos publicados por esa dirección (UC~26).
 
-**HU-7.7** — Ruta `/profile` — Panel personal (requiere cartera): reputación propia, historial de validaciones por ronda, botón "Reclamar reputación retroactiva" para artículos con rondas posteriores no reclamadas.
-- `useWriteContract` → `ValidationRegistry.claimRetroactiveReputation(contentHash)`
-- Muestra el delta neto estimado antes de reclamar
+**HU-8.7** — Ruta `/profile` — Panel personal (requiere cartera):
+- Reputación propia y su evolución histórica (gráfico o listado cronológico, UC~6, UC~7)
+- Historial de validaciones por ronda, clasificado en ganadas/perdidas/sin resolver
+  (las rondas DISPUTED no cuentan como ganada ni perdida), con métricas de acierto (UC~5)
+- Botón "Reclamar reputación retroactiva" para artículos con rondas posteriores no
+  reclamadas; `useWriteContract` → `ValidationRegistry.claimRetroactiveReputation(contentHash)`;
+  muestra el delta neto estimado antes de reclamar (UC~8, UC~37)
+- Listado de solicitudes de reapertura realizadas y su estado (UC~9)
+- Listado de artículos publicados propios (UC~4)
+
+**HU-8.8** — Edición de perfil enriquecido (dentro de `/profile`, UC~2):
+- Formulario de `displayName`, `avatarUrl`, `email` (opcional)
+- Al guardar, solicita firma `personal_sign` de un mensaje que incluye los datos
+  a actualizar; envía `{ signature, message }` a
+  `PUT /api/v1/profile/:address`. Sin contraseña, sin transacción on-chain
+
+**HU-8.9** — Favoritos (dentro de `/profile`, UC~3): listado paginado de artículos
+guardados vía `GET /api/v1/profile/:address/favorites`, con acceso directo a cada
+uno y opción de quitarlos.
+
+**HU-8.10** — Notificaciones (UC~10): panel accesible desde la cabecera con
+`GET /api/v1/profile/:address/notifications`; marcar como leída con
+`PATCH /api/v1/notifications/:id/read`. Estado vacío si no hay notificaciones.
 
 Definition of done:
 - [ ] Todas las rutas renderizan sin errores con Hardhat Network local
-- [ ] Flujo de publicación E2E funcional
+- [ ] Flujo de publicación E2E funcional, incluyendo borrador y vista previa
 - [ ] Flujo de validación E2E funcional
+- [ ] Favoritos, seguimiento y notificaciones funcionales end-to-end contra el backend
+- [ ] Edición de perfil enriquecido verifica la firma antes de persistir
 - [ ] Estados de carga y error manejados (no pantallas en blanco)
 - [ ] Legible en móvil
 
 ---
 
-### Sprint 8 — Integración, despliegue Sepolia y métricas (OE7) `[ TODO ]`
+### Sprint 9 — Integración, despliegue Sepolia y métricas (OE7) `[ TODO ]`
 
 **Objetivo:** sistema completo integrado y verificable en Sepolia; métricas reales listas para la memoria del TFG.
 
-**HU-8.1** — Despliegue en Sepolia con Hardhat Ignition. Guardar en `blockchain/deployments/sepolia.json`:
+**HU-9.1** — Despliegue en Sepolia con Hardhat Ignition. Guardar en `blockchain/deployments/sepolia.json`:
 ```json
 {
   "PublicationRegistry": "0x...",
@@ -645,14 +845,14 @@ Definition of done:
 ```
 Verificar los contratos en Etherscan Sepolia. Actualizar wagmi config del frontend para apuntar a Sepolia.
 
-**HU-8.2** — Flujo E2E completo verificado manualmente sobre Sepolia: publicar → IPFS → on-chain → visible en feed → validar → reputación actualizada.
+**HU-9.2** — Flujo E2E completo verificado manualmente sobre Sepolia: publicar → IPFS → on-chain → visible en feed → validar → reputación actualizada.
 
-**HU-8.3** — Exportar `docs/metricas.json` con valores reales (generado con `node scripts/generar-metricas.js`):
+**HU-9.3** — Exportar `docs/metricas.json` con valores reales (generado con `node scripts/generar-metricas.js`):
 ```json
 {
   "fecha": "YYYY-MM-DD",
   "red": "Sepolia",
-  "sprint": "Sprint 8",
+  "sprint": "Sprint 9",
   "bloque_despliegue": 0,
   "contratos": {
     "addresses": {
@@ -665,6 +865,7 @@ Verificar los contratos en Etherscan Sepolia. Actualizar wagmi config del fronte
       "submitValidation":             0,
       "requestReopen":                0,
       "claimRetroactiveReputation":   0,
+      "submitPrediction":             0,
       "increaseReputation":           0,
       "decreaseReputation":           0,
       "media":                        0
@@ -683,9 +884,9 @@ Verificar los contratos en Etherscan Sepolia. Actualizar wagmi config del fronte
 }
 ```
 
-**HU-8.4** — `hardhat-gas-reporter` configurado; costes de cada función capturados en `docs/metricas.json`.
+**HU-9.4** — `hardhat-gas-reporter` configurado; costes de cada función capturados en `docs/metricas.json`.
 
-**HU-8.5** — `README.md` con instrucciones de arranque local y de Sepolia + `.env.example` con todas las variables.
+**HU-9.5** — `README.md` con instrucciones de arranque local y de Sepolia + `.env.example` con todas las variables.
 
 Definition of done:
 - [ ] 3 contratos desplegados y verificados en Etherscan Sepolia
@@ -729,3 +930,39 @@ ETHERSCAN_API_KEY=...
 - **Layer 2 (Arbitrum / Polygon)** — reducir costes de gas en uno o dos órdenes de magnitud
 - **Rotación de quórum / decaimiento de reputación** — mitigar concentración de poder por validadores con alta reputación coordinados
 - **zkML / oracle veredicto automatizado** — `AI_VERDICT` como cuarto tipo de voto verificado on-chain; ver Sección 14
+
+---
+
+## 15. ERS y catálogo de casos de uso
+
+Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo 4, §4.1 y Anexo A) se encuentran en:
+
+- **`docs/ERS.md`** — Especificación de Requisitos de Software: RNF 1–27, RD 1–24, RI 1–12, tabla de discrepancias detectadas.
+- **`docs/casos-de-uso.md`** — Catálogo completo de los 42 casos de uso (UC 1–42) con actor, precondiciones, flujo principal, flujos alternativos y postcondiciones.
+
+### Resumen de requisitos clave para el desarrollo
+
+**Seguridad (no negociable):**
+- RNF 3/4: ningún componente almacena claves privadas; el backend nunca firma transacciones.
+- RNF 5: Slither sin findings High/Critical.
+- RNF 6: control de acceso siempre mediante `AccessControl` (roles), nunca ad-hoc.
+- RNF 8: datos on-chain son inmutables; los contratos no exponen funciones de borrado ni edición.
+
+**UX (obligatorio, Sprint 8):**
+- RNF 14/RI 5: todo estado de carga y error explícito, sin pantallas en blanco.
+- RI 7: errores de revert conocidos traducidos a lenguaje natural.
+- RI 6: toda operación que requiera firma muestra el hash de transacción y su estado mediante `useWaitForTransactionReceipt`.
+
+**Datos (invariantes de diseño):**
+- RD 1: PostgreSQL es réplica de solo lectura; la blockchain es la fuente de verdad.
+- RD 6: `keccak256(body) == contentHash`; cualquier discrepancia invalida el registro.
+- RD 18: UserProfile sin contraseña — toda modificación requiere firma `personal_sign`.
+
+### Discrepancias identificadas (ver `docs/ERS.md` §5)
+
+| # | Área | Estado |
+|---|------|--------|
+| D1 | `generar-metricas.js` no extraía gas de `requestReopen`, `claimRetroactiveReputation`, `submitPrediction` | Resuelto |
+| D2 | `POST /api/v1/sync/events` (re-sincronización manual del indexador) en la memoria pero ausente de HU-7.x | Resuelto — HU-7.6 |
+| D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Pendiente Sprint 6 |
+| D4 | `backend/src/lib/viem.ts` solo configura Sepolia; falta modo Hardhat Network local | Pendiente Sprint 7 |

@@ -8,7 +8,7 @@ app.use(logger());
 
 app.get("/", (c) => c.json({ status: "ok", service: "newsera-backend" }));
 
-// TODO Sprint 6: registrar rutas de publicaciones, validaciones y validadores
+// TODO Sprint 7: registrar rutas de publicaciones, validaciones y validadores
 // import { publicationsRouter } from "./routes/publications.js"
 // app.route("/api/v1/publications", publicationsRouter)
 

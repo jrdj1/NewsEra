@@ -45,10 +45,13 @@ function extractGas(report, fnName) {
 }
 
 const gasValues = {
-  registerPublication: extractGas(gasReport, "registerPublication"),
-  submitValidation:    extractGas(gasReport, "submitValidation"),
-  increaseReputation:  extractGas(gasReport, "increaseReputation"),
-  decreaseReputation:  extractGas(gasReport, "decreaseReputation"),
+  registerPublication:        extractGas(gasReport, "registerPublication"),
+  submitValidation:           extractGas(gasReport, "submitValidation"),
+  requestReopen:              extractGas(gasReport, "requestReopen"),
+  claimRetroactiveReputation: extractGas(gasReport, "claimRetroactiveReputation"),
+  submitPrediction:           extractGas(gasReport, "submitPrediction"),
+  increaseReputation:         extractGas(gasReport, "increaseReputation"),
+  decreaseReputation:         extractGas(gasReport, "decreaseReputation"),
 };
 
 const gasNonNull = Object.values(gasValues).filter((v) => v !== null);

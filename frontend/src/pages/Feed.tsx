@@ -88,7 +88,7 @@ export default function Feed() {
       <section className="border-t border-zinc-100 dark:border-zinc-900">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center">
           <p className="text-sm text-zinc-400">
-            Prototipo en desarrollo &mdash; Sprint 2 completado &mdash; Feed de publicaciones disponible en Sprint 7
+            Prototipo en desarrollo &mdash; Sprint 5 completado &mdash; Feed de publicaciones disponible en Sprint 8
           </p>
         </div>
       </section>
