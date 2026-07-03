@@ -11,12 +11,14 @@ const NewsEraModule = buildModule("NewsEraModule", (m) => {
   // 2. ReputationSystem — AccessControl, sin dependencias
   const reputationSystem = m.contract("ReputationSystem");
 
-  // 3. ValidationRegistry — depende de ReputationSystem para canValidate / rep changes
+  // 3. ValidationRegistry — depende de ReputationSystem (canValidate / rep changes)
+  //    y de PublicationRegistry (lectura del autor para la recompensa por publicación)
   const validationRegistry = m.contract("ValidationRegistry", [
     reputationSystem,
     QUORUM_THRESHOLD,
     SUPER_MAJORITY_BPS,
     REOPEN_THRESHOLD,
+    publicationRegistry,
   ]);
 
   // 4. Conceder VALIDATOR_ROLE a ValidationRegistry en ReputationSystem

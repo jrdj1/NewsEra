@@ -19,6 +19,7 @@ const REOPEN_THRESH  = 3n;
 const INIT_REP       = 10n;
 const REWARD         = 5n;
 const PENALTY        = 3n;
+const PUBLISH_REWARD = 8n;
 
 // VoteType
 const TRUE_V  = 0;
@@ -51,7 +52,13 @@ async function deployAll(): Promise<{
   await rep.waitForDeployment();
 
   const ValF = await ethers.getContractFactory("ValidationRegistry");
-  const val  = await ValF.deploy(await rep.getAddress(), QUORUM, SUPER_MAJ, REOPEN_THRESH);
+  const val  = await ValF.deploy(
+    await rep.getAddress(),
+    QUORUM,
+    SUPER_MAJ,
+    REOPEN_THRESH,
+    await pub.getAddress(),
+  );
   await val.waitForDeployment();
 
   // Configurar roles (replica lo que hace el módulo Ignition)
@@ -102,7 +109,9 @@ describe("E2E-1: Flujo básico publicar → votar → consenso DEFINITIVE", () =
     expect(await val.consensusState(HASH)).to.equal(DEFINITIVE);
 
     // Verificar reputación de los 3 que votaron TRUE: +5
-    expect(await rep.getReputation(v[0].address)).to.equal(INIT_REP + REWARD);
+    // v[0] es además el autor del artículo (test anterior) y el resultado es TRUE,
+    // por lo que también recibe la recompensa por publicación (+8): 10+5+8=23.
+    expect(await rep.getReputation(v[0].address)).to.equal(INIT_REP + REWARD + PUBLISH_REWARD);
     expect(await rep.getReputation(v[1].address)).to.equal(INIT_REP + REWARD);
     expect(await rep.getReputation(v[2].address)).to.equal(INIT_REP + REWARD);
   });
@@ -117,6 +126,7 @@ describe("E2E-1: Flujo básico publicar → votar → consenso DEFINITIVE", () =
 // ── E2E-2: Flujo multironda con claimRetroactiveReputation ────────────────────
 
 describe("E2E-2: Flujo multironda con claimRetroactiveReputation", () => {
+  let pub:   PublicationRegistry;
   let rep:   ReputationSystem;
   let val:   ValidationRegistry;
   let admin: HardhatEthersSigner;
@@ -125,7 +135,8 @@ describe("E2E-2: Flujo multironda con claimRetroactiveReputation", () => {
   const HASH = h("e2e-multironda");
 
   before(async () => {
-    ({ rep, val, admin, signers: [admin, ...v] } = await deployAll());
+    ({ pub, rep, val, admin, signers: [admin, ...v] } = await deployAll());
+    await pub.connect(admin).registerPublication(HASH);
     // 9 validadores
     for (let i = 0; i < 9; i++) {
       await rep.registerValidator(v[i].address, INIT_REP);
@@ -211,6 +222,7 @@ describe("E2E-3: Resistencia Sybil — direcciones sin reputación no pueden val
 // ── E2E-4: Validador degradado pierde acceso ──────────────────────────────────
 
 describe("E2E-4: Degradación — validador que pierde reputación no puede seguir validando", () => {
+  let pub:   PublicationRegistry;
   let rep:   ReputationSystem;
   let val:   ValidationRegistry;
   let admin: HardhatEthersSigner;
@@ -222,7 +234,8 @@ describe("E2E-4: Degradación — validador que pierde reputación no puede segu
 
   before(async () => {
     // quorum=3, superMajority=6667 → necesitamos un registry con quorum=3
-    ({ rep, val, admin, signers: [admin, ...v] } = await deployAll());
+    ({ pub, rep, val, admin, signers: [admin, ...v] } = await deployAll());
+    await pub.connect(admin).registerPublication(HASH_A);
 
     // v[0] es el objetivo. v[1], v[2] conforman la mayoría. v[3] es spare.
     // Reputaciones: v[0]=10, v[1..3]=10
@@ -241,7 +254,13 @@ describe("E2E-4: Degradación — validador que pierde reputación no puede segu
 
     // Usamos un registry con quorum=5 para tener más votos que controlar:
     const ValF = await ethers.getContractFactory("ValidationRegistry");
-    const val5 = await ValF.deploy(await rep.getAddress(), 5n, SUPER_MAJ, REOPEN_THRESH);
+    const val5 = await ValF.deploy(
+      await rep.getAddress(),
+      5n,
+      SUPER_MAJ,
+      REOPEN_THRESH,
+      await pub.getAddress(),
+    );
     await val5.waitForDeployment();
     const VALIDATOR_ROLE = await rep.VALIDATOR_ROLE();
     await rep.grantRole(VALIDATOR_ROLE, await val5.getAddress());

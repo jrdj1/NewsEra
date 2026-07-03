@@ -18,6 +18,8 @@ export type { PublicationRegistry } from "./contracts/PublicationRegistry";
 export { PublicationRegistry__factory } from "./factories/contracts/PublicationRegistry__factory";
 export type { ReputationSystem } from "./contracts/ReputationSystem";
 export { ReputationSystem__factory } from "./factories/contracts/ReputationSystem__factory";
+export type { IPublicationRegistry } from "./contracts/ValidationRegistry.sol/IPublicationRegistry";
+export { IPublicationRegistry__factory } from "./factories/contracts/ValidationRegistry.sol/IPublicationRegistry__factory";
 export type { IReputationSystem } from "./contracts/ValidationRegistry.sol/IReputationSystem";
 export { IReputationSystem__factory } from "./factories/contracts/ValidationRegistry.sol/IReputationSystem__factory";
 export type { ValidationRegistry } from "./contracts/ValidationRegistry.sol/ValidationRegistry";

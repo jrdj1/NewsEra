@@ -38,6 +38,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReputationSystem__factory>;
     getContractFactory(
+      name: "IPublicationRegistry",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPublicationRegistry__factory>;
+    getContractFactory(
       name: "IReputationSystem",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IReputationSystem__factory>;
@@ -77,6 +81,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReputationSystem>;
     getContractAt(
+      name: "IPublicationRegistry",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPublicationRegistry>;
+    getContractAt(
       name: "IReputationSystem",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -112,6 +121,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReputationSystem>;
     deployContract(
+      name: "IPublicationRegistry",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPublicationRegistry>;
+    deployContract(
       name: "IReputationSystem",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IReputationSystem>;
@@ -150,6 +163,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReputationSystem>;
+    deployContract(
+      name: "IPublicationRegistry",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPublicationRegistry>;
     deployContract(
       name: "IReputationSystem",
       args: any[],

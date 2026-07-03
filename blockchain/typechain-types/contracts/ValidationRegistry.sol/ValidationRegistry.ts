@@ -23,34 +23,42 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace ValidationRegistry {
-  export type ValidationStruct = { validator: AddressLike; vote: BigNumberish };
-
-  export type ValidationStructOutput = [validator: string, vote: bigint] & {
-    validator: string;
-    vote: bigint;
-  };
-}
-
 export interface ValidationRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "consensusResult"
+      | "claimRetroactiveReputation"
       | "consensusState"
-      | "getValidations"
-      | "hasValidated"
+      | "currentRound"
+      | "getRoundVoters"
+      | "getVote"
+      | "hasRequestedReopen"
+      | "hasVoted"
+      | "publicationRegistry"
       | "quorumThreshold"
+      | "reopenRequestCount"
+      | "reopenThreshold"
       | "reputationSystem"
+      | "requestReopen"
+      | "roundVoteCount"
+      | "rounds"
+      | "submitPrediction"
       | "submitValidation"
       | "superMajorityBps"
+      | "voterRound"
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "ConsensusReached" | "ValidationSubmitted"
+    nameOrSignatureOrTopic:
+      | "ConsensusReached"
+      | "PredictionSubmitted"
+      | "ReopenRequested"
+      | "RetroactiveClaimed"
+      | "ValidationSubmitted"
+      | "VotingReopened"
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "consensusResult",
+    functionFragment: "claimRetroactiveReputation",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
@@ -58,20 +66,60 @@ export interface ValidationRegistryInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getValidations",
+    functionFragment: "currentRound",
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "hasValidated",
+    functionFragment: "getRoundVoters",
+    values: [BytesLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getVote",
     values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasRequestedReopen",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasVoted",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "publicationRegistry",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "quorumThreshold",
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "reopenRequestCount",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "reopenThreshold",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "reputationSystem",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "requestReopen",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "roundVoteCount",
+    values: [BytesLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "rounds",
+    values: [BytesLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "submitPrediction",
+    values: [BytesLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "submitValidation",
@@ -81,9 +129,13 @@ export interface ValidationRegistryInterface extends Interface {
     functionFragment: "superMajorityBps",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "voterRound",
+    values: [BytesLike, AddressLike]
+  ): string;
 
   decodeFunctionResult(
-    functionFragment: "consensusResult",
+    functionFragment: "claimRetroactiveReputation",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -91,11 +143,21 @@ export interface ValidationRegistryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getValidations",
+    functionFragment: "currentRound",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "hasValidated",
+    functionFragment: "getRoundVoters",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "getVote", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "hasRequestedReopen",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "hasVoted", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "publicationRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -103,7 +165,28 @@ export interface ValidationRegistryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "reopenRequestCount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "reopenThreshold",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "reputationSystem",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "requestReopen",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "roundVoteCount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "rounds", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "submitPrediction",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -114,23 +197,96 @@ export interface ValidationRegistryInterface extends Interface {
     functionFragment: "superMajorityBps",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "voterRound", data: BytesLike): Result;
 }
 
 export namespace ConsensusReachedEvent {
   export type InputTuple = [
     contentHash: BytesLike,
     result: BigNumberish,
-    state: BigNumberish
+    state: BigNumberish,
+    round: BigNumberish
   ];
   export type OutputTuple = [
     contentHash: string,
     result: bigint,
-    state: bigint
+    state: bigint,
+    round: bigint
   ];
   export interface OutputObject {
     contentHash: string;
     result: bigint;
     state: bigint;
+    round: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PredictionSubmittedEvent {
+  export type InputTuple = [
+    contentHash: BytesLike,
+    predictor: AddressLike,
+    vote: BigNumberish,
+    round: BigNumberish
+  ];
+  export type OutputTuple = [
+    contentHash: string,
+    predictor: string,
+    vote: bigint,
+    round: bigint
+  ];
+  export interface OutputObject {
+    contentHash: string;
+    predictor: string;
+    vote: bigint;
+    round: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace ReopenRequestedEvent {
+  export type InputTuple = [
+    contentHash: BytesLike,
+    requester: AddressLike,
+    count: BigNumberish
+  ];
+  export type OutputTuple = [
+    contentHash: string,
+    requester: string,
+    count: bigint
+  ];
+  export interface OutputObject {
+    contentHash: string;
+    requester: string;
+    count: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RetroactiveClaimedEvent {
+  export type InputTuple = [
+    contentHash: BytesLike,
+    validator: AddressLike,
+    netDelta: BigNumberish
+  ];
+  export type OutputTuple = [
+    contentHash: string,
+    validator: string,
+    netDelta: bigint
+  ];
+  export interface OutputObject {
+    contentHash: string;
+    validator: string;
+    netDelta: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -142,17 +298,33 @@ export namespace ValidationSubmittedEvent {
   export type InputTuple = [
     contentHash: BytesLike,
     validator: AddressLike,
-    vote: BigNumberish
+    vote: BigNumberish,
+    round: BigNumberish
   ];
   export type OutputTuple = [
     contentHash: string,
     validator: string,
-    vote: bigint
+    vote: bigint,
+    round: bigint
   ];
   export interface OutputObject {
     contentHash: string;
     validator: string;
     vote: bigint;
+    round: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace VotingReopenedEvent {
+  export type InputTuple = [contentHash: BytesLike, newRound: BigNumberish];
+  export type OutputTuple = [contentHash: string, newRound: bigint];
+  export interface OutputObject {
+    contentHash: string;
+    newRound: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -203,25 +375,79 @@ export interface ValidationRegistry extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  consensusResult: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+  claimRetroactiveReputation: TypedContractMethod<
+    [contentHash: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
   consensusState: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
 
-  getValidations: TypedContractMethod<
-    [contentHash: BytesLike],
-    [ValidationRegistry.ValidationStructOutput[]],
+  currentRound: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+
+  getRoundVoters: TypedContractMethod<
+    [contentHash: BytesLike, round: BigNumberish],
+    [string[]],
     "view"
   >;
 
-  hasValidated: TypedContractMethod<
+  getVote: TypedContractMethod<
+    [contentHash: BytesLike, validator: AddressLike],
+    [[bigint, bigint] & { vote_: bigint; round_: bigint }],
+    "view"
+  >;
+
+  hasRequestedReopen: TypedContractMethod<
+    [arg0: BytesLike, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  hasVoted: TypedContractMethod<
     [contentHash: BytesLike, validator: AddressLike],
     [boolean],
     "view"
   >;
 
+  publicationRegistry: TypedContractMethod<[], [string], "view">;
+
   quorumThreshold: TypedContractMethod<[], [bigint], "view">;
 
+  reopenRequestCount: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+
+  reopenThreshold: TypedContractMethod<[], [bigint], "view">;
+
   reputationSystem: TypedContractMethod<[], [string], "view">;
+
+  requestReopen: TypedContractMethod<
+    [contentHash: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
+  roundVoteCount: TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  rounds: TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [
+      [bigint, bigint, boolean] & {
+        result: bigint;
+        state: bigint;
+        completed: boolean;
+      }
+    ],
+    "view"
+  >;
+
+  submitPrediction: TypedContractMethod<
+    [contentHash: BytesLike, vote: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   submitValidation: TypedContractMethod<
     [contentHash: BytesLike, vote: BigNumberish],
@@ -231,36 +457,98 @@ export interface ValidationRegistry extends BaseContract {
 
   superMajorityBps: TypedContractMethod<[], [bigint], "view">;
 
+  voterRound: TypedContractMethod<
+    [arg0: BytesLike, arg1: AddressLike],
+    [bigint],
+    "view"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "consensusResult"
-  ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+    nameOrSignature: "claimRetroactiveReputation"
+  ): TypedContractMethod<[contentHash: BytesLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "consensusState"
   ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
   getFunction(
-    nameOrSignature: "getValidations"
+    nameOrSignature: "currentRound"
+  ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getRoundVoters"
   ): TypedContractMethod<
-    [contentHash: BytesLike],
-    [ValidationRegistry.ValidationStructOutput[]],
+    [contentHash: BytesLike, round: BigNumberish],
+    [string[]],
     "view"
   >;
   getFunction(
-    nameOrSignature: "hasValidated"
+    nameOrSignature: "getVote"
+  ): TypedContractMethod<
+    [contentHash: BytesLike, validator: AddressLike],
+    [[bigint, bigint] & { vote_: bigint; round_: bigint }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasRequestedReopen"
+  ): TypedContractMethod<
+    [arg0: BytesLike, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasVoted"
   ): TypedContractMethod<
     [contentHash: BytesLike, validator: AddressLike],
     [boolean],
     "view"
   >;
   getFunction(
+    nameOrSignature: "publicationRegistry"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "quorumThreshold"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "reopenRequestCount"
+  ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "reopenThreshold"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "reputationSystem"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "requestReopen"
+  ): TypedContractMethod<[contentHash: BytesLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "roundVoteCount"
+  ): TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "rounds"
+  ): TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [
+      [bigint, bigint, boolean] & {
+        result: bigint;
+        state: bigint;
+        completed: boolean;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "submitPrediction"
+  ): TypedContractMethod<
+    [contentHash: BytesLike, vote: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "submitValidation"
   ): TypedContractMethod<
@@ -271,6 +559,13 @@ export interface ValidationRegistry extends BaseContract {
   getFunction(
     nameOrSignature: "superMajorityBps"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "voterRound"
+  ): TypedContractMethod<
+    [arg0: BytesLike, arg1: AddressLike],
+    [bigint],
+    "view"
+  >;
 
   getEvent(
     key: "ConsensusReached"
@@ -280,15 +575,43 @@ export interface ValidationRegistry extends BaseContract {
     ConsensusReachedEvent.OutputObject
   >;
   getEvent(
+    key: "PredictionSubmitted"
+  ): TypedContractEvent<
+    PredictionSubmittedEvent.InputTuple,
+    PredictionSubmittedEvent.OutputTuple,
+    PredictionSubmittedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ReopenRequested"
+  ): TypedContractEvent<
+    ReopenRequestedEvent.InputTuple,
+    ReopenRequestedEvent.OutputTuple,
+    ReopenRequestedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RetroactiveClaimed"
+  ): TypedContractEvent<
+    RetroactiveClaimedEvent.InputTuple,
+    RetroactiveClaimedEvent.OutputTuple,
+    RetroactiveClaimedEvent.OutputObject
+  >;
+  getEvent(
     key: "ValidationSubmitted"
   ): TypedContractEvent<
     ValidationSubmittedEvent.InputTuple,
     ValidationSubmittedEvent.OutputTuple,
     ValidationSubmittedEvent.OutputObject
   >;
+  getEvent(
+    key: "VotingReopened"
+  ): TypedContractEvent<
+    VotingReopenedEvent.InputTuple,
+    VotingReopenedEvent.OutputTuple,
+    VotingReopenedEvent.OutputObject
+  >;
 
   filters: {
-    "ConsensusReached(bytes32,uint8,uint8)": TypedContractEvent<
+    "ConsensusReached(bytes32,uint8,uint8,uint256)": TypedContractEvent<
       ConsensusReachedEvent.InputTuple,
       ConsensusReachedEvent.OutputTuple,
       ConsensusReachedEvent.OutputObject
@@ -299,7 +622,40 @@ export interface ValidationRegistry extends BaseContract {
       ConsensusReachedEvent.OutputObject
     >;
 
-    "ValidationSubmitted(bytes32,address,uint8)": TypedContractEvent<
+    "PredictionSubmitted(bytes32,address,uint8,uint256)": TypedContractEvent<
+      PredictionSubmittedEvent.InputTuple,
+      PredictionSubmittedEvent.OutputTuple,
+      PredictionSubmittedEvent.OutputObject
+    >;
+    PredictionSubmitted: TypedContractEvent<
+      PredictionSubmittedEvent.InputTuple,
+      PredictionSubmittedEvent.OutputTuple,
+      PredictionSubmittedEvent.OutputObject
+    >;
+
+    "ReopenRequested(bytes32,address,uint256)": TypedContractEvent<
+      ReopenRequestedEvent.InputTuple,
+      ReopenRequestedEvent.OutputTuple,
+      ReopenRequestedEvent.OutputObject
+    >;
+    ReopenRequested: TypedContractEvent<
+      ReopenRequestedEvent.InputTuple,
+      ReopenRequestedEvent.OutputTuple,
+      ReopenRequestedEvent.OutputObject
+    >;
+
+    "RetroactiveClaimed(bytes32,address,int256)": TypedContractEvent<
+      RetroactiveClaimedEvent.InputTuple,
+      RetroactiveClaimedEvent.OutputTuple,
+      RetroactiveClaimedEvent.OutputObject
+    >;
+    RetroactiveClaimed: TypedContractEvent<
+      RetroactiveClaimedEvent.InputTuple,
+      RetroactiveClaimedEvent.OutputTuple,
+      RetroactiveClaimedEvent.OutputObject
+    >;
+
+    "ValidationSubmitted(bytes32,address,uint8,uint256)": TypedContractEvent<
       ValidationSubmittedEvent.InputTuple,
       ValidationSubmittedEvent.OutputTuple,
       ValidationSubmittedEvent.OutputObject
@@ -308,6 +664,17 @@ export interface ValidationRegistry extends BaseContract {
       ValidationSubmittedEvent.InputTuple,
       ValidationSubmittedEvent.OutputTuple,
       ValidationSubmittedEvent.OutputObject
+    >;
+
+    "VotingReopened(bytes32,uint256)": TypedContractEvent<
+      VotingReopenedEvent.InputTuple,
+      VotingReopenedEvent.OutputTuple,
+      VotingReopenedEvent.OutputObject
+    >;
+    VotingReopened: TypedContractEvent<
+      VotingReopenedEvent.InputTuple,
+      VotingReopenedEvent.OutputTuple,
+      VotingReopenedEvent.OutputObject
     >;
   };
 }

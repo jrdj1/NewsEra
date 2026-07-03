@@ -20,6 +20,11 @@
         "internalType": "uint256",
         "name": "reopenThreshold_",
         "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "publicationRegistry_",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
@@ -66,6 +71,17 @@
       }
     ],
     "name": "InsufficientReputation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "predictor",
+        "type": "address"
+      }
+    ],
+    "name": "NotEligibleForPrediction",
     "type": "error"
   },
   {
@@ -135,6 +151,37 @@
       }
     ],
     "name": "ConsensusReached",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "contentHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "predictor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "vote",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "round",
+        "type": "uint256"
+      }
+    ],
+    "name": "PredictionSubmitted",
     "type": "event"
   },
   {
@@ -391,6 +438,19 @@
   },
   {
     "inputs": [],
+    "name": "publicationRegistry",
+    "outputs": [
+      {
+        "internalType": "contract IPublicationRegistry",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "quorumThreshold",
     "outputs": [
       {
@@ -516,6 +576,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "contentHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint8",
+        "name": "vote",
+        "type": "uint8"
+      }
+    ],
+    "name": "submitPrediction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

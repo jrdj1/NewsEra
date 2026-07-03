@@ -506,7 +506,7 @@ Definition of done:
 
 ---
 
-### Sprint 6 — Reputación (II): recompensa por publicación y acceso meritocrático (OE3/OE4) `[ TODO ]`
+### Sprint 6 — Reputación (II): recompensa por publicación y acceso meritocrático (OE3/OE4) `[DONE]`
 
 **Objetivo:** ampliar `ValidationRegistry` para que la reputación también se gane publicando contenido veraz, y ofrecer una vía de acceso a validador sin necesidad de publicar ni de bootstrapping manual del administrador.
 
@@ -530,16 +530,24 @@ Definition of done:
 **HU-6.4** — Actualizar el módulo Ignition (`NewsEra.ts`) para pasar la dirección de `PublicationRegistry` al constructor de `ValidationRegistry`.
 
 Definition of done:
-- [ ] Tests: recompensa `+8` al autor cuando la ronda resuelve `TRUE`
-- [ ] Tests: penalización `−8` al autor cuando resuelve `UNVERIFIABLE`
-- [ ] Tests: penalización `−15` al autor cuando resuelve `FALSE`
-- [ ] Tests: sin efecto sobre el autor cuando resuelve `DISPUTED`
-- [ ] Tests: la recompensa/penalización no se reaplica en una reapertura posterior del mismo artículo
-- [ ] Tests: `submitPrediction` revierte si el predictor ya puede votar (`canValidate == true`)
-- [ ] Tests: predicción resuelta automáticamente al alcanzar `DEFINITIVE`, con efecto simétrico ±1
-- [ ] Tests: una dirección que solo predice puede acumular reputación hasta alcanzar `MIN_REPUTATION_TO_VALIDATE` y pasar a `submitValidation`
-- [ ] Cobertura ≥ 80% mantenida tras la ampliación
-- [ ] Módulo Ignition actualizado con la nueva dependencia entre contratos
+- [x] Tests: recompensa `+8` al autor cuando la ronda resuelve `TRUE`
+- [x] Tests: penalización `−8` al autor cuando resuelve `UNVERIFIABLE`
+- [x] Tests: penalización `−15` al autor cuando resuelve `FALSE`
+- [x] Tests: sin efecto sobre el autor cuando resuelve `DISPUTED`
+- [x] Tests: la recompensa/penalización no se reaplica en una reapertura posterior del mismo artículo
+- [x] Tests: `submitPrediction` revierte si el predictor ya puede votar (`canValidate == true`)
+- [x] Tests: predicción resuelta automáticamente al alcanzar `DEFINITIVE`, con efecto simétrico ±1
+- [x] Tests: una dirección que solo predice puede acumular reputación hasta alcanzar `MIN_REPUTATION_TO_VALIDATE` y pasar a `submitValidation`
+- [x] Cobertura ≥ 80% mantenida tras la ampliación — 96.97% statements / 88.46% branch tras la ampliación (91 tests, 0 fallos)
+- [x] Módulo Ignition actualizado con la nueva dependencia entre contratos — desplegado en Docker (`make hardhat && make deploy-local`)
+
+**Nota de implementación:** también se añadió el guard simétrico `_hasPredicted` en
+`submitValidation` (no solo en `submitPrediction`), de modo que una dirección que ya
+predijo un artículo tampoco pueda votarlo después — coherente con la invariante ya
+existente de que `_hasVoted` es global por artículo, no por ronda.
+Se eliminó `ignition/modules/ValidationRegistry.ts` (módulo Sprint 3, ya no compilable
+tras el 5º parámetro del constructor y completamente sustituido por `NewsEra.ts` desde
+el Sprint 5).
 
 ---
 
@@ -964,5 +972,5 @@ Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo
 |---|------|--------|
 | D1 | `generar-metricas.js` no extraía gas de `requestReopen`, `claimRetroactiveReputation`, `submitPrediction` | Resuelto |
 | D2 | `POST /api/v1/sync/events` (re-sincronización manual del indexador) en la memoria pero ausente de HU-7.x | Resuelto — HU-7.6 |
-| D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Pendiente Sprint 6 |
+| D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Resuelto — Sprint 6 |
 | D4 | `backend/src/lib/viem.ts` solo configura Sepolia; falta modo Hardhat Network local | Pendiente Sprint 7 |

@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import type { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import type { ReputationSystem, ValidationRegistry } from "../typechain-types";
+import type {
+  PublicationRegistry,
+  ReputationSystem,
+  ValidationRegistry,
+} from "../typechain-types";
 
 // ── Parámetros del contrato ────────────────────────────────────────────────
 const QUORUM           = 3n;
@@ -11,6 +15,11 @@ const INIT_REP         = 10n;
 const REWARD           = 5n;
 const PENALTY          = 3n;
 const RETRO_DELTA      = 1n;
+const PUBLISH_REWARD               = 8n;
+const PUBLISH_PENALTY_UNVERIFIABLE = 8n;
+const PUBLISH_PENALTY_FALSE        = 15n;
+const PREDICTION_REWARD  = 1n;
+const PREDICTION_PENALTY = 1n;
 
 // ConsensusState indices
 const PENDING    = 0n;
@@ -30,12 +39,19 @@ const HASH2 = h("otro-articulo");
 
 async function deployRegistry(
   rep: ReputationSystem,
+  pub: PublicationRegistry,
   quorum: bigint,
   superMaj: bigint,
   reopenThresh: bigint,
 ): Promise<ValidationRegistry> {
   const F = await ethers.getContractFactory("ValidationRegistry");
-  const reg = await F.deploy(await rep.getAddress(), quorum, superMaj, reopenThresh);
+  const reg = await F.deploy(
+    await rep.getAddress(),
+    quorum,
+    superMaj,
+    reopenThresh,
+    await pub.getAddress(),
+  );
   await reg.waitForDeployment();
   const VALIDATOR_ROLE = await rep.VALIDATOR_ROLE();
   await rep.grantRole(VALIDATOR_ROLE, await reg.getAddress());
@@ -69,6 +85,7 @@ async function doReopen(
 
 describe("ValidationRegistry", () => {
   let reputation: ReputationSystem;
+  let publication: PublicationRegistry;
   let registry:   ValidationRegistry;
   let admin:      HardhatEthersSigner;
   // 15 validadores: v[0..14]. Suficientes para 4 rondas + tests de cap.
@@ -83,7 +100,14 @@ describe("ValidationRegistry", () => {
     reputation = await RepF.deploy();
     await reputation.waitForDeployment();
 
-    registry = await deployRegistry(reputation, QUORUM, SUPER_MAJORITY, REOPEN_THRESHOLD);
+    const PubF = await ethers.getContractFactory("PublicationRegistry");
+    publication = await PubF.deploy();
+    await publication.waitForDeployment();
+    // HASH y HASH2 registrados por admin — solo se necesita que exista el autor.
+    await publication.connect(admin).registerPublication(HASH);
+    await publication.connect(admin).registerPublication(HASH2);
+
+    registry = await deployRegistry(reputation, publication, QUORUM, SUPER_MAJORITY, REOPEN_THRESHOLD);
 
     // Registrar los 15 validadores con reputación inicial 10
     for (const val of v) {
@@ -166,7 +190,7 @@ describe("ValidationRegistry", () => {
     });
 
     it("4 TRUE + 1 FALSE de 5 (80%) → DEFINITIVE; FALSE voter −PENALTY", async () => {
-      const reg5 = await deployRegistry(reputation, 5n, SUPER_MAJORITY, REOPEN_THRESHOLD);
+      const reg5 = await deployRegistry(reputation, publication, 5n, SUPER_MAJORITY, REOPEN_THRESHOLD);
       await doVotes(reg5, HASH, [v[0], v[1], v[2], v[3]], TRUE_VOTE);
       await reg5.connect(v[4]).submitValidation(HASH, FALSE_VOTE);
 
@@ -176,7 +200,7 @@ describe("ValidationRegistry", () => {
     });
 
     it("4 TRUE + 1 UNVERIFIABLE → DEFINITIVE; UNVERIFIABLE voter −PENALTY", async () => {
-      const reg5 = await deployRegistry(reputation, 5n, SUPER_MAJORITY, REOPEN_THRESHOLD);
+      const reg5 = await deployRegistry(reputation, publication, 5n, SUPER_MAJORITY, REOPEN_THRESHOLD);
       await doVotes(reg5, HASH, [v[0], v[1], v[2], v[3]], TRUE_VOTE);
       await reg5.connect(v[4]).submitValidation(HASH, UNVERIFIABLE_VOTE);
 
@@ -194,7 +218,7 @@ describe("ValidationRegistry", () => {
     });
 
     it("4 UNVERIFIABLE + 1 TRUE → DEFINITIVE result=UNVERIFIABLE; TRUE voter −PENALTY", async () => {
-      const reg5 = await deployRegistry(reputation, 5n, SUPER_MAJORITY, REOPEN_THRESHOLD);
+      const reg5 = await deployRegistry(reputation, publication, 5n, SUPER_MAJORITY, REOPEN_THRESHOLD);
       await doVotes(reg5, HASH, [v[0], v[1], v[2], v[3]], UNVERIFIABLE_VOTE);
       await reg5.connect(v[4]).submitValidation(HASH, TRUE_VOTE);
 
@@ -221,7 +245,7 @@ describe("ValidationRegistry", () => {
     });
 
     it("2 TRUE + 2 FALSE de 4 (50%) → DISPUTED", async () => {
-      const reg4 = await deployRegistry(reputation, 4n, SUPER_MAJORITY, REOPEN_THRESHOLD);
+      const reg4 = await deployRegistry(reputation, publication, 4n, SUPER_MAJORITY, REOPEN_THRESHOLD);
       await doVotes(reg4, HASH, [v[0], v[1]], TRUE_VOTE);
       await doVotes(reg4, HASH, [v[2], v[3]], FALSE_VOTE);
       expect(await reg4.consensusState(HASH)).to.equal(DISPUTED);
@@ -461,6 +485,195 @@ describe("ValidationRegistry", () => {
       await registry.connect(v[0]).submitValidation(HASH, TRUE_VOTE);
       expect(await registry.hasVoted(HASH, v[0].address)).to.be.true;
       expect(await registry.hasVoted(HASH, v[1].address)).to.be.false;
+    });
+  });
+
+  // ── Sprint 6 — recompensa por publicación ────────────────────────────────
+
+  describe("recompensa por publicación", () => {
+    let author: HardhatEthersSigner;
+
+    beforeEach(async () => {
+      const signers = await ethers.getSigners();
+      author = signers[16];
+      // Reputación inicial no nula para poder observar penalizaciones sin
+      // que el suelo en 0 las oculte.
+      await reputation.registerValidator(author.address, 20n);
+    });
+
+    it("recompensa +8 al autor cuando la ronda resuelve TRUE", async () => {
+      const hash = h("sprint6-publish-true");
+      await publication.connect(author).registerPublication(hash);
+      await doVotes(registry, hash, [v[0], v[1], v[2]], TRUE_VOTE);
+
+      expect(await registry.consensusState(hash)).to.equal(DEFINITIVE);
+      expect(await reputation.getReputation(author.address)).to.equal(20n + PUBLISH_REWARD);
+    });
+
+    it("penalización −8 al autor cuando resuelve UNVERIFIABLE", async () => {
+      const hash = h("sprint6-publish-unverifiable");
+      await publication.connect(author).registerPublication(hash);
+      await doVotes(registry, hash, [v[0], v[1], v[2]], UNVERIFIABLE_VOTE);
+
+      expect(await registry.consensusState(hash)).to.equal(DEFINITIVE);
+      expect(await reputation.getReputation(author.address))
+        .to.equal(20n - PUBLISH_PENALTY_UNVERIFIABLE);
+    });
+
+    it("penalización −15 al autor cuando resuelve FALSE", async () => {
+      const hash = h("sprint6-publish-false");
+      await publication.connect(author).registerPublication(hash);
+      await doVotes(registry, hash, [v[0], v[1], v[2]], FALSE_VOTE);
+
+      expect(await registry.consensusState(hash)).to.equal(DEFINITIVE);
+      expect(await reputation.getReputation(author.address)).to.equal(20n - PUBLISH_PENALTY_FALSE);
+    });
+
+    it("sin efecto sobre el autor cuando la ronda resuelve DISPUTED", async () => {
+      const hash = h("sprint6-publish-disputed");
+      await publication.connect(author).registerPublication(hash);
+      await registry.connect(v[0]).submitValidation(hash, TRUE_VOTE);
+      await registry.connect(v[1]).submitValidation(hash, TRUE_VOTE);
+      await registry.connect(v[2]).submitValidation(hash, FALSE_VOTE); // 2/3 → DISPUTED
+
+      expect(await registry.consensusState(hash)).to.equal(DISPUTED);
+      expect(await reputation.getReputation(author.address)).to.equal(20n);
+    });
+
+    it("no se reaplica en una reapertura posterior del mismo artículo", async () => {
+      const hash = h("sprint6-publish-no-repeat");
+      await publication.connect(author).registerPublication(hash);
+
+      await doVotes(registry, hash, [v[0], v[1], v[2]], TRUE_VOTE); // ronda 0 → DEFINITIVE TRUE, +8
+      expect(await reputation.getReputation(author.address)).to.equal(20n + PUBLISH_REWARD);
+
+      await doReopen(registry, hash, [v[3], v[4], v[5]]); // → ronda 1
+      await doVotes(registry, hash, [v[3], v[4], v[5]], FALSE_VOTE); // ronda 1 → DEFINITIVE FALSE
+
+      // El autor no recibe una segunda recompensa ni penalización: sigue en 28
+      expect(await reputation.getReputation(author.address)).to.equal(20n + PUBLISH_REWARD);
+    });
+
+    it("si la ronda 0 es DISPUTED, el autor recibe el efecto cuando una ronda posterior alcanza DEFINITIVE", async () => {
+      const hash = h("sprint6-publish-disputed-then-definitive");
+      await publication.connect(author).registerPublication(hash);
+
+      // Ronda 0: DISPUTED (2 TRUE + 1 FALSE) → sin efecto, _authorRewarded sigue false
+      await registry.connect(v[0]).submitValidation(hash, TRUE_VOTE);
+      await registry.connect(v[1]).submitValidation(hash, TRUE_VOTE);
+      await registry.connect(v[2]).submitValidation(hash, FALSE_VOTE);
+      expect(await registry.consensusState(hash)).to.equal(DISPUTED);
+      expect(await reputation.getReputation(author.address)).to.equal(20n);
+
+      // Reopen → ronda 1: DEFINITIVE TRUE → ahora sí se aplica la recompensa
+      await doReopen(registry, hash, [v[3], v[4], v[5]]);
+      await doVotes(registry, hash, [v[3], v[4], v[5]], TRUE_VOTE);
+      expect(await registry.consensusState(hash)).to.equal(DEFINITIVE);
+      expect(await reputation.getReputation(author.address)).to.equal(20n + PUBLISH_REWARD);
+    });
+  });
+
+  // ── Sprint 6 — submitPrediction ──────────────────────────────────────────
+
+  describe("submitPrediction", () => {
+    let predictor: HardhatEthersSigner;
+
+    beforeEach(async () => {
+      const signers = await ethers.getSigners();
+      predictor = signers[17]; // no registrado: reputación 0 < MIN_REPUTATION_TO_VALIDATE
+    });
+
+    it("revierte NotEligibleForPrediction si el predictor ya puede votar", async () => {
+      await expect(registry.connect(v[0]).submitPrediction(HASH, TRUE_VOTE))
+        .to.be.revertedWithCustomError(registry, "NotEligibleForPrediction")
+        .withArgs(v[0].address);
+    });
+
+    it("revierte VotingNotOpen si el artículo no está PENDING", async () => {
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE
+      await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
+        .to.be.revertedWithCustomError(registry, "VotingNotOpen")
+        .withArgs(HASH);
+    });
+
+    it("revierte AlreadyValidated si la dirección ya predijo ese artículo", async () => {
+      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
+      await expect(registry.connect(predictor).submitPrediction(HASH, FALSE_VOTE))
+        .to.be.revertedWithCustomError(registry, "AlreadyValidated")
+        .withArgs(HASH, predictor.address);
+    });
+
+    it("revierte AlreadyValidated si el predictor ya votó ese artículo (canValidate cambió tras votar)", async () => {
+      // v[0] ya tiene reputación suficiente y ya votó: no es candidato a predictor,
+      // pero comprobamos que el guard de "ya votó" también aplica si canValidate fuese false.
+      await registry.connect(v[0]).submitValidation(HASH, TRUE_VOTE);
+      await expect(registry.connect(v[0]).submitPrediction(HASH, TRUE_VOTE))
+        .to.be.revertedWithCustomError(registry, "NotEligibleForPrediction")
+        .withArgs(v[0].address);
+    });
+
+    it("no incrementa roundVoteCount ni cuenta para el quórum", async () => {
+      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
+      expect(await registry.roundVoteCount(HASH, 0)).to.equal(0n);
+
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE);
+      expect(await registry.consensusState(HASH)).to.equal(DEFINITIVE);
+    });
+
+    it("emite PredictionSubmitted con la ronda actual", async () => {
+      await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
+        .to.emit(registry, "PredictionSubmitted")
+        .withArgs(HASH, predictor.address, TRUE_VOTE, 0);
+    });
+
+    it("predicción correcta se resuelve automáticamente con +1 al alcanzar DEFINITIVE", async () => {
+      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
+      expect(await reputation.getReputation(predictor.address)).to.equal(0n);
+
+      // La misma transacción que cierra la ronda aplica el efecto — sin llamada adicional.
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE);
+      expect(await reputation.getReputation(predictor.address)).to.equal(PREDICTION_REWARD);
+    });
+
+    it("predicción incorrecta se resuelve automáticamente con −1 al alcanzar DEFINITIVE", async () => {
+      // Reputación inicial > 0 para poder observar el descuento sin que el suelo en 0 lo oculte.
+      await reputation.registerValidator(predictor.address, 5n);
+      await registry.connect(predictor).submitPrediction(HASH, FALSE_VOTE);
+
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // gana TRUE
+      expect(await reputation.getReputation(predictor.address)).to.equal(5n - PREDICTION_PENALTY);
+    });
+
+    it("sin efecto sobre la predicción si la ronda resuelve DISPUTED", async () => {
+      await reputation.registerValidator(predictor.address, 5n);
+      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
+
+      await registry.connect(v[0]).submitValidation(HASH, TRUE_VOTE);
+      await registry.connect(v[1]).submitValidation(HASH, FALSE_VOTE);
+      await registry.connect(v[2]).submitValidation(HASH, UNVERIFIABLE_VOTE); // 33% → DISPUTED
+
+      expect(await registry.consensusState(HASH)).to.equal(DISPUTED);
+      expect(await reputation.getReputation(predictor.address)).to.equal(5n);
+    });
+
+    it("una dirección que solo predice puede acumular reputación hasta poder votar", async () => {
+      // predictor acierta en 10 artículos distintos: +1 cada vez, hasta alcanzar MIN=10.
+      const allHashes = Array.from({ length: 10 }, (_, i) => h(`sprint6-prediction-accum-${i}`));
+      // Autor arbitrario para cada publicación (no relevante en este test)
+      for (const hash of allHashes) {
+        await publication.connect(admin).registerPublication(hash);
+        await registry.connect(predictor).submitPrediction(hash, TRUE_VOTE);
+        await doVotes(registry, hash, [v[0], v[1], v[2]], TRUE_VOTE); // resuelve DEFINITIVE TRUE
+      }
+
+      expect(await reputation.getReputation(predictor.address)).to.equal(10n);
+      expect(await reputation.canValidate(predictor.address)).to.be.true;
+
+      // Ahora puede votar con normalidad usando submitValidation
+      const newHash = h("sprint6-prediction-then-vote");
+      await expect(registry.connect(predictor).submitValidation(newHash, TRUE_VOTE))
+        .to.emit(registry, "ValidationSubmitted")
+        .withArgs(newHash, predictor.address, TRUE_VOTE, 0);
     });
   });
 });

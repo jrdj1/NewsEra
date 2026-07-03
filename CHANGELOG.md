@@ -5,16 +5,32 @@ Versiones alineadas con sprints del TFG (Sprint 2 = v0.2.0, etc.).
 
 ---
 
-## [Unreleased] — Sprint 6+
+## [Unreleased] — Sprint 7+
 
 ### Pendiente
-- Recompensa/penalización de reputación por publicación con consenso TRUE/FALSE/UNVERIFIABLE (Sprint 6)
-- `submitPrediction` — acceso meritocrático a validador sin publicar (Sprint 6)
 - Backend: API REST con Hono + Prisma + PostgreSQL (Sprint 7)
 - Indexador de eventos on-chain con viem `watchContractEvent` (Sprint 7)
 - Frontend completo: feed, publicación, detalle, validación, perfiles (Sprint 8)
 - Deploy en Sepolia + fichero `blockchain/deployments/sepolia.json` (Sprint 9)
 - `docs/metricas.json` con valores reales + README operativo (Sprint 9)
+
+---
+
+## [0.6.0] — Sprint 6 (reputación II: recompensa por publicación y predicciones)
+
+### Añadido
+- `ValidationRegistry.sol` — recompensa/penalización de reputación al autor cuando la ronda de su artículo alcanza `DEFINITIVE` por primera vez: `+8` (TRUE), `−8` (UNVERIFIABLE), `−15` (FALSE), sin efecto en DISPUTED. Se aplica una única vez por artículo (`_authorRewarded`); una ronda DISPUTED no la marca, así que una reapertura posterior que sí alcance DEFINITIVE la dispara entonces.
+- `ValidationRegistry.sol` — `submitPrediction(bytes32, uint8)`: acceso meritocrático a reputación para direcciones con `canValidate == false`, sin contar para quórum/supermayoría. Se resuelve automáticamente (no *pull*) junto con los votantes reales al alcanzar `DEFINITIVE`: `±PREDICTION_REWARD/PENALTY = ±1`.
+- Nueva dependencia de solo lectura `IPublicationRegistry` en `ValidationRegistry` (5º parámetro del constructor); `ignition/modules/NewsEra.ts` actualizado para pasar la dirección de `PublicationRegistry`.
+- Guard simétrico: una dirección que ya predijo un artículo tampoco puede votarlo después (`_hasPredicted` añadido a la comprobación de `submitValidation`).
+- 16 tests nuevos: recompensa/penalización por publicación (incluyendo no reaplicación tras reapertura y resolución diferida tras DISPUTED), guards de `submitPrediction`, resolución automática de predicciones y acumulación de reputación hasta `MIN_REPUTATION_TO_VALIDATE`.
+
+### Eliminado
+- `ignition/modules/ValidationRegistry.ts` — módulo Sprint 3, dejó de ser compilable con el 5º parámetro del constructor y ya estaba completamente sustituido por `NewsEra.ts` desde el Sprint 5.
+
+### Métricas
+- **Total tests:** 91 passing
+- **Cobertura:** 96.97% statements / 88.46% branch / 100% functions
 
 ---
 
