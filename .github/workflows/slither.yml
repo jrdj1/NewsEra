@@ -2,7 +2,7 @@ name: Slither
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths: ["blockchain/contracts/**"]
   pull_request:
     paths: ["blockchain/contracts/**"]
@@ -10,11 +10,15 @@ on:
 jobs:
   slither:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: blockchain
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
@@ -35,5 +39,51 @@ jobs:
       - name: Instalar Slither
         run: pip install slither-analyzer
 
-      - name: Ejecutar Slither
-        run: slither . --exclude-dependencies --fail-high
+      - name: Ejecutar Slither y generar informe
+        id: slither
+        run: |
+          set +e
+          mkdir -p ../docs/reports
+          slither . --exclude-dependencies --fail-high --checklist \
+            --markdown-root "https://github.com/${{ github.repository }}/blob/${{ github.head_ref || github.ref_name }}/blockchain/" \
+            > ../docs/reports/slither-report.md
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          set -e
+
+      - name: Añadir cabecera con fecha y commit al informe
+        run: |
+          {
+            echo "<!-- Generado automáticamente por .github/workflows/slither.yml — no editar a mano. -->"
+            echo "# Informe de Slither"
+            echo ""
+            echo "- **Commit:** ${{ github.sha }}"
+            echo "- **Fecha:** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo ""
+            cat ../docs/reports/slither-report.md
+          } > ../docs/reports/slither-report.tmp.md
+          mv ../docs/reports/slither-report.tmp.md ../docs/reports/slither-report.md
+
+      # push: el informe se versiona directamente en la rama (visible en el repo,
+      # diffable entre commits). pull_request: se sube solo como artefacto — no
+      # se hace commit sobre la rama de la PR.
+      - name: Commit del informe (solo en push)
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ../docs/reports/slither-report.md
+          git diff --staged --quiet || git commit -m "chore(security): actualizar informe de Slither [skip ci]"
+          git diff --staged --quiet || git push
+
+      - name: Subir informe como artefacto (pull_request)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-report
+          path: docs/reports/slither-report.md
+
+      - name: Fallar si hay findings High/Critical
+        if: steps.slither.outputs.exit_code != '0'
+        run: |
+          echo "Slither encontró findings de severidad High/Critical — ver docs/reports/slither-report.md"
+          exit 1

@@ -28,13 +28,20 @@ NewsEra/
 ├── backend/      → Node.js + TypeScript + Hono + Prisma + PostgreSQL
 ├── frontend/     → React + Vite (SPA) + TypeScript + Tailwind CSS v4 + shadcn/ui
 │                   + wagmi v2 + viem + RainbowKit + React Router v6
-├── docs/         → metricas.json (auto-generado), ERS.md, casos-de-uso.md, abis/, prompts/
+├── docs/         → metricas.json (auto-generado), ERS.md, casos-de-uso.md, abis/, prompts/, reports/
 ├── scripts/      → generar-metricas.js y utilidades de automatización
 └── .github/      → GitHub Actions workflows
 ```
 
 Cada carpeta es un proyecto Node.js **independiente** con su propio `package.json`.
 **NO hay workspaces ni monorepo.**
+
+**`docs/reports/`** — informes de los workflows de CI, versionados en el repo para poder
+revisarlos y corregir findings sin entrar a los logs de GitHub Actions:
+- `slither-report.md` — checklist de Slither (`.github/workflows/slither.yml`), regenerado
+  y commiteado automáticamente en cada `push` a `main`/`develop` que toque `blockchain/contracts/**`
+  (`[skip ci]`, no dispara el propio workflow de nuevo). En `pull_request` se sube como
+  artefacto de la Action en vez de commitearse sobre la rama de la PR.
 
 ---
 
