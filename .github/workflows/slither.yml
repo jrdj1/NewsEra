@@ -6,6 +6,7 @@ on:
     paths: ["blockchain/contracts/**"]
   pull_request:
     paths: ["blockchain/contracts/**"]
+  workflow_dispatch: {}
 
 jobs:
   slither:
