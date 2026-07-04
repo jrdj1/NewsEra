@@ -34,3 +34,8 @@ profileRouter.get("/:address/notifications", async (c) => {
   );
   return c.json(result);
 });
+
+profileRouter.get("/:address/reopen-requests", async (c) => {
+  const result = await profileService.getReopenRequests(c.req.param("address"));
+  return c.json(result);
+});

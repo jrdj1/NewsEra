@@ -5,12 +5,29 @@ Versiones alineadas con sprints del TFG (Sprint 2 = v0.2.0, etc.).
 
 ---
 
-## [Unreleased] — Sprint 8+
+## [Unreleased] — Sprint 9+
 
 ### Pendiente
-- Frontend completo: feed, publicación, detalle, validación, perfiles (Sprint 8)
 - Deploy en Sepolia + fichero `blockchain/deployments/sepolia.json` (Sprint 9)
 - `docs/metricas.json` con valores reales + README operativo (Sprint 9)
+
+---
+
+## [0.8.0] — Sprint 8 (frontend: SPA React + Vite completa)
+
+### Añadido
+- Cliente API tipado (`lib/api.ts`) y hooks compartidos con react-query: `usePublications`, `usePublication`, `useValidators`, `useValidatorDetail/History`, `useReputationHistory`, `useEnrichedProfile`, `useFavorites`, `useNotifications`, `useReopenRequests`.
+- `useTransactionState` — envuelve `useWriteContract` + `useWaitForTransactionReceipt` en los 5 estados documentados en la memoria (Idle/Pending/Confirming/Confirmed/Failed) y traduce los reverts conocidos a lenguaje natural (`lib/errors.ts`).
+- `Publish.tsx` — formulario completo: borrador en `localStorage`, vista previa, cálculo de `contentHash` con viem, subida a IPFS (best-effort si no hay `VITE_PINATA_JWT`), `registerPublication` on-chain, `POST /api/v1/publications`.
+- `Article.tsx` — historial de rondas, progreso de quórum, votantes de la ronda actual, voto real (`submitValidation`) o predicción de práctica (`submitPrediction`) según `canValidate`, solicitud de reapertura, favoritos, seguimiento, compartir, artículos relacionados por etiqueta.
+- `Validators.tsx` y `ValidatorProfile.tsx` — ranking paginado y perfil público con reputación, % de aciertos, historial e identidad enriquecida.
+- `Profile.tsx` — panel con pestañas: reputación y su evolución, historial de validaciones, reclamaciones retroactivas pendientes (calculadas cruzando el historial con `currentRound` on-chain vía `useReadContracts`), solicitudes de reapertura propias, publicaciones propias, favoritos, edición de perfil con `personal_sign`.
+- `Header.tsx` — panel de notificaciones con contador de no leídas y refetch periódico.
+- `Feed.tsx` ampliado con el listado real de publicaciones (filtro por estado, orden, paginación) — antes solo tenía la landing page.
+- `GET /api/v1/profile/:address/reopen-requests` (backend) — gap señalado en el prompt de Sprint 8: no existía forma de listar las solicitudes de reapertura propias del usuario.
+
+### Corregido
+- **CORS** (bug crítico): el backend no tenía middleware CORS — el navegador bloqueaba toda petición del frontend. Añadido `hono/cors` sobre `/api/*`.
 
 ---
 

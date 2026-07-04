@@ -1,10 +1,13 @@
 FROM node:20-alpine
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Contexto de build = raíz del repo (ver docker-compose.yml): el frontend
+# importa los ABIs de docs/abis/, que vive fuera de frontend/.
+COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
-COPY . .
+COPY frontend/. .
+COPY docs/abis /docs/abis
 
 EXPOSE 5174
 

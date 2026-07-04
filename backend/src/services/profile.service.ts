@@ -3,6 +3,7 @@ import { normalizeAddress } from "../lib/address.js";
 import { profileRepository } from "../repositories/profile.repository.js";
 import { favoriteRepository } from "../repositories/favorite.repository.js";
 import { notificationRepository } from "../repositories/notification.repository.js";
+import { reopenRequestRepository } from "../repositories/reopen-request.repository.js";
 import { verifyProfileSignature } from "./signature.js";
 import type { UpdateProfileBody, Paginated } from "../types/api.js";
 
@@ -39,5 +40,15 @@ export const profileService = {
     const address = normalizeAddress(rawAddress);
     const { items, total } = await notificationRepository.listByUser(address, page, limit);
     return { items, page, limit, total };
+  },
+
+  /**
+   * HU-8.7/UC 9 (Sprint 8): no existía un endpoint para las solicitudes de
+   * reapertura propias del usuario — se añade aquí en vez de en Sprint 7
+   * porque el frontend es el primer consumidor de este listado.
+   */
+  async getReopenRequests(rawAddress: string) {
+    const address = normalizeAddress(rawAddress);
+    return reopenRequestRepository.listByRequester(address);
   },
 };

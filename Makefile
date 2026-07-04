@@ -43,7 +43,7 @@ rebuild: ## Forzar reconstruccion y arrancar
 
 .PHONY: frontend
 frontend: ## Levantar solo el frontend (puerto 5174)
-	$(COMPOSE) up frontend -d
+	$(COMPOSE) up frontend -d --build
 
 .PHONY: backend
 backend: ## Levantar solo el backend (puerto 3001, requiere: make postgres)
@@ -140,6 +140,10 @@ build-frontend: ## Compilar frontend para produccion
 .PHONY: typecheck
 typecheck: ## Verificar tipos TypeScript del frontend
 	cd frontend && npx tsc -b --noEmit
+
+.PHONY: test-frontend
+test-frontend: ## Ejecutar tests del frontend
+	cd frontend && npm test
 
 # ─── Backend ──────────────────────────────────────────────────────────────────
 # Prisma CLI corre en el host contra el PostgreSQL de Docker (puerto 5432

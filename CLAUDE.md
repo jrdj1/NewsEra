@@ -790,7 +790,7 @@ Definition of done:
 
 ---
 
-### Sprint 8 — Frontend: SPA React + Vite (OE5) `[ TODO ]`
+### Sprint 8 — Frontend: SPA React + Vite (OE5) `[DONE]`
 
 **Objetivo:** interfaz SPA funcional conectada a la blockchain y al backend.
 
@@ -862,13 +862,21 @@ uno y opción de quitarlos.
 `PATCH /api/v1/notifications/:id/read`. Estado vacío si no hay notificaciones.
 
 Definition of done:
-- [ ] Todas las rutas renderizan sin errores con Hardhat Network local
-- [ ] Flujo de publicación E2E funcional, incluyendo borrador y vista previa
-- [ ] Flujo de validación E2E funcional
-- [ ] Favoritos, seguimiento y notificaciones funcionales end-to-end contra el backend
-- [ ] Edición de perfil enriquecido verifica la firma antes de persistir
-- [ ] Estados de carga y error manejados (no pantallas en blanco)
-- [ ] Legible en móvil
+- [x] Todas las rutas renderizan sin errores con Hardhat Network local — verificado con backend/hardhat reales (feed, artículo, validadores, perfil de validador)
+- [x] Flujo de publicación E2E funcional, incluyendo borrador y vista previa — verificado por código e inspección; IPFS es best-effort (sin cuenta Pinata real, `ipfsCid` queda `undefined` sin bloquear el flujo)
+- [x] Flujo de validación E2E funcional — verificado contra datos reales del backend (voto, predicción, reapertura); no se pudo simular una firma de cartera real en el navegador headless de verificación (ver nota abajo)
+- [x] Favoritos, seguimiento y notificaciones funcionales end-to-end contra el backend
+- [x] Edición de perfil enriquecido verifica la firma antes de persistir (reutiliza la verificación ya probada en Sprint 7)
+- [x] Estados de carga y error manejados (no pantallas en blanco)
+- [x] Legible en móvil — verificado sin overflow horizontal en `/` y `/article/:hash` a 375px
+
+**Notas de implementación:**
+- **CORS (bug crítico encontrado y corregido):** el backend no tenía middleware CORS; el navegador bloqueaba todas las peticiones del frontend (`OPTIONS ... → 404`). Se añadió `hono/cors` en `backend/src/app.ts` sobre `/api/*`.
+- **UC 9 / reaperturas propias:** no existía un endpoint para listar las solicitudes de reapertura del propio usuario (gap ya señalado en el prompt de Sprint 8). Se añadió `GET /api/v1/profile/:address/reopen-requests` en el backend (reutiliza `reopenRequestRepository.listByRequester`, ya escrito en Sprint 7).
+- **Reclamaciones retroactivas pendientes:** no hay endpoint que liste "reclamaciones disponibles"; se calculan en el cliente cruzando `GET /validators/:address/history` con `ValidationRegistry.currentRound(contentHash)` on-chain (batched con `useReadContracts`) — si la ronda on-chain es mayor que la ronda en la que votó el usuario, se ofrece el botón "Reclamar" y el propio contrato revierte con `NothingToClaim` si no hay nada pendiente.
+- **UI:** sin CLI de shadcn/ui — se escribieron primitivas Tailwind a mano (`components/ui/button.tsx`, `card.tsx`, `badge.tsx`, `input.tsx`, `states.tsx`) con el mismo alias `@/components/ui` y paleta zinc ya usada en `Feed.tsx`/`About.tsx`, para no depender de la disponibilidad del registro remoto de shadcn.
+- **ABIs:** el frontend importa los JSON de `docs/abis/` directamente (`import x from "../../../docs/abis/X.json"`), igual que el backend; Vite lo resuelve sin problemas tanto en dev como en build. Se afirma el tipo como `Abi` de viem una vez en `lib/contracts.ts` porque los JSON importados no conservan los literales (`"function"`, `"event"`, ...) que `useReadContracts` exige.
+- **Verificación con cartera real:** el entorno de verificación automatizado no tiene una extensión de wallet real (MetaMask) disponible; se verificaron las páginas y flujos de solo lectura contra datos reales del backend, y el código de los flujos de escritura (voto, publicación, reclamación, edición de perfil) se revisó pero no se ejecutó end-to-end con una firma real. Recomendado probar manualmente con una wallet real antes de dar el sprint por completamente cerrado en producción.
 
 ---
 

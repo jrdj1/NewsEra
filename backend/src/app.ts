@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import { cors } from "hono/cors";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { publicationsRouter } from "./routes/publications.js";
 import { validatorsRouter } from "./routes/validators.js";
@@ -11,6 +12,14 @@ import { syncRouter } from "./routes/sync.js";
 export const app = new Hono();
 
 app.use(logger());
+app.use(
+  "/api/*",
+  cors({
+    origin: (origin) => origin, // SPA local/Sepolia: sin lista de orígenes fija en el prototipo
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.onError(errorHandler);
 
 app.get("/", (c) => c.json({ status: "ok", service: "newsera-backend" }));

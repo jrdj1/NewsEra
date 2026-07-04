@@ -41,9 +41,16 @@ services:
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: . # raíz del repo: el frontend importa los ABIs de ../docs/abis
+      dockerfile: frontend/Dockerfile
     container_name: newsera-frontend
+    environment:
+      VITE_WALLETCONNECT_PROJECT_ID: ${VITE_WALLETCONNECT_PROJECT_ID:-newsera-local-dev}
+      VITE_PUBLICATION_REGISTRY_ADDRESS: ${PUBLICATION_REGISTRY_ADDRESS:-}
+      VITE_VALIDATION_REGISTRY_ADDRESS: ${VALIDATION_REGISTRY_ADDRESS:-}
+      VITE_REPUTATION_SYSTEM_ADDRESS: ${REPUTATION_SYSTEM_ADDRESS:-}
+      VITE_BACKEND_URL: http://localhost:3001
+      VITE_PINATA_JWT: ${VITE_PINATA_JWT:-}
     ports:
       - "5174:5174"
     healthcheck:

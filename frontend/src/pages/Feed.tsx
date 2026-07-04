@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
+import { usePublications } from "@/hooks/usePublications";
+import { PublicationCard } from "@/components/PublicationCard";
+import { Button } from "@/components/ui/button";
+import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
 
 function Pillar({
   title,
@@ -19,6 +24,94 @@ function Pillar({
       <h3 className="mb-2 font-semibold text-zinc-900 dark:text-white">{title}</h3>
       <p className="text-sm leading-relaxed text-zinc-500">{description}</p>
     </div>
+  );
+}
+
+const STATE_FILTERS = [
+  { value: "", label: "Todos" },
+  { value: "PENDING", label: "En votación" },
+  { value: "DEFINITIVE", label: "Consenso" },
+  { value: "DISPUTED", label: "En disputa" },
+];
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "Más recientes" },
+  { value: "votes", label: "Más votados" },
+  { value: "state", label: "Por estado" },
+] as const;
+
+function FeedSection() {
+  const [page, setPage] = useState(1);
+  const [state, setState] = useState("");
+  const [sort, setSort] = useState<"recent" | "votes" | "state">("recent");
+
+  const { data, isLoading, isError, refetch } = usePublications({ page, limit: 12, state: state || undefined, sort });
+
+  return (
+    <section className="border-t border-zinc-100 dark:border-zinc-900">
+      <div className="mx-auto max-w-6xl px-4 py-16">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-400">
+            Feed de publicaciones
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <select
+              value={state}
+              onChange={(e) => {
+                setState(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              {STATE_FILTERS.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {isLoading && <LoadingState label="Cargando publicaciones..." />}
+        {isError && <ErrorState onRetry={() => refetch()} />}
+        {data && data.items.length === 0 && <EmptyState message="Todavía no hay publicaciones." />}
+
+        {data && data.items.length > 0 && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {data.items.map((p) => (
+                <PublicationCard key={p.contentHash} publication={p} />
+              ))}
+            </div>
+            {data.total > data.limit && (
+              <div className="mt-8 flex justify-center gap-3">
+                <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={page * data.limit >= data.total}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -84,14 +177,7 @@ export default function Feed() {
         </div>
       </section>
 
-      {/* Estado actual */}
-      <section className="border-t border-zinc-100 dark:border-zinc-900">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-          <p className="text-sm text-zinc-400">
-            Prototipo en desarrollo &mdash; Sprint 5 completado &mdash; Feed de publicaciones disponible en Sprint 8
-          </p>
-        </div>
-      </section>
+      <FeedSection />
     </div>
   );
 }
