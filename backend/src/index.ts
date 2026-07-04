@@ -1,19 +1,15 @@
 import { serve } from "@hono/node-server";
-import { Hono } from "hono";
-import { logger } from "hono/logger";
-
-const app = new Hono();
-
-app.use(logger());
-
-app.get("/", (c) => c.json({ status: "ok", service: "newsera-backend" }));
-
-// TODO Sprint 7: registrar rutas de publicaciones, validaciones y validadores
-// import { publicationsRouter } from "./routes/publications.js"
-// app.route("/api/v1/publications", publicationsRouter)
+import { app } from "./app.js";
+import { startIndexer } from "./services/indexer.js";
 
 const port = Number(process.env.PORT ?? 3001);
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`NewsEra backend listening on http://localhost:${port}`);
 });
+
+if (process.env.PUBLICATION_REGISTRY_ADDRESS) {
+  startIndexer().catch((err) => console.error("[indexer] fallo al arrancar:", err));
+} else {
+  console.warn("[indexer] direcciones de contratos no configuradas — indexador deshabilitado");
+}

@@ -45,6 +45,10 @@ rebuild: ## Forzar reconstruccion y arrancar
 frontend: ## Levantar solo el frontend (puerto 5174)
 	$(COMPOSE) up frontend -d
 
+.PHONY: backend
+backend: ## Levantar solo el backend (puerto 3001, requiere: make postgres)
+	$(COMPOSE) up backend -d --build
+
 .PHONY: hardhat
 hardhat: ## Levantar solo el nodo EVM (puerto 8545)
 	$(COMPOSE) up hardhat-node -d
@@ -56,6 +60,10 @@ postgres: ## Levantar solo PostgreSQL (puerto 5432)
 .PHONY: stop-frontend
 stop-frontend: ## Parar solo el frontend
 	$(COMPOSE) stop frontend
+
+.PHONY: stop-backend
+stop-backend: ## Parar solo el backend
+	$(COMPOSE) stop backend
 
 .PHONY: stop-hardhat
 stop-hardhat: ## Parar solo el nodo EVM
@@ -70,6 +78,10 @@ logs: ## Ver logs de todos los servicios en tiempo real
 .PHONY: logs-frontend
 logs-frontend: ## Ver logs del frontend
 	$(COMPOSE) logs -f frontend
+
+.PHONY: logs-backend
+logs-backend: ## Ver logs del backend
+	$(COMPOSE) logs -f backend
 
 .PHONY: logs-hardhat
 logs-hardhat: ## Ver logs del nodo EVM
@@ -128,6 +140,30 @@ build-frontend: ## Compilar frontend para produccion
 .PHONY: typecheck
 typecheck: ## Verificar tipos TypeScript del frontend
 	cd frontend && npx tsc -b --noEmit
+
+# ─── Backend ──────────────────────────────────────────────────────────────────
+# Prisma CLI corre en el host contra el PostgreSQL de Docker (puerto 5432
+# publicado en el host); requiere: make postgres
+
+.PHONY: migrate
+migrate: ## Aplicar migraciones Prisma (requiere: make postgres)
+	cd backend && npx prisma migrate dev
+
+.PHONY: migrate-deploy
+migrate-deploy: ## Aplicar migraciones Prisma en modo no interactivo (CI/producción)
+	cd backend && npx prisma migrate deploy
+
+.PHONY: prisma-generate
+prisma-generate: ## Regenerar el cliente Prisma tras cambios de schema
+	cd backend && npx prisma generate
+
+.PHONY: prisma-studio
+prisma-studio: ## Abrir Prisma Studio (requiere: make postgres)
+	cd backend && npx prisma studio
+
+.PHONY: test-backend
+test-backend: ## Ejecutar tests de integración del backend (requiere: make postgres)
+	cd backend && npm test
 
 # ─── Metricas ─────────────────────────────────────────────────────────────────
 

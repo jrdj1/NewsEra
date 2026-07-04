@@ -5,14 +5,36 @@ Versiones alineadas con sprints del TFG (Sprint 2 = v0.2.0, etc.).
 
 ---
 
-## [Unreleased] — Sprint 7+
+## [Unreleased] — Sprint 8+
 
 ### Pendiente
-- Backend: API REST con Hono + Prisma + PostgreSQL (Sprint 7)
-- Indexador de eventos on-chain con viem `watchContractEvent` (Sprint 7)
 - Frontend completo: feed, publicación, detalle, validación, perfiles (Sprint 8)
 - Deploy en Sepolia + fichero `blockchain/deployments/sepolia.json` (Sprint 9)
 - `docs/metricas.json` con valores reales + README operativo (Sprint 9)
+
+---
+
+## [0.7.0] — Sprint 7 (backend: API REST + indexador de eventos)
+
+### Añadido
+- `backend/prisma/schema.prisma` ampliado: `Round`, `UserProfile`, `Favorite`, `Follow`, `Notification`, `IndexerState` (bookkeeping interno); `Publication.consensusState/currentRound/reopenRequestCount`, `Validator.registeredAt`.
+- Arquitectura de 3 capas (`routes` → `services` → `repositories`); ningún router accede a Prisma directamente.
+- Endpoints núcleo: `GET/POST /api/v1/publications`, `GET /api/v1/publications/:hash`, `POST /api/v1/publications/:hash/reopen-request`, `POST /api/v1/publications/:hash/claim-retroactive`, `GET /api/v1/validators`, `GET /api/v1/validators/:address`, `GET /api/v1/validators/:address/history`, `GET /api/v1/validators/:address/reputation-history`.
+- Perfil enriquecido, favoritos, seguimiento y notificaciones: `GET/PUT /api/v1/profile/:address` (verificación `personal_sign` con viem), `GET /api/v1/profile/:address/favorites`, `POST/DELETE /api/v1/favorites/:hash`, `POST/DELETE /api/v1/publications/:hash/follow`, `GET /api/v1/profile/:address/notifications`, `PATCH /api/v1/notifications/:id/read`.
+- `POST /api/v1/sync/events` (HU-7.6) — re-sincronización manual del indexador protegida con `Authorization: Bearer <SERVICE_TOKEN>`.
+- Indexador de eventos on-chain (`services/indexer.ts`) con `viem`: procesa historial desde `DEPLOY_BLOCK`/último bloque persistido y se suscribe en tiempo real a los tres contratos; genera notificaciones para `ConsensusReached`, `VotingReopened` y `RetroactiveClaimed`.
+- `backend/Dockerfile` + servicio `backend` en `docker-compose.yml` (contexto = raíz del repo, ya que depende de `docs/abis/`); nuevos targets de Makefile (`backend`, `stop-backend`, `logs-backend`, `migrate`, `migrate-deploy`, `prisma-generate`, `prisma-studio`, `test-backend`).
+- 9 tests de integración contra PostgreSQL y Hardhat Network reales (sin mocks): publicaciones, firma de perfil, favoritos, notificaciones, indexador.
+
+### Corregido
+- `lib/viem.ts` (D4) — antes solo configuraba Sepolia con un nombre de variable de entorno distinto al documentado (`SEPOLIA_RPC_URL`); ahora soporta `NETWORK=local|sepolia` con `RPC_URL_LOCAL`/`RPC_URL_SEPOLIA`.
+- Manejo de errores global movido de middleware (`app.use`) a `app.onError(...)` — un middleware con `try/await next()/catch` no capturaba de forma fiable los errores lanzados en rutas montadas vía `app.route()`.
+- Direcciones Ethereum normalizadas a checksum EIP-55 en el límite de los servicios (`lib/address.ts`) — sin esto, la misma dirección en distinto casing (p.ej. de una wallet vs. de un evento on-chain) se trataba como dos entidades distintas en PostgreSQL.
+- Orden de procesado del indexador: se pasó de un watch/query por nombre de evento a uno por contrato completo, para que eventos relacionados de una misma transacción (`ReopenRequested` + `VotingReopened`) se procesen en el orden real de `logIndex` — la separación por evento corrompía `reopenRequestCount`.
+- `handleReopenRequested` pasó de incrementar `reopenRequestCount` de forma relativa a fijar el valor absoluto emitido por el contrato; inserciones del indexador en `ReopenRequest`/`RetroactiveClaim` usan `upsert` para ser idempotentes frente a reprocesados.
+
+### Métricas
+- **Total tests backend:** 9 passing (integración, sin mocks)
 
 ---
 

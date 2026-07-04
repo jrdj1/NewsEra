@@ -8,25 +8,44 @@ generator client {
 }
 
 model Publication {
-  id            Int             @id @default(autoincrement())
-  contentHash   String          @unique
-  title         String
-  body          String
-  authorAddress String
-  tags          String[]
-  ipfsCid       String?
-  createdAt     DateTime        @default(now())
-  validations   Validation[]
-  reopenRequests ReopenRequest[]
+  id                 Int             @id @default(autoincrement())
+  contentHash        String          @unique
+  title              String
+  body               String
+  authorAddress      String
+  tags               String[]
+  ipfsCid            String?
+  consensusState     String          @default("PENDING")
+  currentRound       Int             @default(1)
+  reopenRequestCount Int             @default(0)
+  createdAt          DateTime        @default(now())
+  validations        Validation[]
+  reopenRequests     ReopenRequest[]
+  rounds             Round[]
+  favorites          Favorite[]
+  follows            Follow[]
 
   @@map("publications")
+}
+
+model Round {
+  id          Int         @id @default(autoincrement())
+  contentHash String
+  round       Int
+  state       String      @default("PENDING")
+  result      String?
+  completed   Boolean     @default(false)
+  publication Publication @relation(fields: [contentHash], references: [contentHash])
+
+  @@unique([contentHash, round])
+  @@map("rounds")
 }
 
 model Validation {
   id               Int         @id @default(autoincrement())
   contentHash      String
   validatorAddress String
-  vote             String      // "TRUE" | "FALSE" | "UNVERIFIABLE"
+  vote             String // "TRUE" | "FALSE" | "UNVERIFIABLE"
   round            Int         @default(0)
   txHash           String?
   createdAt        DateTime    @default(now())
@@ -40,6 +59,7 @@ model Validator {
   address         String   @id
   reputationScore Int      @default(0)
   lastSyncBlock   BigInt   @default(0)
+  registeredAt    DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@map("validators")
@@ -67,4 +87,57 @@ model RetroactiveClaim {
 
   @@unique([contentHash, validatorAddress, txHash])
   @@map("retroactive_claims")
+}
+
+model UserProfile {
+  address     String   @id
+  displayName String?
+  avatarUrl   String?
+  email       String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+model Favorite {
+  id          Int         @id @default(autoincrement())
+  userAddress String
+  contentHash String
+  createdAt   DateTime    @default(now())
+  publication Publication @relation(fields: [contentHash], references: [contentHash])
+
+  @@unique([userAddress, contentHash])
+  @@map("favorites")
+}
+
+model Follow {
+  id          Int         @id @default(autoincrement())
+  userAddress String
+  contentHash String
+  createdAt   DateTime    @default(now())
+  publication Publication @relation(fields: [contentHash], references: [contentHash])
+
+  @@unique([userAddress, contentHash])
+  @@map("follows")
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userAddress String
+  contentHash String
+  type        String // "REOPENED" | "CONSENSUS_REACHED" | "RETROACTIVE_APPLIED"
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("notifications")
+}
+
+// Bookkeeping interno del indexador (no forma parte del catálogo de datos del
+// ERS): persiste el último bloque procesado para que un reinicio del backend
+// reanude en lugar de reprocesar el historial completo desde DEPLOY_BLOCK.
+model IndexerState {
+  id                 Int    @id @default(1)
+  lastProcessedBlock BigInt @default(0)
+
+  @@map("indexer_state")
 }

@@ -551,7 +551,7 @@ el Sprint 5).
 
 ---
 
-### Sprint 7 — Backend: API REST + indexador (OE2) `[ TODO ]`
+### Sprint 7 — Backend: API REST + indexador (OE2) `[DONE]`
 
 **Objetivo:** API Hono + Prisma + PostgreSQL en Docker con indexador de eventos on-chain,
 con la superficie completa definida en el ERS de la memoria (Capítulo 4, §4.1 y
@@ -595,8 +595,14 @@ model Publication {
   validations        Validation[]
   reopenRequests     ReopenRequest[]
   rounds             Round[]
+  favorites          Favorite[]
+  follows            Follow[]
   @@map("publications")
 }
+// Nota de implementación: currentRound se crea en 0 (no en el default de
+// esquema 1) para los registros generados por el indexador o por POST
+// /publications — las rondas on-chain (ValidationRegistry.currentRound)
+// empiezan en 0, no en 1.
 
 model Round {
   id          Int         @id @default(autoincrement())
@@ -690,6 +696,15 @@ model Notification {
   createdAt   DateTime @default(now())
   @@map("notifications")
 }
+
+// Bookkeeping interno del indexador (no forma parte del catálogo de datos
+// del ERS): último bloque procesado, para reanudar en vez de reprocesar
+// el historial completo en cada reinicio del backend.
+model IndexerState {
+  id                 Int    @id @default(1)
+  lastProcessedBlock BigInt @default(0)
+  @@map("indexer_state")
+}
 ```
 
 **HU-7.2** — Endpoints núcleo de publicaciones y validadores:
@@ -746,12 +761,25 @@ model Notification {
 > **Crítico:** el backend NO firma transacciones. Las escrituras on-chain las ejecuta el frontend con la cartera del usuario.
 
 Definition of done:
-- [ ] `docker compose up -d && npm run dev` sin errores
-- [ ] `prisma migrate dev` aplica el esquema de HU-7.0 sin errores
-- [ ] Todos los endpoints (HU-7.2 y HU-7.5) responden con datos reales de Hardhat Network local
-- [ ] Indexador procesa eventos históricos desde `deployBlock` al arrancar, incluyendo generación de notificaciones
-- [ ] `PUT /api/v1/profile/:address` rechaza firmas inválidas o de otra dirección
-- [ ] Tests de integración con base de datos real (no mocks)
+- [x] `docker compose up -d && npm run dev` sin errores — `make postgres && make hardhat && make deploy-local`, backend vía `make backend` (Docker) o `npm run dev` en host
+- [x] `prisma migrate dev` aplica el esquema de HU-7.0 sin errores
+- [x] Todos los endpoints (HU-7.2 y HU-7.5) responden con datos reales de Hardhat Network local
+- [x] Indexador procesa eventos históricos desde `deployBlock` al arrancar, incluyendo generación de notificaciones
+- [x] `PUT /api/v1/profile/:address` rechaza firmas inválidas o de otra dirección
+- [x] Tests de integración con base de datos real (no mocks) — 9 tests, `make test-backend`
+
+**Notas de implementación (desviaciones respecto al prompt original, documentadas para trazabilidad):**
+- Capa de **servicios** añadida entre routers y repositorios (`src/services/*.service.ts`), conforme a la arquitectura de 3 capas de CLAUDE.md §5 (Router → Services → Repositories) — el prompt de sprint la omitía por brevedad, pero el router nunca debe acceder a Prisma directamente.
+- `docker-compose.yml`: el servicio `backend` usa **la raíz del repo como build context** (`context: ., dockerfile: backend/Dockerfile`), porque el backend depende de `docs/abis/` que vive fuera de `backend/`. Se añadió un `.dockerignore` en la raíz para no copiar `node_modules` del host (Windows) sobre los instalados en el contenedor (linux-musl), y un `RUN npx prisma generate` dentro del Dockerfile para regenerar el motor de Prisma con la plataforma correcta.
+- PostgreSQL de Docker remapeado a **puerto 5433** en el host (`5433:5432`) — puerto 5432 ya estaba ocupado por una instancia nativa de PostgreSQL preexistente en la máquina de desarrollo; el puerto interno del contenedor y las conexiones backend↔postgres dentro de la red Docker siguen siendo 5432.
+- `lib/viem.ts` corregido (D4): ahora soporta `NETWORK=local` (Hardhat, vía `RPC_URL_LOCAL`) además de `NETWORK=sepolia` (vía `RPC_URL_SEPOLIA`); antes solo configuraba Sepolia y con una variable de entorno con nombre distinto al documentado (`SEPOLIA_RPC_URL` en vez de `RPC_URL_SEPOLIA`).
+- Nuevo modelo `IndexerState` (bookkeeping interno, no forma parte del catálogo de datos del ERS): persiste el último bloque procesado para que un reinicio del backend reanude en vez de reprocesar el historial completo desde `DEPLOY_BLOCK` — sin esto, cada reinicio duplicaba las notificaciones generadas por el indexador.
+- El indexador se suscribe/consulta **por contrato** (todo el ABI), no por nombre de evento por separado: eventos relacionados emitidos en la misma transacción (p.ej. `ReopenRequested` + `VotingReopened`) deben procesarse en el orden de `logIndex` real; separarlos en watches/queries independientes por evento rompía ese orden causal y corrompía `reopenRequestCount`.
+- `handleReopenRequested` fija el valor **absoluto** de `count` emitido por el evento en vez de incrementar de forma relativa, e inserciones de `ReopenRequest`/`RetroactiveClaim` desde el indexador usan `upsert` — necesario para que el reprocesado (reinicio, `POST /sync/events`) sea idempotente.
+- `notificationRepository.createMany` no crea una notificación duplicada si ya existe una sin leer para el mismo `(userAddress, contentHash, type)` — red de seguridad adicional, ya que el modelo `Notification` no distingue de qué ronda proviene (RD-20).
+- Todas las direcciones Ethereum se normalizan a checksum EIP-55 (`lib/address.ts`) en el límite de los servicios: las direcciones son case-insensitive pero PostgreSQL compara texto exacto, y sin esto la misma dirección en distinto casing se trataba como dos entidades distintas.
+- `validators.list`/`getByAddress` excluyen `lastSyncBlock` de la respuesta pública: es un `BigInt` de Prisma (no serializable en `JSON.stringify`) y un campo de bookkeeping interno (RD-13), no parte de la API pública.
+- Manejo de errores centralizado con `app.onError(...)` (patrón idiomático de Hono), no con `app.use(middleware)` — un middleware normal con `try/await next()/catch` no envuelve de forma fiable las rutas montadas vía `app.route()`.
 
 ---
 
@@ -973,4 +1001,4 @@ Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo
 | D1 | `generar-metricas.js` no extraía gas de `requestReopen`, `claimRetroactiveReputation`, `submitPrediction` | Resuelto |
 | D2 | `POST /api/v1/sync/events` (re-sincronización manual del indexador) en la memoria pero ausente de HU-7.x | Resuelto — HU-7.6 |
 | D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Resuelto — Sprint 6 |
-| D4 | `backend/src/lib/viem.ts` solo configura Sepolia; falta modo Hardhat Network local | Pendiente Sprint 7 |
+| D4 | `backend/src/lib/viem.ts` solo configuraba Sepolia; falta modo Hardhat Network local | Resuelto — Sprint 7 |

@@ -145,4 +145,4 @@ Los seis casos de uso de mayor complejidad (transacción on-chain o verificació
 | D1 | `scripts/generar-metricas.js` | No extraía gas de `requestReopen`, `claimRetroactiveReputation` ni `submitPrediction` | **Resuelto** — extracción añadida |
 | D2 | Backend REST API | `POST /api/v1/sync/events` (re-sincronización manual del indexador) existe en §4.5.2 de la memoria pero no en el Sprint 7 HU list de CLAUDE.md | **Resuelto** — añadido como HU-7.6 |
 | D3 | Sprint 6 | `submitPrediction` y recompensa/penalización por publicación no estaban implementados en `ValidationRegistry.sol` | **Resuelto** — Sprint 6 completo, 91 tests, cobertura 96.97% |
-| D4 | `backend/src/lib/viem.ts` | Solo configura Sepolia; falta modo Hardhat Network para desarrollo local | Pendiente Sprint 7 |
+| D4 | `backend/src/lib/viem.ts` | Solo configuraba Sepolia (y con una variable de entorno de nombre distinto al documentado); faltaba modo Hardhat Network para desarrollo local | **Resuelto** — Sprint 7, `NETWORK=local\|sepolia` |

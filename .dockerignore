@@ -1,0 +1,14 @@
+# El build del backend usa la raíz del repo como contexto (necesita
+# ../docs/abis) — este .dockerignore evita copiar node_modules del host
+# (Windows) sobre los instalados dentro del contenedor (linux-musl).
+backend/node_modules/
+backend/dist/
+backend/.env
+frontend/node_modules/
+frontend/dist/
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
+blockchain/typechain-types/
+blockchain/coverage/
+.git/
