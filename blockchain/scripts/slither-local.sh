@@ -2,4 +2,4 @@
 set -e
 cd "$(dirname "$0")/.."
 npx hardhat compile
-slither contracts/ --exclude-dependencies --fail-high
+slither . --exclude-dependencies --fail-high

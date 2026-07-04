@@ -36,4 +36,4 @@ jobs:
         run: pip install slither-analyzer
 
       - name: Ejecutar Slither
-        run: slither contracts/ --exclude-dependencies --fail-high
+        run: slither . --exclude-dependencies --fail-high

@@ -47,7 +47,7 @@ npx hardhat test                                           # ejecutar tests
 REPORT_GAS=true npx hardhat test                          # tests con gas report
 npx hardhat coverage                                       # cobertura (objetivo mínimo: 80%)
 npx hardhat run scripts/deploy.ts --network sepolia        # desplegar en Sepolia
-npx slither contracts/                                     # análisis estático de seguridad
+npx slither .                                               # análisis estático (auto-detecta Hardhat, no apuntar a contracts/)
 ```
 
 ### backend/
@@ -491,7 +491,7 @@ Definition of done:
 - Sybil: 5 direcciones nuevas intentan validar sin reputación → todas revierten con `InsufficientReputation`
 - Whitewashing: validador penalizado abandona dirección → nueva dirección empieza en 0, no puede validar
 
-**HU-5.5** — Análisis estático: `slither blockchain/contracts/ --exclude-dependencies` sin findings High/Critical.
+**HU-5.5** — Análisis estático: `slither .` (desde `blockchain/`, con `--exclude-dependencies --fail-high`) sin findings High/Critical. Apuntar Slither directamente a `contracts/` en vez de a la raíz del proyecto Hardhat rompe la resolución de imports de `@openzeppelin` (no usa la integración de Slither con Hardhat, que resuelve `node_modules` automáticamente).
 
 **HU-5.6** — ABIs exportados a `blockchain/artifacts/` en formato JSON consumible por el backend y el frontend.
 
