@@ -7,6 +7,11 @@ build/
 blockchain/artifacts/
 blockchain/cache/
 blockchain/deployments/localhost/
+# Estado de Hardhat Ignition para la red local (chainId 31337): no
+# determinista entre reinicios del nodo en memoria (blockHash cambia en
+# cada redeploy aunque direcciones y tx hashes se mantengan) — no aporta
+# nada versionado. El despliegue en Sepolia (chain-11155111) sí se versiona.
+blockchain/ignition/deployments/chain-31337/
 coverage/
 gas-report.json
 # docs/metricas.json NO se ignora — se versiona y lo lee el repo de memoria
