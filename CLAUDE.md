@@ -258,8 +258,8 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
   - `UNVERIFIABLE` → `-PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE` (−8)
   - `FALSE` → `-PUBLISH_REPUTATION_PENALTY_FALSE` (−15)
   - `DISPUTED` → sin efecto
-- **Predicciones — acceso meritocrático sin publicar (Sprint 6):** `submitPrediction(bytes32 contentHash, uint8 vote)` — solo si `canValidate(msg.sender) == false`; estado `PENDING`; una dirección no puede predecir ni votar dos veces el mismo artículo. No cuenta para `roundVoteCount` ni para el quórum/supermayoría. Se resuelve **automáticamente** (no *pull*) en el mismo momento en que la ronda alcanza `DEFINITIVE`, junto con los votantes reales: acierto `+PREDICTION_REWARD` (+1), fallo `-PREDICTION_PENALTY` (−1), `DISPUTED` sin efecto.
-  - **Por qué no es *pull* como lo retroactivo:** si el propio predictor decidiera cuándo reclamar, nunca reclamaría sus fallos (el suelo en 0 ya lo protege de perder lo que no tiene), convirtiendo el ±1 simétrico en una recompensa unilateral. Al resolverse junto con los votantes de la misma ronda —conjunto acotado, del orden de `quorumThreshold`— se cierra esa vía sin reintroducir el coste de gas no acotado que motivó el modelo *pull* para lo retroactivo.
+- **Predicciones — acceso guiado sin publicar (rediseñado tras Sprint 6, ver nota más abajo):** `submitPrediction(bytes32 contentHash, uint8 vote)` — solo si `canValidate(msg.sender) == false`; solo sobre un artículo cuyo `consensusState` ya sea `DEFINITIVE` (revierte si está `PENDING` o `DISPUTED` — no hay respuesta fijada aún); una dirección solo puede predecir una vez por artículo. No toca `roundVoteCount`, quórum ni supermayoría. La resolución es **inmediata y síncrona**, en la misma transacción: compara el voto con `rounds[contentHash][currentRound].result` y aplica al instante `+PREDICTION_REWARD` (+1) si acierta o `-PREDICTION_PENALTY` (−1) si falla. No depende de ningún consenso en curso ni se resuelve junto con nadie más — es asíncrona respecto a cualquier votación real de la red.
+  - **Es una rampa de acceso guiada, no una prueba de criterio:** como el artículo objetivo ya está resuelto de forma pública e inmutable, cualquiera puede consultar la respuesta antes de predecir. Ocultarla en la interfaz no protegería nada real (el dato sigue siendo legible del contrato), así que se documenta explícitamente como un mecanismo deliberadamente accesible, acotado solo por cuántos artículos ya alcanzaron `DEFINITIVE`.
 - Constantes: `REPUTATION_REWARD=5`, `REPUTATION_PENALTY=3`, `RETROACTIVE_DELTA=1`, `RETROACTIVE_CAP=3`, `PUBLISH_REPUTATION_REWARD=8`, `PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE=8`, `PUBLISH_REPUTATION_PENALTY_FALSE=15`, `PREDICTION_REWARD=1`, `PREDICTION_PENALTY=1`.
 - Eventos: `ValidationSubmitted(..., uint256 round)`, `ConsensusReached(..., uint256 round)`, `ReopenRequested(...)`, `VotingReopened(..., uint256 newRound)`, `RetroactiveClaimed(..., int256 netDelta)`, `PredictionSubmitted(bytes32 indexed contentHash, address indexed predictor, uint8 vote, uint256 round)`.
 - Interactúa con `ReputationSystem` via interfaz `IReputationSystem`, y con `PublicationRegistry` (lectura del autor, única dependencia de solo lectura).
@@ -556,6 +556,18 @@ Se eliminó `ignition/modules/ValidationRegistry.ts` (módulo Sprint 3, ya no co
 tras el 5º parámetro del constructor y completamente sustituido por `NewsEra.ts` desde
 el Sprint 5).
 
+**Nota de corrección (revisión de diseño posterior a Sprint 6):** el diseño original de
+HU-6.2 —predicción sobre un artículo `PENDING`, resuelta junto con los votantes reales al
+alcanzar `DEFINITIVE`— quedaba con un problema sin resolver: un predictor cuya ronda
+resolvía `DISPUTED` no tenía forma de recuperar su predicción, a diferencia de un votante
+real (que sí puede beneficiarse después vía `claimRetroactiveReputation`). Al revisar el
+propósito original del mecanismo (una rampa de acceso, no una simulación de voto real), se
+rediseñó para predecir sobre artículos **ya `DEFINITIVE`** con resolución inmediata y
+síncrona — ver la referencia rápida más arriba y `docs/prompts/fix-prediccion-articulos-resueltos.md`.
+Esto también retira el guard `_hasPredicted` de `submitValidation` (ya no aplica: predecir
+y votar dejan de compartir ronda) y elimina el bucle de resolución dentro de
+`_checkConsensus`, ya innecesario.
+
 ---
 
 ### Sprint 7 — Backend: API REST + indexador (OE2) `[DONE]`
@@ -749,7 +761,7 @@ model IndexerState {
 **HU-7.4** — IPFS/Pinata: `POST /api/v1/publications` acepta `ipfsCid` opcional.
 
 **HU-7.6** — Re-sincronización manual del indexador (uso interno, protegido):
-- `POST /api/v1/sync/events` — dispara una re-indexación desde `lastSyncBlock` hasta el bloque actual; requiere `Authorization: Bearer <SERVICE_TOKEN>`. Uso interno (no expuesto en el cliente).
+- `POST /api/v1/sync/events` — dispara una re-indexación desde `lastSyncBlock` hasta el bloque actual; requiere `Authorization: Bearer <SERVICE_TOKEN>`, responde `401 UNAUTHORIZED` si el token falta o no coincide (código añadido a `AppError`, ver D5). Uso interno (no expuesto en el cliente).
 
 **HU-7.5** — Perfil enriquecido, favoritos, notificaciones y seguimiento:
 - `GET /api/v1/profile/:address` — perfil enriquecido público (`displayName`,
@@ -1017,5 +1029,6 @@ Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo
 | D2 | `POST /api/v1/sync/events` (re-sincronización manual del indexador) en la memoria pero ausente de HU-7.x | Resuelto — HU-7.6 |
 | D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Resuelto — Sprint 6 |
 | D4 | `backend/src/lib/viem.ts` solo configuraba Sepolia; falta modo Hardhat Network local | Resuelto — Sprint 7 |
+| D5 | Código de error `UNAUTHORIZED` (401) en `AppError` (uso: `POST /api/v1/sync/events`), no enumerado en el diseño original | Resuelto — añadido a RI 11 en la memoria y en `docs/ERS.md` |
 | D6 | `PUT /api/v1/profile/:address` no validaba el `timestamp` del mensaje firmado (protección anti-replay solo de apariencia) | Resuelto — `profile.service.ts` valida ventana de frescura de 5 min |
 | D7 | El indexador no persistía `lastProcessedBlock` mientras escuchaba eventos en vivo, solo tras el catch-up histórico | Resuelto — `indexer.ts` persiste en cada lote de `processLogs` |

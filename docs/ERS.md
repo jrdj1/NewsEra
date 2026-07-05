@@ -133,7 +133,7 @@ Los seis casos de uso de mayor complejidad (transacción on-chain o verificació
 - **RI 8.** Interfaz con la cartera del usuario vía wagmi + RainbowKit (MetaMask, WalletConnect).
 - **RI 9.** Interfaz con la blockchain vía viem, contra Hardhat Network o Ethereum Sepolia según la configuración de red activa.
 - **RI 10.** Interfaz con IPFS a través de la API de Pinata, para subida y recuperación del contenido de los artículos.
-- **RI 11.** Interfaz REST entre frontend y backend bajo `/api/v1`, formato JSON, con estructura de error uniforme `{"error": {"code", "message"}}`.
+- **RI 11.** Interfaz REST entre frontend y backend bajo `/api/v1`, formato JSON, con estructura de error uniforme `{"error": {"code", "message"}}`. Códigos: `NOT_FOUND` (404), `CONFLICT` (409), `UNPROCESSABLE` (422), `FORBIDDEN` (403), `UNAUTHORIZED` (401 — credenciales de servicio ausentes o inválidas, usado en `POST /api/v1/sync/events`) e `INTERNAL_ERROR` (500).
 - **RI 12.** Interfaz de verificación pública de los contratos desplegados en Etherscan (Sepolia).
 
 ---
@@ -146,5 +146,6 @@ Los seis casos de uso de mayor complejidad (transacción on-chain o verificació
 | D2 | Backend REST API | `POST /api/v1/sync/events` (re-sincronización manual del indexador) existe en §4.5.2 de la memoria pero no en el Sprint 7 HU list de CLAUDE.md | **Resuelto** — añadido como HU-7.6 |
 | D3 | Sprint 6 | `submitPrediction` y recompensa/penalización por publicación no estaban implementados en `ValidationRegistry.sol` | **Resuelto** — Sprint 6 completo, 91 tests, cobertura 96.97% |
 | D4 | `backend/src/lib/viem.ts` | Solo configuraba Sepolia (y con una variable de entorno de nombre distinto al documentado); faltaba modo Hardhat Network para desarrollo local | **Resuelto** — Sprint 7, `NETWORK=local\|sepolia` |
+| D5 | `AppError`/RI 11 | Código de error `UNAUTHORIZED` (401) añadido en `backend/src/errors/AppError.ts` para `POST /api/v1/sync/events`, no enumerado en el diseño original (solo `NOT_FOUND`/`CONFLICT`/`UNPROCESSABLE`/`FORBIDDEN`/`INTERNAL_ERROR`) | **Resuelto** — añadido a RI 11 en la memoria y aquí |
 | D6 | `backend/src/services/profile.service.ts` | `PUT /api/v1/profile/:address` verificaba la firma pero nunca validaba el `timestamp` del mensaje firmado, pese a que `Profile.tsx` ya lo incluía — una firma+mensaje capturados podían reenviarse (replay) en cualquier momento posterior y se aceptaban como edición nueva | **Resuelto** — `assertFreshSignature` valida ventana de frescura de 5 min (± 1 min de tolerancia de reloj), rechazo con `FORBIDDEN` (403) |
 | D7 | `backend/src/services/indexer.ts` | `processLogs` solo avanzaba `lastProcessedBlock` en memoria; `watchLiveEvents` (eventos en vivo) nunca persistía en `IndexerState`, solo `processHistoricalEvents` al terminar el catch-up — un reinicio del backend reprocesaba el tramo ya procesado en vivo | **Resuelto** — `processLogs` persiste `lastProcessedBlock` en cada lote, tanto histórico como en vivo |
