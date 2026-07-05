@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { usePublications } from "@/hooks/usePublications";
 import { PublicationCard } from "@/components/PublicationCard";
 import { Button } from "@/components/ui/button";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
+import { reputationSystem } from "@/lib/contracts";
 
 function Pillar({
   title,
@@ -116,7 +117,14 @@ function FeedSection() {
 }
 
 export default function Feed() {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+
+  const { data: canValidate } = useReadContract({
+    ...reputationSystem,
+    functionName: "canValidate",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
 
   return (
     <div>
@@ -176,6 +184,26 @@ export default function Feed() {
           </div>
         </div>
       </section>
+
+      {/* Rampa de acceso a predicciones */}
+      {isConnected && canValidate === false && (
+        <section className="border-t border-zinc-100 dark:border-zinc-900">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-12 text-center sm:flex-row sm:justify-between sm:text-left">
+            <div>
+              <h2 className="text-lg font-semibold">Todavía no tienes reputación suficiente para votar</h2>
+              <p className="text-sm text-zinc-500">
+                Practica prediciendo el resultado de artículos ya resueltos y gana reputación.
+              </p>
+            </div>
+            <Link
+              to="/practice"
+              className="shrink-0 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              Empieza a ganar reputación
+            </Link>
+          </div>
+        </section>
+      )}
 
       <FeedSection />
     </div>

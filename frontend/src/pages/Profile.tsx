@@ -7,7 +7,7 @@ import { useEnrichedProfile, useFavorites, useInvalidateProfile } from "@/hooks/
 import { usePublications } from "@/hooks/usePublications";
 import { useReopenRequests } from "@/hooks/useReopenRequests";
 import { useTransactionState } from "@/hooks/useTransactionState";
-import { reputationSystem, validationRegistry } from "@/lib/contracts";
+import { reputationSystem, validationRegistry, MIN_REPUTATION_TO_VALIDATE } from "@/lib/contracts";
 import { api } from "@/lib/api";
 import { translateError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
@@ -233,6 +233,21 @@ export default function Profile() {
               <p className="text-xs text-zinc-500">% de aciertos</p>
             </Card>
           </div>
+
+          {reputation !== undefined && Number(reputation) < MIN_REPUTATION_TO_VALIDATE && (
+            <Card className="flex items-center justify-between gap-4 p-4">
+              <p className="text-sm text-zinc-500">
+                Te faltan {MIN_REPUTATION_TO_VALIDATE - Number(reputation)} puntos de reputación para
+                poder votar de verdad.
+              </p>
+              <Link
+                to="/practice"
+                className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+              >
+                Practicar predicciones
+              </Link>
+            </Card>
+          )}
 
           <div>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">

@@ -14,8 +14,6 @@ import {
   type VoteLabel,
   REPUTATION_REWARD,
   REPUTATION_PENALTY,
-  PREDICTION_REWARD,
-  PREDICTION_PENALTY,
 } from "@/lib/contracts";
 import { Button } from "@/components/ui/button";
 import { Badge, consensusTone } from "@/components/ui/badge";
@@ -45,7 +43,6 @@ export default function Article() {
   const { data: publication, isLoading, isError, refetch } = usePublication(hash);
 
   const voteTx = useTransactionState();
-  const predictionTx = useTransactionState();
   const reopenTx = useTransactionState();
 
   const [actionError, setActionError] = useState<string | null>(null);
@@ -119,16 +116,6 @@ export default function Article() {
     });
   }
 
-  async function handlePredict(vote: VoteLabel) {
-    if (!hash) return;
-    setActionError(null);
-    predictionTx.write({
-      ...validationRegistry,
-      functionName: "submitPrediction",
-      args: [hash, voteToIndex(vote)],
-    });
-  }
-
   async function handleReopen() {
     if (!hash) return;
     setActionError(null);
@@ -140,10 +127,10 @@ export default function Article() {
   }
 
   useEffect(() => {
-    if (voteTx.isConfirmed || predictionTx.isConfirmed || reopenTx.isConfirmed) {
+    if (voteTx.isConfirmed || reopenTx.isConfirmed) {
       refetch();
     }
-  }, [voteTx.isConfirmed, predictionTx.isConfirmed, reopenTx.isConfirmed, refetch]);
+  }, [voteTx.isConfirmed, reopenTx.isConfirmed, refetch]);
 
   async function toggleFavorite() {
     if (!hash || !address || favoritePending) return;
@@ -294,50 +281,48 @@ export default function Article() {
 
       {actionError && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{actionError}</p>}
 
-      {/* Votación / predicción */}
-      {isPending && isConnected && !alreadyVoted && (
+      {/* Votación */}
+      {isPending && isConnected && !!canValidate && !alreadyVoted && (
         <Card className="mb-8 p-5">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
-            {canValidate ? "Emitir voto" : "Predicción de práctica"}
+            Emitir voto
           </h2>
-          {!canValidate && (
-            <p className="mb-3 text-sm text-zinc-500">
-              Todavía no tienes reputación suficiente para votar. Puedes predecir el resultado como
-              práctica: no cuenta para el consenso, pero acertar te da +{PREDICTION_REWARD} de reputación
-              (fallar resta {PREDICTION_PENALTY}), hasta que puedas votar de verdad.
-            </p>
-          )}
           <div className="flex flex-wrap gap-3">
-            {(["TRUE", "FALSE", "UNVERIFIABLE"] as VoteLabel[]).map((vote) => {
-              const tx = canValidate ? voteTx : predictionTx;
-              return (
-                <Button
-                  key={vote}
-                  variant="secondary"
-                  disabled={tx.status !== "idle" && tx.status !== "failed"}
-                  onClick={() => (canValidate ? handleVote(vote) : handlePredict(vote))}
-                >
-                  {VOTE_LABELS_ES[vote]}
-                  <span className="ml-1 text-xs text-zinc-400">
-                    ({canValidate ? `+${REPUTATION_REWARD}/−${REPUTATION_PENALTY}` : `+${PREDICTION_REWARD}/−${PREDICTION_PENALTY}`})
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-          {(voteTx.status !== "idle" || predictionTx.status !== "idle") && (
-            <p className="mt-3 text-sm text-zinc-500">
-              {(canValidate ? voteTx : predictionTx).status === "pending" && "Confirma en tu cartera..."}
-              {(canValidate ? voteTx : predictionTx).status === "confirming" && "Esperando confirmación..."}
-              {(canValidate ? voteTx : predictionTx).status === "confirmed" && "¡Voto registrado!"}
-              {(canValidate ? voteTx : predictionTx).status === "failed" && (
-                <span className="text-red-600 dark:text-red-400">
-                  {(canValidate ? voteTx : predictionTx).errorMessage}
+            {(["TRUE", "FALSE", "UNVERIFIABLE"] as VoteLabel[]).map((vote) => (
+              <Button
+                key={vote}
+                variant="secondary"
+                disabled={voteTx.status !== "idle" && voteTx.status !== "failed"}
+                onClick={() => handleVote(vote)}
+              >
+                {VOTE_LABELS_ES[vote]}
+                <span className="ml-1 text-xs text-zinc-400">
+                  (+{REPUTATION_REWARD}/−{REPUTATION_PENALTY})
                 </span>
+              </Button>
+            ))}
+          </div>
+          {voteTx.status !== "idle" && (
+            <p className="mt-3 text-sm text-zinc-500">
+              {voteTx.status === "pending" && "Confirma en tu cartera..."}
+              {voteTx.status === "confirming" && "Esperando confirmación..."}
+              {voteTx.status === "confirmed" && "¡Voto registrado!"}
+              {voteTx.status === "failed" && (
+                <span className="text-red-600 dark:text-red-400">{voteTx.errorMessage}</span>
               )}
             </p>
           )}
         </Card>
+      )}
+
+      {isPending && isConnected && !canValidate && !alreadyVoted && (
+        <p className="mb-8 text-sm text-zinc-500">
+          Todavía no tienes reputación suficiente para votar de verdad.{" "}
+          <Link to="/practice" className="underline underline-offset-2">
+            Practica prediciendo sobre artículos ya resueltos
+          </Link>{" "}
+          para ganar reputación.
+        </p>
       )}
 
       {isPending && alreadyVoted && (

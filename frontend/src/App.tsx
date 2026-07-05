@@ -11,6 +11,7 @@ import Article from "@/pages/Article";
 import Validators from "@/pages/Validators";
 import ValidatorProfile from "@/pages/ValidatorProfile";
 import Profile from "@/pages/Profile";
+import Practice from "@/pages/Practice";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ export default function App() {
                 <Route path="/validators" element={<Validators />} />
                 <Route path="/validators/:address" element={<ValidatorProfile />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/practice" element={<Practice />} />
               </Route>
             </Routes>
           </BrowserRouter>

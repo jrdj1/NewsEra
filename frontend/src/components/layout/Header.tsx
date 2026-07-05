@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { NavLink, Link } from "react-router-dom";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
+import { reputationSystem } from "@/lib/contracts";
 
 const navLinks = [
   { to: "/", label: "Inicio", end: true },
@@ -41,6 +42,13 @@ function NotificationBell({ address }: { address: string }) {
 export default function Header() {
   const { address, isConnected } = useAccount();
 
+  const { data: canValidate } = useReadContract({
+    ...reputationSystem,
+    functionName: "canValidate",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/90 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/90">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -76,6 +84,18 @@ export default function Header() {
               }
             >
               Mi perfil
+            </NavLink>
+          )}
+          {isConnected && canValidate === false && (
+            <NavLink
+              to="/practice"
+              className={({ isActive }) =>
+                `rounded-full bg-zinc-900 px-3 py-1 font-medium text-white transition-colors dark:bg-white dark:text-zinc-900 ${
+                  isActive ? "opacity-100" : "opacity-90 hover:opacity-100"
+                }`
+              }
+            >
+              Empieza a ganar reputación
             </NavLink>
           )}
         </nav>
