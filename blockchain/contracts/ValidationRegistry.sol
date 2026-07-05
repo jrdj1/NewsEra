@@ -70,12 +70,12 @@ contract ValidationRegistry {
     // Publish reward: applied once per article, the first time it reaches DEFINITIVE
     mapping(bytes32 => bool) private _authorRewarded;
 
-    // Predictions: practice votes from addresses not yet eligible to validate.
-    // Do not count toward roundVoteCount/quorum; resolved automatically alongside
-    // real voters when their round reaches DEFINITIVE.
+    // Predictions: guided access ramp for addresses not yet eligible to validate.
+    // Only allowed on articles already DEFINITIVE; resolved immediately and
+    // synchronously within submitPrediction itself, independent of any
+    // in-progress voting round.
     mapping(bytes32 => mapping(address => bool))     private _hasPredicted;
     mapping(bytes32 => mapping(address => VoteType)) private _prediction;
-    mapping(bytes32 => mapping(uint256 => address[])) private _roundPredictors;
 
     event ValidationSubmitted(
         bytes32 indexed contentHash,
@@ -114,6 +114,8 @@ contract ValidationRegistry {
     error AlreadyRequestedReopen(bytes32 contentHash, address requester);
     error NothingToClaim(bytes32 contentHash, address validator);
     error NotEligibleForPrediction(address predictor);
+    error PredictionTargetNotDefinitive(bytes32 contentHash);
+    error AlreadyPredicted(bytes32 contentHash, address predictor);
 
     constructor(
         address reputationSystem_,
@@ -138,7 +140,7 @@ contract ValidationRegistry {
             revert VotingNotOpen(contentHash);
         if (!reputationSystem.canValidate(msg.sender))
             revert InsufficientReputation(msg.sender);
-        if (_hasVoted[contentHash][msg.sender] || _hasPredicted[contentHash][msg.sender])
+        if (_hasVoted[contentHash][msg.sender])
             revert AlreadyValidated(contentHash, msg.sender);
 
         VoteType voteType = VoteType(vote);
@@ -156,28 +158,36 @@ contract ValidationRegistry {
     }
 
     // -----------------------------------------------------------------------
-    // Predictions — meritocratic access for addresses not yet eligible to vote
+    // Predictions — guided access ramp for addresses not yet eligible to vote
     // -----------------------------------------------------------------------
 
-    /// @notice Registers a practice prediction for an address with canValidate == false.
-    ///         Invisible to quorum/supermajority; resolved automatically alongside
-    ///         real voters when the round reaches DEFINITIVE.
+    /// @notice Registers a prediction over an article already DEFINITIVE, resolved
+    ///         immediately and synchronously in this same transaction. Not a real
+    ///         vote under uncertainty — the article's result is already public — but
+    ///         a deliberately accessible way to earn reputation toward
+    ///         MIN_REPUTATION_TO_VALIDATE.
     function submitPrediction(bytes32 contentHash, uint8 vote) external {
-        if (consensusState[contentHash] != ConsensusState.PENDING)
-            revert VotingNotOpen(contentHash);
         if (reputationSystem.canValidate(msg.sender))
             revert NotEligibleForPrediction(msg.sender);
-        if (_hasVoted[contentHash][msg.sender] || _hasPredicted[contentHash][msg.sender])
-            revert AlreadyValidated(contentHash, msg.sender);
+        if (consensusState[contentHash] != ConsensusState.DEFINITIVE)
+            revert PredictionTargetNotDefinitive(contentHash);
+        if (_hasPredicted[contentHash][msg.sender])
+            revert AlreadyPredicted(contentHash, msg.sender);
 
-        VoteType voteType = VoteType(vote);
-        uint256  round    = currentRound[contentHash];
+        VoteType guess   = VoteType(vote);
+        uint256  round   = currentRound[contentHash];
+        VoteType correct = rounds[contentHash][round].result;
 
         _hasPredicted[contentHash][msg.sender] = true;
-        _prediction[contentHash][msg.sender]   = voteType;
-        _roundPredictors[contentHash][round].push(msg.sender);
+        _prediction[contentHash][msg.sender]   = guess;
 
         emit PredictionSubmitted(contentHash, msg.sender, vote, round);
+
+        if (guess == correct) {
+            reputationSystem.increaseReputation(msg.sender, PREDICTION_REWARD);
+        } else {
+            reputationSystem.decreaseReputation(msg.sender, PREDICTION_PENALTY);
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -317,14 +327,6 @@ contract ValidationRegistry {
                     reputationSystem.decreaseReputation(voters[i], REPUTATION_PENALTY);
             }
 
-            address[] storage predictors = _roundPredictors[contentHash][round];
-            for (uint256 i; i < predictors.length; i++) {
-                if (_prediction[contentHash][predictors[i]] == winner)
-                    reputationSystem.increaseReputation(predictors[i], PREDICTION_REWARD);
-                else
-                    reputationSystem.decreaseReputation(predictors[i], PREDICTION_PENALTY);
-            }
-
             if (!_authorRewarded[contentHash]) {
                 _authorRewarded[contentHash] = true;
                 address author = publicationRegistry.getPublication(contentHash).author;
@@ -366,5 +368,12 @@ contract ValidationRegistry {
         returns (bool)
     {
         return _hasVoted[contentHash][validator];
+    }
+
+    function hasPredicted(bytes32 contentHash, address predictor)
+        external view
+        returns (bool)
+    {
+        return _hasPredicted[contentHash][predictor];
     }
 }

@@ -31,6 +31,7 @@ export interface ValidationRegistryInterface extends Interface {
       | "currentRound"
       | "getRoundVoters"
       | "getVote"
+      | "hasPredicted"
       | "hasRequestedReopen"
       | "hasVoted"
       | "publicationRegistry"
@@ -75,6 +76,10 @@ export interface ValidationRegistryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getVote",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasPredicted",
     values: [BytesLike, AddressLike]
   ): string;
   encodeFunctionData(
@@ -151,6 +156,10 @@ export interface ValidationRegistryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getVote", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "hasPredicted",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "hasRequestedReopen",
     data: BytesLike
@@ -397,6 +406,12 @@ export interface ValidationRegistry extends BaseContract {
     "view"
   >;
 
+  hasPredicted: TypedContractMethod<
+    [contentHash: BytesLike, predictor: AddressLike],
+    [boolean],
+    "view"
+  >;
+
   hasRequestedReopen: TypedContractMethod<
     [arg0: BytesLike, arg1: AddressLike],
     [boolean],
@@ -488,6 +503,13 @@ export interface ValidationRegistry extends BaseContract {
   ): TypedContractMethod<
     [contentHash: BytesLike, validator: AddressLike],
     [[bigint, bigint] & { vote_: bigint; round_: bigint }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasPredicted"
+  ): TypedContractMethod<
+    [contentHash: BytesLike, predictor: AddressLike],
+    [boolean],
     "view"
   >;
   getFunction(
