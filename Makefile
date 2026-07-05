@@ -1,6 +1,8 @@
 # NewsEra — Makefile
 # Uso: make <target>
 # Requiere: Docker Desktop, Node.js 20, GNU Make
+# Ejecutar siempre desde Git Bash en Windows (make usa cmd.exe por defecto,
+# que no entiende sintaxis de shell POSIX como rm -rf o until/done).
 
 COMPOSE  := docker compose
 HARDHAT  := cd blockchain && npx hardhat
@@ -38,6 +40,25 @@ build: ## Reconstruir todas las imagenes Docker
 .PHONY: rebuild
 rebuild: ## Forzar reconstruccion y arrancar
 	$(COMPOSE) up -d --build
+
+.PHONY: fresh-start
+fresh-start: ## Levanta todo, redespliega los contratos y resincroniza el backend en un solo paso
+	@echo "Levantando todos los servicios..."
+	$(COMPOSE) up -d --build
+	@echo "Esperando a que el nodo Hardhat este listo..."
+	@until [ "$$(docker inspect -f '{{.State.Health.Status}}' newsera-hardhat 2>/dev/null)" = "healthy" ]; do sleep 1; done
+	@echo "Redesplegando contratos (el nodo Hardhat es en memoria: pierde el estado en cada reinicio)..."
+	rm -rf blockchain/ignition/deployments/chain-31337
+	$(HARDHAT) ignition deploy ignition/modules/NewsEra.ts --network localhost
+	@echo "Resincronizando el indexador del backend..."
+	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE indexer_state;" 2>/dev/null
+	docker restart newsera-backend
+	@echo ""
+	@echo "Todo listo:"
+	@echo "  Frontend:  http://localhost:5174"
+	@echo "  Backend:   http://localhost:3001"
+	@echo "  Hardhat:   http://localhost:8545"
+	@echo "  Postgres:  localhost:5433 (usuario/clave/bd: newsera)"
 
 # ─── Servicios individuales ───────────────────────────────────────────────────
 
