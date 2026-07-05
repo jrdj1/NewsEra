@@ -13,7 +13,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { app } from "../src/app.js";
 import { prisma } from "../src/lib/prisma.js";
-import { processHistoricalEvents, loadLastProcessedBlock } from "../src/services/indexer.js";
+import { processHistoricalEvents, loadLastProcessedBlock, processLogs } from "../src/services/indexer.js";
+import { indexerStateRepository } from "../src/repositories/indexer-state.repository.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const abisDir = join(__dirname, "../../docs/abis");
@@ -383,6 +384,42 @@ describe("backend de integración", () => {
     it("reanuda desde el último bloque persistido sin reprocesar el historial completo", async () => {
       const persisted = await loadLastProcessedBlock();
       expect(typeof persisted).toBe("bigint");
+    });
+
+    // Bug D7: `processLogs` solo avanzaba `lastProcessedBlock` en memoria;
+    // un lote procesado en vivo (watchContractEvent) nunca se persistía en
+    // IndexerState hasta el siguiente catch-up histórico.
+    describe("persistencia en vivo del indexador (D7)", () => {
+      it("persiste el bloque de un evento procesado en vivo inmediatamente, sin esperar a un reinicio", async () => {
+        // `lastProcessedBlock` es una variable en memoria del módulo indexer,
+        // no se resetea entre tests (a diferencia de la fila de IndexerState,
+        // truncada en cada beforeEach) — se usa la altura real de la cadena
+        // para garantizar que el bloque simulado es siempre mayor.
+        const chainBlock = await publicClient.getBlockNumber();
+        const liveBlock = chainBlock + 100n;
+
+        await processLogs([{ eventName: "FakeLiveEvent", blockNumber: liveBlock, logIndex: 0, args: {} }]);
+
+        const persisted = await indexerStateRepository.getLastProcessedBlock();
+        expect(persisted).toBe(liveBlock);
+      });
+
+      it("tras un catch-up histórico, un lote en vivo posterior deja lastProcessedBlock en el bloque más reciente", async () => {
+        const fromBlock = await publicClient.getBlockNumber();
+        await processHistoricalEvents(fromBlock);
+        // No se compara contra el bloque real de la cadena: `lastProcessedBlock`
+        // es una variable de módulo compartida entre tests (no se resetea con
+        // resetDb), así que el catch-up puede no avanzarla si un test anterior
+        // ya la dejó más alta con un bloque simulado.
+        const afterCatchup = await indexerStateRepository.getLastProcessedBlock();
+
+        const liveBlock = afterCatchup + 50n;
+        await processLogs([{ eventName: "FakeLiveEvent", blockNumber: liveBlock, logIndex: 0, args: {} }]);
+
+        const persisted = await indexerStateRepository.getLastProcessedBlock();
+        expect(persisted).toBe(liveBlock);
+        expect(persisted).not.toBe(afterCatchup);
+      });
     });
   });
 });

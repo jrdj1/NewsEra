@@ -1018,3 +1018,4 @@ Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo
 | D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Resuelto — Sprint 6 |
 | D4 | `backend/src/lib/viem.ts` solo configuraba Sepolia; falta modo Hardhat Network local | Resuelto — Sprint 7 |
 | D6 | `PUT /api/v1/profile/:address` no validaba el `timestamp` del mensaje firmado (protección anti-replay solo de apariencia) | Resuelto — `profile.service.ts` valida ventana de frescura de 5 min |
+| D7 | El indexador no persistía `lastProcessedBlock` mientras escuchaba eventos en vivo, solo tras el catch-up histórico | Resuelto — `indexer.ts` persiste en cada lote de `processLogs` |

@@ -140,16 +140,29 @@ const EVENT_HANDLERS: Record<string, (log: any) => Promise<void>> = {
   RetroactiveClaimed: handleRetroactiveClaimed,
 };
 
-async function processLogs(logs: any[]) {
+/**
+ * Exportada (además de usada internamente) para poder simular en tests un
+ * lote de eventos "en vivo" sin depender de `watchContractEvent` real.
+ */
+export async function processLogs(logs: any[]) {
   // Orden estable: los eventos de una misma transacción/bloque deben aplicarse
   // en el orden en que el nodo los emite (logIndex ascendente).
   const sorted = [...logs].sort((a, b) => Number(a.logIndex ?? 0) - Number(b.logIndex ?? 0));
+  const startBlock = lastProcessedBlock;
   for (const log of sorted) {
     const handler = EVENT_HANDLERS[log.eventName as string];
     if (handler) await handler(log);
     if (log.blockNumber && log.blockNumber > lastProcessedBlock) {
       lastProcessedBlock = log.blockNumber;
     }
+  }
+
+  // Persistir aquí también (no solo al final de processHistoricalEvents):
+  // sin esto, un lote procesado en vivo por watchLiveEvents solo avanzaba la
+  // variable en memoria, y un reinicio del backend reanudaba desde el último
+  // catch-up histórico, reprocesando un tramo ya procesado en vivo.
+  if (lastProcessedBlock > startBlock) {
+    await indexerStateRepository.setLastProcessedBlock(lastProcessedBlock);
   }
 }
 
