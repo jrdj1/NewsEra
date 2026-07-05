@@ -168,7 +168,7 @@ describe("backend de integración", () => {
         chain: hardhat,
         transport: http(process.env.RPC_URL_LOCAL),
       });
-      const message = "actualizar mi perfil";
+      const message = JSON.stringify({ displayName: "Jorge", avatarUrl: "", email: "", timestamp: Date.now() });
       const signature = await walletClient.signMessage({ message });
 
       const res = await app.request(`/api/v1/profile/${account.address}`, {
@@ -179,6 +179,91 @@ describe("backend de integración", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.displayName).toBe("Jorge");
+    });
+
+    // Bug D6: la protección anti-replay solo era apariencia — el backend
+    // nunca validaba el `timestamp` que el frontend ya incluía en el mensaje.
+    describe("anti-replay del timestamp (D6)", () => {
+      async function putProfile(account: ReturnType<typeof privateKeyToAccount>, timestamp: number) {
+        const walletClient = createWalletClient({
+          account,
+          chain: hardhat,
+          transport: http(process.env.RPC_URL_LOCAL),
+        });
+        const message = JSON.stringify({ displayName: "Jorge", avatarUrl: "", email: "", timestamp });
+        const signature = await walletClient.signMessage({ message });
+        const res = await app.request(`/api/v1/profile/${account.address}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: "Jorge", message, signature }),
+        });
+        return res;
+      }
+
+      it("rechaza con 403 una firma con timestamp de hace 10 minutos", async () => {
+        const account = privateKeyToAccount(generatePrivateKey());
+        const res = await putProfile(account, Date.now() - 10 * 60 * 1000);
+        expect(res.status).toBe(403);
+        expect((await res.json()).error.code).toBe("FORBIDDEN");
+      });
+
+      it("acepta una firma con timestamp de hace 2 minutos", async () => {
+        const account = privateKeyToAccount(generatePrivateKey());
+        const res = await putProfile(account, Date.now() - 2 * 60 * 1000);
+        expect(res.status).toBe(200);
+      });
+
+      it("rechaza con 403 una firma con timestamp 2 minutos en el futuro", async () => {
+        const account = privateKeyToAccount(generatePrivateKey());
+        const res = await putProfile(account, Date.now() + 2 * 60 * 1000);
+        expect(res.status).toBe(403);
+      });
+
+      it("acepta una firma con timestamp 30 segundos en el futuro (tolerancia de reloj)", async () => {
+        const account = privateKeyToAccount(generatePrivateKey());
+        const res = await putProfile(account, Date.now() + 30 * 1000);
+        expect(res.status).toBe(200);
+      });
+
+      it("rechaza con 403 un mensaje sin timestamp o no parseable como JSON", async () => {
+        const account = privateKeyToAccount(generatePrivateKey());
+        const walletClient = createWalletClient({
+          account,
+          chain: hardhat,
+          transport: http(process.env.RPC_URL_LOCAL),
+        });
+        const message = "actualizar mi perfil";
+        const signature = await walletClient.signMessage({ message });
+        const res = await app.request(`/api/v1/profile/${account.address}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: "Jorge", message, signature }),
+        });
+        expect(res.status).toBe(403);
+      });
+
+      it("rechaza el reenvío (replay) de una petición capturada hace más de 5 minutos (regresión del bug original)", async () => {
+        // Simula un atacante que capturó una firma+mensaje válidos en su momento
+        // (timestamp original) y los reenvía ahora, más de 5 minutos después.
+        // Sin el fix, el backend solo comprobaba la firma y aceptaba esta
+        // petición igual que la primera vez.
+        const account = privateKeyToAccount(generatePrivateKey());
+        const capturedTimestamp = Date.now() - 6 * 60 * 1000;
+        const walletClient = createWalletClient({
+          account,
+          chain: hardhat,
+          transport: http(process.env.RPC_URL_LOCAL),
+        });
+        const message = JSON.stringify({ displayName: "Jorge", avatarUrl: "", email: "", timestamp: capturedTimestamp });
+        const signature = await walletClient.signMessage({ message });
+
+        const replay = await app.request(`/api/v1/profile/${account.address}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: "Jorge", message, signature }),
+        });
+        expect(replay.status).toBe(403);
+      });
     });
   });
 

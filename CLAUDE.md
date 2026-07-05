@@ -1017,3 +1017,4 @@ Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo
 | D2 | `POST /api/v1/sync/events` (re-sincronización manual del indexador) en la memoria pero ausente de HU-7.x | Resuelto — HU-7.6 |
 | D3 | `submitPrediction` + recompensa/penalización por publicación no implementados aún | Resuelto — Sprint 6 |
 | D4 | `backend/src/lib/viem.ts` solo configuraba Sepolia; falta modo Hardhat Network local | Resuelto — Sprint 7 |
+| D6 | `PUT /api/v1/profile/:address` no validaba el `timestamp` del mensaje firmado (protección anti-replay solo de apariencia) | Resuelto — `profile.service.ts` valida ventana de frescura de 5 min |

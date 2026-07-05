@@ -7,6 +7,30 @@ import { reopenRequestRepository } from "../repositories/reopen-request.reposito
 import { verifyProfileSignature } from "./signature.js";
 import type { UpdateProfileBody, Paginated } from "../types/api.js";
 
+// Ventana de frescura del mensaje firmado en PUT /profile/:address (Bug D6):
+// sin esto, cualquier firma válida antigua capturada podía reenviarse en
+// cualquier momento posterior y el backend la aceptaba como edición nueva.
+const PROFILE_SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutos
+const PROFILE_SIGNATURE_CLOCK_SKEW_MS = 60 * 1000; // tolerancia por desfase de reloj del cliente
+
+function assertFreshSignature(message: string): void {
+  let timestamp: unknown;
+  try {
+    timestamp = JSON.parse(message).timestamp;
+  } catch {
+    throw new AppError("FORBIDDEN", "La firma ha caducado, vuelve a firmar");
+  }
+
+  if (typeof timestamp !== "number" || !Number.isFinite(timestamp)) {
+    throw new AppError("FORBIDDEN", "La firma ha caducado, vuelve a firmar");
+  }
+
+  const age = Date.now() - timestamp;
+  if (age > PROFILE_SIGNATURE_MAX_AGE_MS || age < -PROFILE_SIGNATURE_CLOCK_SKEW_MS) {
+    throw new AppError("FORBIDDEN", "La firma ha caducado, vuelve a firmar");
+  }
+}
+
 export const profileService = {
   async getPublic(rawAddress: string) {
     const address = normalizeAddress(rawAddress);
@@ -26,6 +50,7 @@ export const profileService = {
     if (!valid) {
       throw new AppError("FORBIDDEN", "La firma no corresponde a la dirección indicada");
     }
+    assertFreshSignature(message);
 
     return profileRepository.upsert(address, { displayName, avatarUrl, email });
   },
