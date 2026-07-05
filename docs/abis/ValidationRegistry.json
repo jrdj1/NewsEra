@@ -39,6 +39,22 @@
       },
       {
         "internalType": "address",
+        "name": "predictor",
+        "type": "address"
+      }
+    ],
+    "name": "AlreadyPredicted",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "contentHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
         "name": "requester",
         "type": "address"
       }
@@ -98,6 +114,17 @@
       }
     ],
     "name": "NothingToClaim",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "contentHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "PredictionTargetNotDefinitive",
     "type": "error"
   },
   {
@@ -383,6 +410,30 @@
         "internalType": "uint256",
         "name": "round_",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "contentHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "predictor",
+        "type": "address"
+      }
+    ],
+    "name": "hasPredicted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
