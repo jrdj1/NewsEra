@@ -573,7 +573,8 @@ describe("ValidationRegistry", () => {
     });
   });
 
-  // ── Sprint 6 — submitPrediction ──────────────────────────────────────────
+  // ── submitPrediction — predecir sobre artículos ya DEFINITIVE ────────────
+  // Rediseñado tras revisión de Sprint 6: ver docs/prompts/fix-prediccion-articulos-resueltos.md
 
   describe("submitPrediction", () => {
     let predictor: HardhatEthersSigner;
@@ -584,96 +585,118 @@ describe("ValidationRegistry", () => {
     });
 
     it("revierte NotEligibleForPrediction si el predictor ya puede votar", async () => {
-      await expect(registry.connect(v[0]).submitPrediction(HASH, TRUE_VOTE))
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE
+      await expect(registry.connect(v[3]).submitPrediction(HASH, TRUE_VOTE))
         .to.be.revertedWithCustomError(registry, "NotEligibleForPrediction")
-        .withArgs(v[0].address);
+        .withArgs(v[3].address);
     });
 
-    it("revierte VotingNotOpen si el artículo no está PENDING", async () => {
-      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE
+    it("revierte PredictionTargetNotDefinitive si el artículo está PENDING", async () => {
       await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
-        .to.be.revertedWithCustomError(registry, "VotingNotOpen")
+        .to.be.revertedWithCustomError(registry, "PredictionTargetNotDefinitive")
         .withArgs(HASH);
     });
 
-    it("revierte AlreadyValidated si la dirección ya predijo ese artículo", async () => {
-      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
-      await expect(registry.connect(predictor).submitPrediction(HASH, FALSE_VOTE))
-        .to.be.revertedWithCustomError(registry, "AlreadyValidated")
-        .withArgs(HASH, predictor.address);
-    });
-
-    it("revierte AlreadyValidated si el predictor ya votó ese artículo (canValidate cambió tras votar)", async () => {
-      // v[0] ya tiene reputación suficiente y ya votó: no es candidato a predictor,
-      // pero comprobamos que el guard de "ya votó" también aplica si canValidate fuese false.
-      await registry.connect(v[0]).submitValidation(HASH, TRUE_VOTE);
-      await expect(registry.connect(v[0]).submitPrediction(HASH, TRUE_VOTE))
-        .to.be.revertedWithCustomError(registry, "NotEligibleForPrediction")
-        .withArgs(v[0].address);
-    });
-
-    it("no incrementa roundVoteCount ni cuenta para el quórum", async () => {
-      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
-      expect(await registry.roundVoteCount(HASH, 0)).to.equal(0n);
-
-      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE);
-      expect(await registry.consensusState(HASH)).to.equal(DEFINITIVE);
-    });
-
-    it("emite PredictionSubmitted con la ronda actual", async () => {
-      await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
-        .to.emit(registry, "PredictionSubmitted")
-        .withArgs(HASH, predictor.address, TRUE_VOTE, 0);
-    });
-
-    it("predicción correcta se resuelve automáticamente con +1 al alcanzar DEFINITIVE", async () => {
-      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
-      expect(await reputation.getReputation(predictor.address)).to.equal(0n);
-
-      // La misma transacción que cierra la ronda aplica el efecto — sin llamada adicional.
-      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE);
-      expect(await reputation.getReputation(predictor.address)).to.equal(PREDICTION_REWARD);
-    });
-
-    it("predicción incorrecta se resuelve automáticamente con −1 al alcanzar DEFINITIVE", async () => {
-      // Reputación inicial > 0 para poder observar el descuento sin que el suelo en 0 lo oculte.
-      await reputation.registerValidator(predictor.address, 5n);
-      await registry.connect(predictor).submitPrediction(HASH, FALSE_VOTE);
-
-      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // gana TRUE
-      expect(await reputation.getReputation(predictor.address)).to.equal(5n - PREDICTION_PENALTY);
-    });
-
-    it("sin efecto sobre la predicción si la ronda resuelve DISPUTED", async () => {
-      await reputation.registerValidator(predictor.address, 5n);
-      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
-
+    it("revierte PredictionTargetNotDefinitive si el artículo está DISPUTED", async () => {
       await registry.connect(v[0]).submitValidation(HASH, TRUE_VOTE);
       await registry.connect(v[1]).submitValidation(HASH, FALSE_VOTE);
       await registry.connect(v[2]).submitValidation(HASH, UNVERIFIABLE_VOTE); // 33% → DISPUTED
-
       expect(await registry.consensusState(HASH)).to.equal(DISPUTED);
-      expect(await reputation.getReputation(predictor.address)).to.equal(5n);
+
+      await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
+        .to.be.revertedWithCustomError(registry, "PredictionTargetNotDefinitive")
+        .withArgs(HASH);
+    });
+
+    it("predicción correcta sobre un artículo DEFINITIVE aplica +1 en la misma transacción", async () => {
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE, result=TRUE
+
+      await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
+        .to.emit(registry, "PredictionSubmitted")
+        .withArgs(HASH, predictor.address, TRUE_VOTE, 0);
+      expect(await reputation.getReputation(predictor.address)).to.equal(PREDICTION_REWARD);
+    });
+
+    it("predicción incorrecta sobre un artículo DEFINITIVE aplica −1 en la misma transacción", async () => {
+      // Reputación inicial > 0 para observar el descuento sin que el suelo en 0 lo oculte.
+      await reputation.registerValidator(predictor.address, 5n);
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE, result=TRUE
+
+      await registry.connect(predictor).submitPrediction(HASH, FALSE_VOTE);
+      expect(await reputation.getReputation(predictor.address)).to.equal(5n - PREDICTION_PENALTY);
+    });
+
+    it("revierte AlreadyPredicted si la misma dirección predice dos veces sobre el mismo artículo", async () => {
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE
+      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
+
+      await expect(registry.connect(predictor).submitPrediction(HASH, FALSE_VOTE))
+        .to.be.revertedWithCustomError(registry, "AlreadyPredicted")
+        .withArgs(HASH, predictor.address);
     });
 
     it("una dirección que solo predice puede acumular reputación hasta poder votar", async () => {
-      // predictor acierta en 10 artículos distintos: +1 cada vez, hasta alcanzar MIN=10.
-      const allHashes = Array.from({ length: 10 }, (_, i) => h(`sprint6-prediction-accum-${i}`));
-      // Autor arbitrario para cada publicación (no relevante en este test)
+      // predictor acierta en 10 artículos distintos ya DEFINITIVE: +1 cada vez, hasta MIN=10.
+      const allHashes = Array.from({ length: 10 }, (_, i) => h(`prediction-accum-${i}`));
       for (const hash of allHashes) {
         await publication.connect(admin).registerPublication(hash);
-        await registry.connect(predictor).submitPrediction(hash, TRUE_VOTE);
         await doVotes(registry, hash, [v[0], v[1], v[2]], TRUE_VOTE); // resuelve DEFINITIVE TRUE
+        await registry.connect(predictor).submitPrediction(hash, TRUE_VOTE);
       }
 
       expect(await reputation.getReputation(predictor.address)).to.equal(10n);
       expect(await reputation.canValidate(predictor.address)).to.be.true;
 
       // Ahora puede votar con normalidad usando submitValidation
-      const newHash = h("sprint6-prediction-then-vote");
+      const newHash = h("prediction-then-vote");
+      await publication.connect(admin).registerPublication(newHash);
       await expect(registry.connect(predictor).submitValidation(newHash, TRUE_VOTE))
         .to.emit(registry, "ValidationSubmitted")
         .withArgs(newHash, predictor.address, TRUE_VOTE, 0);
+    });
+
+    it("regresión: una ronda DISPUTED reabierta que alcanza DEFINITIVE sí admite predicciones sobre esa ronda", async () => {
+      // Ronda 0: DISPUTED (33/33/33, sin supermayoría).
+      await registry.connect(v[0]).submitValidation(HASH, TRUE_VOTE);
+      await registry.connect(v[1]).submitValidation(HASH, FALSE_VOTE);
+      await registry.connect(v[2]).submitValidation(HASH, UNVERIFIABLE_VOTE);
+      expect(await registry.consensusState(HASH)).to.equal(DISPUTED);
+
+      // Nadie pudo predecir sobre la ronda 0 (nunca estuvo DEFINITIVE) — reabrir.
+      await doReopen(registry, HASH, [v[3], v[4], v[5]]);
+      expect(await registry.currentRound(HASH)).to.equal(1n);
+
+      // Ronda 1: DEFINITIVE con TRUE.
+      await doVotes(registry, HASH, [v[6], v[7], v[8]], TRUE_VOTE);
+      expect(await registry.consensusState(HASH)).to.equal(DEFINITIVE);
+
+      // El problema original ya no puede ocurrir: se predice sobre la ronda 1, ya cerrada.
+      await expect(registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE))
+        .to.emit(registry, "PredictionSubmitted")
+        .withArgs(HASH, predictor.address, TRUE_VOTE, 1);
+      expect(await reputation.getReputation(predictor.address)).to.equal(PREDICTION_REWARD);
+    });
+
+    it("quien predijo sobre un artículo puede votar normalmente si se reabre y ya tiene reputación suficiente", async () => {
+      await doVotes(registry, HASH, [v[0], v[1], v[2]], TRUE_VOTE); // → DEFINITIVE
+      await registry.connect(predictor).submitPrediction(HASH, TRUE_VOTE);
+
+      // predictor acumula el resto de reputación necesaria prediciendo en otros artículos.
+      const extraHashes = Array.from({ length: 9 }, (_, i) => h(`prediction-then-reopen-vote-${i}`));
+      for (const hash of extraHashes) {
+        await publication.connect(admin).registerPublication(hash);
+        await doVotes(registry, hash, [v[3], v[4], v[5]], TRUE_VOTE);
+        await registry.connect(predictor).submitPrediction(hash, TRUE_VOTE);
+      }
+      expect(await reputation.canValidate(predictor.address)).to.be.true;
+
+      // HASH se reabre; predictor, ahora con reputación suficiente, puede votar de verdad.
+      await doReopen(registry, HASH, [v[6], v[7], v[8]]);
+      expect(await registry.currentRound(HASH)).to.equal(1n);
+
+      await expect(registry.connect(predictor).submitValidation(HASH, TRUE_VOTE))
+        .to.emit(registry, "ValidationSubmitted")
+        .withArgs(HASH, predictor.address, TRUE_VOTE, 1);
     });
   });
 });
