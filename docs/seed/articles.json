@@ -1,0 +1,60 @@
+{
+  "accounts": {
+    "admin": 0,
+    "authors": { "p1": 1, "p2": 2, "p3": 3, "p4": 4, "p5": 5, "p6": 6, "p7": 7 },
+    "validators": [8, 9, 10, 11, 12, 13],
+    "predictors": [14, 15],
+    "note": "Índices sobre las 20 cuentas por defecto de Hardhat (mnemonic 'test test test test test test test test test test test junk'). accounts[8..13] son reutilizables libremente entre artículos: hasVoted es por (contentHash, address), no global."
+  },
+  "articles": [
+    {
+      "id": "p1",
+      "scenario": "PENDING - 0 votos",
+      "title": "Detectan una nueva variante de la gripe aviar H5N1 en granjas de Castilla y León",
+      "body": "El Ministerio de Agricultura confirmó este martes la detección de una nueva variante del virus H5N1 en tres explotaciones avícolas de la provincia de León. Las autoridades sanitarias han activado el protocolo de vigilancia reforzada y ordenado el sacrificio preventivo de los animales de las granjas afectadas. Por el momento no se ha confirmado transmisión a humanos ni riesgo para la cadena alimentaria, y los análisis genómicos de la nueva variante siguen en curso en el Centro Nacional de Microbiología.",
+      "tags": ["salud", "actualidad"]
+    },
+    {
+      "id": "p2",
+      "scenario": "PENDING - 1/3 votos",
+      "title": "Un estudio de Harvard vincula el consumo moderado de café con un menor riesgo cardiovascular",
+      "body": "Un equipo de la Escuela de Salud Pública de Harvard publicó los resultados preliminares de un estudio observacional con más de 40.000 participantes durante doce años, que encuentra una asociación entre el consumo de dos a tres tazas de café diarias y una reducción del riesgo de enfermedad cardiovascular. Los autores subrayan que se trata de una correlación, no de una relación causal probada, y que hacen falta ensayos controlados adicionales antes de emitir cualquier recomendación clínica.",
+      "tags": ["salud", "ciencia"]
+    },
+    {
+      "id": "p3",
+      "scenario": "DEFINITIVE / TRUE",
+      "title": "El Congreso de los Diputados aprobó en 2021 la Ley de Cambio Climático y Transición Energética",
+      "body": "El 13 de mayo de 2021, el Congreso de los Diputados aprobó definitivamente la Ley de Cambio Climático y Transición Energética, que establece el objetivo de neutralidad climática para España antes de 2050 y fija metas intermedias de reducción de emisiones de gases de efecto invernadero para 2030. La norma prohíbe también nuevas concesiones de explotación de hidrocarburos en todo el territorio nacional y regula la progresiva descarbonización del parque de vehículos.",
+      "tags": ["política", "medioambiente"]
+    },
+    {
+      "id": "p4",
+      "scenario": "DEFINITIVE / FALSE",
+      "title": "Las antenas de telefonía 5G propagan el virus del COVID-19",
+      "body": "Numerosos mensajes difundidos en redes sociales durante 2020 afirmaron que la instalación de antenas de telefonía móvil 5G estaba directamente relacionada con la propagación del SARS-CoV-2, llegando a provocar el incendio de varias antenas en distintos países europeos. La Organización Mundial de la Salud y múltiples estudios de física de radiofrecuencias han desmentido repetidamente esta afirmación: los virus no se transmiten a través de ondas de radio ni de redes de telecomunicaciones, y no existe ningún mecanismo biológico que sustente esa relación.",
+      "tags": ["tecnología", "salud", "desinformación"]
+    },
+    {
+      "id": "p5",
+      "scenario": "DEFINITIVE / UNVERIFIABLE",
+      "title": "Existen instalaciones extraterrestres ocultas bajo la cara oculta de la Luna",
+      "body": "Diversas teorías conspirativas sostienen que agencias espaciales y gobiernos ocultan desde hace décadas la existencia de bases extraterrestres bajo la superficie de la cara oculta de la Luna, y que las misiones Apollo habrían documentado estructuras artificiales sin hacerlas públicas. No existe evidencia fotográfica, geológica ni testimonial verificable que permita confirmar ni descartar esta afirmación con los medios de observación disponibles actualmente.",
+      "tags": ["espacio", "conspiración"]
+    },
+    {
+      "id": "p6",
+      "scenario": "DISPUTED",
+      "title": "El teletrabajo aumenta la productividad frente al trabajo presencial",
+      "body": "El debate sobre si el teletrabajo mejora o empeora la productividad laboral sigue abierto entre economistas laborales. Algunos estudios señalan menos interrupciones y menor tiempo de desplazamiento como factores que favorecen el rendimiento individual, mientras que otros apuntan a una peor coordinación de equipos, más dificultad para la mentoría de perfiles junior y una frontera difusa entre vida laboral y personal que puede erosionar el rendimiento a medio plazo. Los resultados varían mucho según el sector y el tipo de tarea.",
+      "tags": ["economía", "trabajo"]
+    },
+    {
+      "id": "p7",
+      "scenario": "reabierto: ronda 0 DISPUTED -> ronda 1 DEFINITIVE / FALSE",
+      "title": "Las vacunas de ARN mensajero contra la COVID-19 alteran el ADN humano",
+      "body": "Circuló ampliamente la afirmación de que las vacunas de ARN mensajero (ARNm) contra la COVID-19 modifican permanentemente el material genético de las personas vacunadas. Desde el punto de vista bioquímico, el ARNm de estas vacunas se degrada en el citoplasma de la célula en cuestión de días y nunca entra en el núcleo celular, donde se encuentra el ADN, por lo que no existe mecanismo posible de alteración genética. Agencias reguladoras de medicamentos de múltiples países han confirmado este hecho tras la revisión de los ensayos clínicos y la farmacovigilancia posterior a la autorización.",
+      "tags": ["salud", "vacunas", "desinformación"]
+    }
+  ]
+}
