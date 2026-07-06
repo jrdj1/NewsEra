@@ -20,11 +20,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const abisDir = join(__dirname, "../../docs/abis");
 const pubAbi = JSON.parse(readFileSync(join(abisDir, "PublicationRegistry.json"), "utf-8"));
 const repAbi = JSON.parse(readFileSync(join(abisDir, "ReputationSystem.json"), "utf-8"));
+const valAbi = JSON.parse(readFileSync(join(abisDir, "ValidationRegistry.json"), "utf-8"));
 
 const PUB = process.env.PUBLICATION_REGISTRY_ADDRESS as `0x${string}`;
 const REP = process.env.REPUTATION_SYSTEM_ADDRESS as `0x${string}`;
+const VAL = process.env.VALIDATION_REGISTRY_ADDRESS as `0x${string}`;
 
-const publicClient = createPublicClient({ chain: hardhat, transport: http(process.env.RPC_URL_LOCAL) });
+// cacheTime: 0 — evita que getBlockNumber() devuelva una altura obsoleta
+// cuando varios tests encadenan transacciones rápido (ver fix en lib/viem.ts).
+const publicClient = createPublicClient({
+  chain: hardhat,
+  transport: http(process.env.RPC_URL_LOCAL),
+  cacheTime: 0,
+});
 
 function wallet(account: `0x${string}`) {
   return createWalletClient({ account, chain: hardhat, transport: http(process.env.RPC_URL_LOCAL) });
@@ -133,6 +141,120 @@ describe("backend de integración", () => {
         body: JSON.stringify({ contentHash: realHash, title: "T", body: "contenido distinto", tags: [] }),
       });
       expect(res.status).toBe(422);
+    });
+
+    it("GET /publications?result=TRUE solo devuelve artículos DEFINITIVE con ese veredicto", async () => {
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const admin = accounts[0] as `0x${string}`;
+      const author = accounts[1] as `0x${string}`;
+      const voters = [
+        privateKeyToAccount(generatePrivateKey()),
+        privateKeyToAccount(generatePrivateKey()),
+        privateKeyToAccount(generatePrivateKey()),
+      ];
+      for (const v of voters) {
+        const regTx = await wallet(admin).writeContract({
+          address: REP,
+          abi: repAbi,
+          functionName: "registerValidator",
+          args: [v.address, 10n],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: regTx });
+      }
+
+      const fromBlock = await publicClient.getBlockNumber();
+      const body = uniqueBody("articulo resuelto TRUE para filtro de veredicto");
+      const contentHash = keccak256(toBytes(body));
+      const pubTx = await wallet(author).writeContract({
+        address: PUB,
+        abi: pubAbi,
+        functionName: "registerPublication",
+        args: [contentHash],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: pubTx });
+      await app.request("/api/v1/publications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentHash, title: "Resuelto TRUE", body, tags: [] }),
+      });
+
+      // TRUE_VOTE = 0; 3/3 alcanza quórum (3) y supermayoría (100% >= 66.67%) → DEFINITIVE.
+      // submitValidation exige msg.sender == validador registrado; las cuentas
+      // generadas con generatePrivateKey no tienen ETH para gas en Hardhat
+      // local. Se financian con una transferencia mínima desde `admin` antes de votar.
+      for (const v of voters) {
+        const fundTx = await wallet(admin).sendTransaction({ to: v.address, value: 10n ** 16n });
+        await publicClient.waitForTransactionReceipt({ hash: fundTx });
+      }
+      for (const v of voters) {
+        const voteTx = await createWalletClient({
+          account: v,
+          chain: hardhat,
+          transport: http(process.env.RPC_URL_LOCAL),
+        }).writeContract({ address: VAL, abi: valAbi, functionName: "submitValidation", args: [contentHash, 0] });
+        await publicClient.waitForTransactionReceipt({ hash: voteTx });
+      }
+
+      await processHistoricalEvents(fromBlock);
+
+      const publication = await prisma.publication.findUnique({ where: { contentHash } });
+      expect(publication?.consensusState).toBe("DEFINITIVE");
+      expect(publication?.currentResult).toBe("TRUE");
+
+      const resTrue = await app.request("/api/v1/publications?result=TRUE");
+      const jsonTrue = await resTrue.json();
+      expect(jsonTrue.items.some((p: { contentHash: string }) => p.contentHash === contentHash)).toBe(true);
+
+      const resFalse = await app.request("/api/v1/publications?result=FALSE");
+      const jsonFalse = await resFalse.json();
+      expect(jsonFalse.items.some((p: { contentHash: string }) => p.contentHash === contentHash)).toBe(false);
+    });
+  });
+
+  describe("usuarios (GET /api/v1/users)", () => {
+    it("incluye autores puros (sin fila en validators) junto a validadores, y su perfil no da 404", async () => {
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      // Autor puro: publica pero nunca vota ni recibe ReputationUpdated —
+      // no debe existir fila en `validators` para esta dirección.
+      const author = privateKeyToAccount(generatePrivateKey());
+
+      const body = uniqueBody("articulo de autor puro sin reputacion");
+      const contentHash = keccak256(toBytes(body));
+      const pubTx = await wallet(accounts[1] as `0x${string}`).sendTransaction({
+        to: author.address,
+        value: 10n ** 16n,
+      });
+      await publicClient.waitForTransactionReceipt({ hash: pubTx });
+      const registerTx = await createWalletClient({
+        account: author,
+        chain: hardhat,
+        transport: http(process.env.RPC_URL_LOCAL),
+      }).writeContract({ address: PUB, abi: pubAbi, functionName: "registerPublication", args: [contentHash] });
+      await publicClient.waitForTransactionReceipt({ hash: registerTx });
+      await app.request("/api/v1/publications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentHash, title: "Autor puro", body, tags: [] }),
+      });
+
+      const validatorRow = await prisma.validator.findUnique({ where: { address: author.address } });
+      expect(validatorRow).toBeNull();
+
+      const listRes = await app.request("/api/v1/users?limit=200");
+      const listJson = await listRes.json();
+      const entry = listJson.items.find(
+        (u: { address: string }) => u.address.toLowerCase() === author.address.toLowerCase(),
+      );
+      expect(entry).toBeDefined();
+      expect(entry.reputationScore).toBe(0);
+      expect(entry.articleCount).toBe(1);
+
+      const detailRes = await app.request(`/api/v1/users/${author.address}`);
+      expect(detailRes.status).toBe(200);
+      const detail = await detailRes.json();
+      expect(detail.reputationScore).toBe(0);
+      expect(detail.totalValidations).toBe(0);
+      expect(detail.accuracy).toBeNull();
     });
   });
 
