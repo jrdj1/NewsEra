@@ -76,7 +76,11 @@ async function handleConsensusReached(log: any) {
     result: VOTE_LABELS[result],
     completed: true,
   });
-  await publicationRepository.updateConsensusState(contentHash, stateLabel);
+  await publicationRepository.updateConsensusState(
+    contentHash,
+    stateLabel,
+    stateLabel === "DEFINITIVE" ? VOTE_LABELS[result] : null,
+  );
 
   if (stateLabel === "DEFINITIVE") {
     const interested = await followRepository.listInterestedAddresses(contentHash);

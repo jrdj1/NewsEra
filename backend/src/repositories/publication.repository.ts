@@ -6,15 +6,17 @@ export interface ListPublicationsParams {
   page: number;
   limit: number;
   state?: string;
+  result?: string;
   tags?: string[];
   author?: string;
   sort?: PublicationSort;
 }
 
 export const publicationRepository = {
-  async list({ page, limit, state, tags, author, sort = "recent" }: ListPublicationsParams) {
+  async list({ page, limit, state, result, tags, author, sort = "recent" }: ListPublicationsParams) {
     const where = {
       ...(state ? { consensusState: state } : {}),
+      ...(result ? { currentResult: result } : {}),
       ...(author ? { authorAddress: author } : {}),
       ...(tags && tags.length > 0 ? { tags: { hasSome: tags } } : {}),
     };
@@ -88,10 +90,10 @@ export const publicationRepository = {
     });
   },
 
-  async updateConsensusState(contentHash: string, consensusState: string) {
+  async updateConsensusState(contentHash: string, consensusState: string, currentResult: string | null = null) {
     return prisma.publication.update({
       where: { contentHash },
-      data: { consensusState },
+      data: { consensusState, currentResult },
     });
   },
 
@@ -105,7 +107,15 @@ export const publicationRepository = {
   async openNewRound(contentHash: string, newRound: number) {
     return prisma.publication.update({
       where: { contentHash },
-      data: { currentRound: newRound, reopenRequestCount: 0, consensusState: "PENDING" },
+      data: { currentRound: newRound, reopenRequestCount: 0, consensusState: "PENDING", currentResult: null },
     });
+  },
+
+  async authorStats(): Promise<{ authorAddress: string; articleCount: number }[]> {
+    const grouped = await prisma.publication.groupBy({
+      by: ["authorAddress"],
+      _count: { _all: true },
+    });
+    return grouped.map((g) => ({ authorAddress: g.authorAddress, articleCount: g._count._all }));
   },
 };

@@ -16,6 +16,7 @@ model Publication {
   tags               String[]
   ipfsCid            String?
   consensusState     String          @default("PENDING")
+  currentResult      String?
   currentRound       Int             @default(1)
   reopenRequestCount Int             @default(0)
   createdAt          DateTime        @default(now())

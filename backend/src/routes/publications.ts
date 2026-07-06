@@ -12,16 +12,17 @@ import type {
 export const publicationsRouter = new Hono();
 
 publicationsRouter.get("/", async (c) => {
-  const { page, limit, state, tags, author, sort } = c.req.query();
-  const result = await publicationService.list({
+  const { page, limit, state, result, tags, author, sort } = c.req.query();
+  const list = await publicationService.list({
     page: page ? Number(page) : undefined,
     limit: limit ? Number(limit) : undefined,
     state,
+    result,
     tags,
     author,
     sort: sort as PublicationSort | undefined,
   });
-  return c.json(result);
+  return c.json(list);
 });
 
 publicationsRouter.get("/:hash", async (c) => {

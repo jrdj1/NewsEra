@@ -19,6 +19,7 @@ export const publicationService = {
     page?: number;
     limit?: number;
     state?: string;
+    result?: string;
     tags?: string;
     author?: string;
     sort?: PublicationSort;
@@ -31,6 +32,7 @@ export const publicationService = {
       page,
       limit,
       state: params.state,
+      result: params.result,
       tags,
       author: params.author ? normalizeAddress(params.author) : undefined,
       sort: params.sort,
