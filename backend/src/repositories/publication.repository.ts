@@ -90,6 +90,24 @@ export const publicationRepository = {
     });
   },
 
+  /**
+   * Rellena título/cuerpo/tags/ipfsCid sobre una fila ya existente (creada
+   * por el indexador vía `upsertFromChain` a partir del evento
+   * PublicationRegistered, que solo conoce contentHash/autor). Uso: scripts
+   * de seed que registran contenido on-chain sin pasar por el flujo normal
+   * `POST /api/v1/publications` (que rechazaría con 409 CONFLICT una fila
+   * que el indexador ya creó).
+   */
+  async setContent(
+    contentHash: string,
+    data: { title: string; body: string; tags: string[]; ipfsCid?: string },
+  ) {
+    return prisma.publication.update({
+      where: { contentHash },
+      data,
+    });
+  },
+
   async updateConsensusState(contentHash: string, consensusState: string, currentResult: string | null = null) {
     return prisma.publication.update({
       where: { contentHash },
