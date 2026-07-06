@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount, useReadContract, useReadContracts, useSignMessage } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useValidatorDetail, useValidatorHistory, useReputationHistory } from "@/hooks/useValidatorProfile";
+import { useValidatorHistory, useReputationHistory } from "@/hooks/useValidatorProfile";
+import { useUserDetail } from "@/hooks/useUsers";
 import { useEnrichedProfile, useFavorites, useInvalidateProfile } from "@/hooks/useProfile";
 import { usePublications } from "@/hooks/usePublications";
 import { useReopenRequests } from "@/hooks/useReopenRequests";
@@ -178,7 +179,7 @@ export default function Profile() {
     query: { enabled: !!address },
   });
 
-  const { data: detail } = useValidatorDetail(address);
+  const { data: detail } = useUserDetail(address);
   const { data: reputationHistory } = useReputationHistory(address);
   const { data: history } = useValidatorHistory(address);
   const { data: reopenRequests } = useReopenRequests(address);
@@ -241,7 +242,7 @@ export default function Profile() {
                 poder votar de verdad.
               </p>
               <Link
-                to="/practice"
+                to="/validate"
                 className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
               >
                 Practicar predicciones

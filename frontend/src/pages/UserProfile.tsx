@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
-import { useValidatorDetail, useValidatorHistory } from "@/hooks/useValidatorProfile";
+import { useUserDetail } from "@/hooks/useUsers";
+import { useValidatorHistory } from "@/hooks/useValidatorProfile";
 import { useEnrichedProfile } from "@/hooks/useProfile";
 import { usePublications } from "@/hooks/usePublications";
 import { Card } from "@/components/ui/card";
@@ -13,16 +14,16 @@ const OUTCOME_LABELS: Record<string, { label: string; tone: "success" | "danger"
   unresolved: { label: "Sin resolver", tone: "neutral" },
 };
 
-export default function ValidatorProfile() {
+export default function UserProfile() {
   const { address } = useParams<{ address: string }>();
-  const { data: detail, isLoading, isError, refetch } = useValidatorDetail(address);
+  const { data: detail, isLoading, isError, refetch } = useUserDetail(address);
   const { data: history } = useValidatorHistory(address);
   const { data: profile } = useEnrichedProfile(address);
   const { data: publications } = usePublications(address ? { author: address } : {});
 
-  if (isLoading) return <LoadingState label="Cargando perfil del validador..." />;
+  if (isLoading) return <LoadingState label="Cargando perfil..." />;
   if (isError || !detail) {
-    return <ErrorState message="No se encontró este validador o aún no tiene actividad." onRetry={() => refetch()} />;
+    return <ErrorState message="No se encontró este usuario." onRetry={() => refetch()} />;
   }
 
   return (
@@ -32,7 +33,7 @@ export default function ValidatorProfile() {
           <img src={profile.avatarUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
         )}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{profile?.displayName || "Validador"}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{profile?.displayName || "Usuario"}</h1>
           <p className="font-mono text-xs text-zinc-400 break-all">{address}</p>
         </div>
       </div>

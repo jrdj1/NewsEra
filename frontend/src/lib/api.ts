@@ -76,6 +76,7 @@ export interface Publication {
   tags: string[];
   ipfsCid: string | null;
   consensusState: "PENDING" | "DEFINITIVE" | "DISPUTED";
+  currentResult: "TRUE" | "FALSE" | "UNVERIFIABLE" | null;
   currentRound: number;
   reopenRequestCount: number;
   createdAt: string;
@@ -89,6 +90,12 @@ export interface Validator {
   reputationScore: number;
   registeredAt: string;
   updatedAt: string;
+}
+
+export interface UserSummary {
+  address: string;
+  reputationScore: number;
+  articleCount: number;
 }
 
 export interface ValidatorDetail {

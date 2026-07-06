@@ -8,10 +8,10 @@ import Feed from "@/pages/Feed";
 import About from "@/pages/About";
 import Publish from "@/pages/Publish";
 import Article from "@/pages/Article";
-import Validators from "@/pages/Validators";
-import ValidatorProfile from "@/pages/ValidatorProfile";
+import Users from "@/pages/Users";
+import UserProfile from "@/pages/UserProfile";
 import Profile from "@/pages/Profile";
-import Practice from "@/pages/Practice";
+import Validate from "@/pages/Validate";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const queryClient = new QueryClient();
@@ -28,10 +28,10 @@ export default function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/publish" element={<Publish />} />
                 <Route path="/article/:hash" element={<Article />} />
-                <Route path="/validators" element={<Validators />} />
-                <Route path="/validators/:address" element={<ValidatorProfile />} />
+                <Route path="/users" element={<Users />} />
+                <Route path="/users/:address" element={<UserProfile />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/practice" element={<Practice />} />
+                <Route path="/validate" element={<Validate />} />
               </Route>
             </Routes>
           </BrowserRouter>

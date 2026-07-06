@@ -1,20 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  api,
-  type Paginated,
-  type ValidatorDetail,
-  type ValidationHistoryEntry,
-  type ReputationHistoryEntry,
-} from "@/lib/api";
-
-export function useValidatorDetail(address: string | undefined) {
-  return useQuery({
-    queryKey: ["validator", address],
-    queryFn: () => api.get<ValidatorDetail>(`/api/v1/validators/${address}`),
-    enabled: !!address,
-    retry: false,
-  });
-}
+import { api, type Paginated, type ValidationHistoryEntry, type ReputationHistoryEntry } from "@/lib/api";
 
 export function useValidatorHistory(address: string | undefined, page = 1, limit = 20) {
   return useQuery({

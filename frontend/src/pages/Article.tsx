@@ -198,7 +198,7 @@ export default function Article() {
       <h1 className="mb-2 text-3xl font-bold tracking-tight">{publication.title || "(sin título)"}</h1>
       <p className="mb-6 font-mono text-xs text-zinc-400">
         Autor:{" "}
-        <Link to={`/validators/${publication.authorAddress}`} className="underline underline-offset-2">
+        <Link to={`/users/${publication.authorAddress}`} className="underline underline-offset-2">
           {shortAddress(publication.authorAddress)}
         </Link>{" "}
         · {new Date(publication.createdAt).toLocaleString()}
@@ -318,7 +318,7 @@ export default function Article() {
       {isPending && isConnected && !canValidate && !alreadyVoted && (
         <p className="mb-8 text-sm text-zinc-500">
           Todavía no tienes reputación suficiente para votar de verdad.{" "}
-          <Link to="/practice" className="underline underline-offset-2">
+          <Link to="/validate" className="underline underline-offset-2">
             Practica prediciendo sobre artículos ya resueltos
           </Link>{" "}
           para ganar reputación.

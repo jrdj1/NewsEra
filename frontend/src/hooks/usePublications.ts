@@ -5,6 +5,7 @@ export interface PublicationFilters {
   page?: number;
   limit?: number;
   state?: string;
+  result?: "TRUE" | "FALSE" | "UNVERIFIABLE";
   tags?: string[];
   author?: string;
   sort?: "recent" | "votes" | "state";
@@ -15,6 +16,7 @@ function buildQuery(filters: PublicationFilters): string {
   if (filters.page) params.set("page", String(filters.page));
   if (filters.limit) params.set("limit", String(filters.limit));
   if (filters.state) params.set("state", filters.state);
+  if (filters.result) params.set("result", filters.result);
   if (filters.tags?.length) params.set("tags", filters.tags.join(","));
   if (filters.author) params.set("author", filters.author);
   if (filters.sort) params.set("sort", filters.sort);
