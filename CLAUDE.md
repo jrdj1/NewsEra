@@ -304,13 +304,43 @@ de implementación al final de Sprint 8.
 
 ---
 
-## 13. Filosofía de desarrollo
+## 13. Identidad visual
+
+Paleta y racional completos en la memoria (`desarrollo.tex`, §4.6.1
+"Identidad visual", Tabla 4.5). Resumen accionable para implementación:
+
+**Principio general:** minimalista, para mantener la atención en el
+contenido de los artículos. El color de marca y los colores de estado de
+consenso nunca comparten superficie — el primero es para navegación/acción,
+los segundos son información funcional sobre el artículo.
+
+**Paleta:**
+
+| Uso | Color | Valor |
+|-----|-------|-------|
+| Acento de marca (logotipo, enlaces, navegación activa) | Azul cobalto | `#2563EB` |
+| Fondo claro | Blanco | `#FFFFFF` |
+| Fondo oscuro | Gris casi negro | `#09090B` (zinc-950 de Tailwind) |
+| Texto secundario / bordes | Escala de grises neutros | zinc de Tailwind, ya en uso |
+| Estado de consenso `TRUE` | Verde esmeralda | `#059669` |
+| Estado de consenso `FALSE` | Rojo | `#DC2626` |
+| Estado de consenso `UNVERIFIABLE` / `PENDING` | Ámbar | `#D97706` |
+
+**Logotipo:** `frontend/public/logo.jpg`, usado en `Header.tsx`. Azul de
+marca aplicado a navegación activa, `ConnectButton` y acciones primarias;
+colores de estado de consenso vía `components/ui/ConsensusBadge.tsx` —
+tokens en `src/index.css` (`--color-brand`, `--color-consensus-*`, sintaxis
+`@theme` de Tailwind v4).
+
+---
+
+## 14. Filosofía de desarrollo
 
 - **KISS** — si una tecnología añade complejidad sin aportar valor concreto al prototipo, se descarta.
 - **DRY** — no duplicar lógica entre capas.
 - **Separación de responsabilidades** — on-chain solo lo que requiere inmutabilidad; off-chain el resto.
 
-## 14. Trabajo futuro identificado (fuera del alcance del TFG)
+## 15. Trabajo futuro identificado (fuera del alcance del TFG)
 
 **The Graph Protocol**: migración del indexador del backend a un subgrafo descentralizado,
 eliminando la dependencia del servidor off-chain. No implementar durante el TFG.
@@ -1029,11 +1059,11 @@ ETHERSCAN_API_KEY=...
 - **DIDs / VCs W3C** — resistencia Sybil de nivel producción
 - **Layer 2 (Arbitrum / Polygon)** — reducir costes de gas en uno o dos órdenes de magnitud
 - **Rotación de quórum / decaimiento de reputación** — mitigar concentración de poder por validadores con alta reputación coordinados
-- **zkML / oracle veredicto automatizado** — `AI_VERDICT` como cuarto tipo de voto verificado on-chain; ver Sección 14
+- **zkML / oracle veredicto automatizado** — `AI_VERDICT` como cuarto tipo de voto verificado on-chain; ver Sección 15
 
 ---
 
-## 15. ERS y catálogo de casos de uso
+## 16. ERS y catálogo de casos de uso
 
 Los documentos formales de requisitos derivados de la memoria del TFG (Capítulo 4, §4.1 y Anexo A) se encuentran en:
 
