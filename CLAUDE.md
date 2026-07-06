@@ -287,15 +287,20 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 
 ## 12. Rutas del frontend (React Router v6)
 
+Rediseñadas tras Sprint 8 (rediseño "estilo TikTok": barra de navegación
+superior fija con 5 accesos, feed de inicio a pantalla completa) — ver nota
+de implementación al final de Sprint 8.
+
 | Ruta | Vista |
 |------|-------|
-| `/` | Feed de publicaciones recientes |
+| `/` | Inicio: feed de tarjetas a pantalla completa (scroll-snap), filtro por defecto artículos `DEFINITIVE` + veredicto `TRUE` |
+| `/users` | Descubrir usuarios: validadores y publicadores unidos, con búsqueda y orden |
 | `/publish` | Formulario de publicación |
-| `/article/:hash` | Detalle de artículo + votos |
-| `/validators` | Ranking de validadores por reputación |
-| `/validators/:address` | Perfil público de un validador |
+| `/validate` | Validar: feed a pantalla completa que se adapta según `canValidate` — vota artículos `PENDING` si ya puedes, predice sobre artículos ya `DEFINITIVE` si aún no |
 | `/profile` | Panel personal: reputación propia, historial de validaciones, perfil enriquecido, favoritos y solicitudes de reapertura |
-| `/about` | Información sobre el proyecto y enlace a la memoria del TFG |
+| `/article/:hash` | Detalle de artículo + votos |
+| `/users/:address` | Perfil público de un usuario (validador y/o publicador) |
+| `/about` | Información sobre el proyecto y enlace a la memoria del TFG — accesible desde el pie de página, no está en la barra principal |
 
 ---
 
@@ -889,6 +894,38 @@ Definition of done:
 - **UI:** sin CLI de shadcn/ui — se escribieron primitivas Tailwind a mano (`components/ui/button.tsx`, `card.tsx`, `badge.tsx`, `input.tsx`, `states.tsx`) con el mismo alias `@/components/ui` y paleta zinc ya usada en `Feed.tsx`/`About.tsx`, para no depender de la disponibilidad del registro remoto de shadcn.
 - **ABIs:** el frontend importa los JSON de `docs/abis/` directamente (`import x from "../../../docs/abis/X.json"`), igual que el backend; Vite lo resuelve sin problemas tanto en dev como en build. Se afirma el tipo como `Abi` de viem una vez en `lib/contracts.ts` porque los JSON importados no conservan los literales (`"function"`, `"event"`, ...) que `useReadContracts` exige.
 - **Verificación con cartera real:** el entorno de verificación automatizado no tiene una extensión de wallet real (MetaMask) disponible; se verificaron las páginas y flujos de solo lectura contra datos reales del backend, y el código de los flujos de escritura (voto, publicación, reclamación, edición de perfil) se revisó pero no se ejecutó end-to-end con una firma real. Recomendado probar manualmente con una wallet real antes de dar el sprint por completamente cerrado en producción.
+
+**Nota de implementación (rediseño posterior a Sprint 8 — "estilo TikTok"):**
+petición explícita de mejorar la interfaz para audiencias más jóvenes. Cambios:
+- Barra de navegación superior fija con 5 accesos (Inicio, Usuarios, Publicar,
+  Validar, Perfil) en `Header.tsx`; `/about` deja de estar en la barra
+  principal y pasa al pie de página (`Layout.tsx`).
+- `/` (Inicio) pasa de grid clásico a feed de tarjetas a pantalla completa con
+  scroll-snap vertical (`components/ArticleFullscreenCard.tsx`), filtro por
+  defecto `DEFINITIVE` + veredicto `TRUE`. Para poder filtrar por veredicto
+  (no solo por estado de consenso) se añadió el campo `currentResult` a
+  `Publication` (Prisma), poblado por el indexador en `handleConsensusReached`
+  y limpiado en cada reapertura (`openNewRound`), más el parámetro `result` en
+  `GET /api/v1/publications`.
+- `/validators` y `/validators/:address` se sustituyen por `/users` y
+  `/users/:address`: nuevo endpoint `GET /api/v1/users` (y
+  `GET /api/v1/users/:address`) que une la tabla `validators` con autores
+  únicos de `publications` (`publicationRepository.authorStats`) — sin esto,
+  un autor que nunca ha votado (reputación 0, sin fila en `validators`) era
+  invisible en el ranking y su perfil devolvía 404. `/api/v1/validators` no
+  se toca, sigue sirviendo `history`/`reputation-history` para cualquier
+  dirección.
+- `/practice` desaparece como ruta independiente: su lógica de predicción se
+  funde dentro de `/validate`, que muestra voto real (`canValidate === true`)
+  o predicción sobre artículos ya resueltos (`canValidate === false`) en el
+  mismo feed a pantalla completa.
+- **Bug de indexador encontrado durante la verificación (no relacionado con
+  el rediseño de UI):** `publicClient.getBlockNumber()` en
+  `backend/src/lib/viem.ts` no fijaba `cacheTime`, por lo que el caché por
+  defecto de viem (~4s) podía devolver una altura de bloque obsoleta cuando
+  varias transacciones de test se encadenaban rápido, haciendo que
+  `processHistoricalEvents` escaneara un rango de bloques ya corto y
+  perdiera eventos reales. Corregido con `cacheTime: 0` en el cliente.
 
 ---
 

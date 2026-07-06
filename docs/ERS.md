@@ -121,8 +121,8 @@ Los seis casos de uso de mayor complejidad (transacción on-chain o verificació
 ## 4. Requisitos de interfaz (RI)
 
 ### Interfaz de usuario
-- **RI 1.** Navegación mediante rutas SPA (React Router v6): `/`, `/publish`, `/article/:hash`, `/validators`, `/validators/:address`, `/profile`, `/about`.
-- **RI 2.** Cabecera fija global con logo, navegación y `ConnectButton` de RainbowKit, visible en todas las rutas.
+- **RI 1.** Navegación mediante rutas SPA (React Router v6): `/`, `/users`, `/publish`, `/validate`, `/profile`, `/article/:hash`, `/users/:address`, `/about`.
+- **RI 2.** Cabecera fija global (barra superior) con logo, los 5 accesos principales (Inicio, Usuarios, Publicar, Validar, Perfil) y `ConnectButton` de RainbowKit, visible en todas las rutas.
 - **RI 3.** Plantilla estándar de redacción para artículos (UC 12): todos los artículos se renderizan con el mismo formato visual.
 - **RI 4.** Diseño responsive, legible en dispositivos móviles (RNF 13).
 - **RI 5.** Estados de carga y error explícitos en toda vista que dependa de datos remotos (backend o blockchain).
