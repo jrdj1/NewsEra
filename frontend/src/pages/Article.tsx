@@ -17,6 +17,7 @@ import {
 } from "@/lib/contracts";
 import { Button } from "@/components/ui/button";
 import { Badge, consensusTone } from "@/components/ui/badge";
+import { ConsensusBadge } from "@/components/ui/ConsensusBadge";
 import { Card } from "@/components/ui/card";
 import { LoadingState, ErrorState } from "@/components/ui/states";
 import { PublicationCard } from "@/components/PublicationCard";
@@ -189,9 +190,7 @@ export default function Article() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <div className="mb-4 flex items-center gap-2">
-        <Badge tone={consensusTone(publication.consensusState)}>
-          {STATE_LABELS[publication.consensusState] ?? publication.consensusState}
-        </Badge>
+        <ConsensusBadge state={publication.consensusState} result={publication.currentResult} />
         <span className="text-xs text-zinc-400">Ronda {publication.currentRound}</span>
       </div>
 
@@ -318,7 +317,7 @@ export default function Article() {
       {isPending && isConnected && !canValidate && !alreadyVoted && (
         <p className="mb-8 text-sm text-zinc-500">
           Todavía no tienes reputación suficiente para votar de verdad.{" "}
-          <Link to="/validate" className="underline underline-offset-2">
+          <Link to="/validate" className="text-brand underline underline-offset-2">
             Practica prediciendo sobre artículos ya resueltos
           </Link>{" "}
           para ganar reputación.

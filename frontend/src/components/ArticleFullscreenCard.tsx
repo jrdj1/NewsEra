@@ -1,19 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { Publication } from "@/lib/api";
-import { Badge, consensusTone } from "@/components/ui/badge";
-
-const STATE_LABELS: Record<string, string> = {
-  PENDING: "En votación",
-  DEFINITIVE: "Consenso alcanzado",
-  DISPUTED: "En disputa",
-};
-
-const RESULT_LABELS: Record<string, string> = {
-  TRUE: "Verdadero",
-  FALSE: "Falso",
-  UNVERIFIABLE: "No verificable",
-};
+import { ConsensusBadge } from "@/components/ui/ConsensusBadge";
 
 function shortAddress(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -36,14 +24,7 @@ export function ArticleFullscreenCard({
     <div className="flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col justify-between overflow-hidden px-4 py-10 sm:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col overflow-hidden">
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <Badge tone={consensusTone(publication.consensusState)}>
-            {STATE_LABELS[publication.consensusState] ?? publication.consensusState}
-          </Badge>
-          {publication.currentResult && (
-            <Badge tone={publication.currentResult === "TRUE" ? "success" : publication.currentResult === "FALSE" ? "danger" : "warning"}>
-              {RESULT_LABELS[publication.currentResult]}
-            </Badge>
-          )}
+          <ConsensusBadge state={publication.consensusState} result={publication.currentResult} />
           <span className="text-xs text-zinc-400">
             {publication.voteCount ?? 0} voto{publication.voteCount === 1 ? "" : "s"}
           </span>
@@ -74,7 +55,7 @@ export function ArticleFullscreenCard({
           <Link to={`/users/${publication.authorAddress}`} className="font-mono underline-offset-2 hover:underline">
             Autor: {shortAddress(publication.authorAddress)}
           </Link>
-          <Link to={`/article/${publication.contentHash}`} className="font-medium text-zinc-900 underline underline-offset-2 dark:text-white">
+          <Link to={`/article/${publication.contentHash}`} className="font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:decoration-brand">
             Ver artículo completo
           </Link>
         </div>

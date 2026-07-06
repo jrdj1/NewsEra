@@ -6,12 +6,24 @@ import type { Publication } from "@/lib/api";
 
 type FilterKey = "TRUE" | "FALSE" | "UNVERIFIABLE" | "PENDING" | "DISPUTED";
 
-const FILTERS: { key: FilterKey; label: string; state: string; result?: "TRUE" | "FALSE" | "UNVERIFIABLE" }[] = [
-  { key: "TRUE", label: "Verdadero", state: "DEFINITIVE", result: "TRUE" },
-  { key: "FALSE", label: "Falso", state: "DEFINITIVE", result: "FALSE" },
-  { key: "UNVERIFIABLE", label: "No verificable", state: "DEFINITIVE", result: "UNVERIFIABLE" },
-  { key: "PENDING", label: "Pendientes", state: "PENDING" },
-  { key: "DISPUTED", label: "En disputa", state: "DISPUTED" },
+const FILTERS: {
+  key: FilterKey;
+  label: string;
+  state: string;
+  result?: "TRUE" | "FALSE" | "UNVERIFIABLE";
+  activeClass: string;
+}[] = [
+  { key: "TRUE", label: "Verdadero", state: "DEFINITIVE", result: "TRUE", activeClass: "bg-consensus-true text-white" },
+  { key: "FALSE", label: "Falso", state: "DEFINITIVE", result: "FALSE", activeClass: "bg-consensus-false text-white" },
+  {
+    key: "UNVERIFIABLE",
+    label: "No verificable",
+    state: "DEFINITIVE",
+    result: "UNVERIFIABLE",
+    activeClass: "bg-consensus-unverifiable text-white",
+  },
+  { key: "PENDING", label: "Pendientes", state: "PENDING", activeClass: "bg-consensus-unverifiable text-white" },
+  { key: "DISPUTED", label: "En disputa", state: "DISPUTED", activeClass: "bg-consensus-unverifiable text-white" },
 ];
 
 const PAGE_SIZE = 10;
@@ -60,7 +72,7 @@ export default function Feed() {
             onClick={() => setFilter(f.key)}
             className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === f.key
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                ? f.activeClass
                 : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
             }`}
           >
