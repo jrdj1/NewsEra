@@ -42,7 +42,7 @@ rebuild: ## Forzar reconstruccion y arrancar
 	$(COMPOSE) up -d --build
 
 .PHONY: fresh-start
-fresh-start: ## Levanta todo, redespliega los contratos y resincroniza el backend en un solo paso
+fresh-start: ## Levanta todo, redespliega contratos, siembra estado de prueba y resincroniza el backend
 	@echo "Levantando todos los servicios..."
 	$(COMPOSE) up -d --build
 	@echo "Esperando a que el nodo Hardhat este listo..."
@@ -50,11 +50,26 @@ fresh-start: ## Levanta todo, redespliega los contratos y resincroniza el backen
 	@echo "Redesplegando contratos (el nodo Hardhat es en memoria: pierde el estado en cada reinicio)..."
 	rm -rf blockchain/ignition/deployments/chain-31337
 	$(HARDHAT) ignition deploy ignition/modules/NewsEra.ts --network localhost
-	@echo "Resincronizando el indexador del backend..."
-	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE indexer_state;" 2>/dev/null
-	docker restart newsera-backend
+	@echo "Sembrando estado inicial de prueba (transacciones reales sobre los contratos)..."
+	$(HARDHAT) run scripts/seed.ts --network localhost
+	@echo "Actualizando .env con las direcciones reales desplegadas..."
+	node scripts/update-env-addresses.js
+	@echo "Parando el backend antes de truncar (evita bloqueos de Postgres por conexiones abiertas)..."
+	$(COMPOSE) stop backend
+	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state RESTART IDENTITY CASCADE;" 2>/dev/null
+	@echo "Arrancando el backend con la BD limpia y las direcciones correctas..."
+	$(COMPOSE) up -d backend
+	@echo "Esperando a que el indexador procese el historial sembrado (maximo 30s)..."
+	@i=0; \
+	while [ "$$(docker exec newsera-db psql -U newsera -d newsera -tAc 'SELECT "lastProcessedBlock" FROM indexer_state WHERE id=1;' 2>/dev/null | tr -d '[:space:]')" = "" ]; do \
+		i=$$((i+1)); \
+		if [ $$i -ge 30 ]; then echo "Aviso: el indexador no ha terminado tras 30s, se continua igualmente (revisa 'make logs-backend')."; break; fi; \
+		sleep 1; \
+	done
+	@echo "Sembrando datos sin equivalente on-chain (perfiles, favoritos, follows, notificaciones)..."
+	cd backend && npm run seed:offchain
 	@echo ""
-	@echo "Todo listo:"
+	@echo "Todo listo, con estado de prueba completo cargado:"
 	@echo "  Frontend:  http://localhost:5174"
 	@echo "  Backend:   http://localhost:3001"
 	@echo "  Hardhat:   http://localhost:8545"
