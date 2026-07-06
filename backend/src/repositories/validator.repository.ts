@@ -27,6 +27,10 @@ export const validatorRepository = {
     return prisma.validator.findUnique({ where: { address }, select: PUBLIC_SELECT });
   },
 
+  async listAll() {
+    return prisma.validator.findMany({ select: PUBLIC_SELECT });
+  },
+
   async upsertReputation(address: string, reputationScore: number, lastSyncBlock: bigint) {
     return prisma.validator.upsert({
       where: { address },
