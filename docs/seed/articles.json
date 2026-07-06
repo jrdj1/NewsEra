@@ -1,43 +1,69 @@
 {
   "accounts": {
     "admin": 0,
-    "authors": { "p1": 1, "p2": 2, "p3": 3, "p4": 4, "p5": 5, "p6": 6, "p7": 7 },
-    "validators": [8, 9, 10, 11, 12, 13],
-    "predictors": [14, 15],
-    "note": "Índices sobre las 20 cuentas por defecto de Hardhat (mnemonic 'test test test test test test test test test test test junk'). accounts[8..13] son reutilizables libremente entre artículos: hasVoted es por (contentHash, address), no global."
+    "authorPool": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "validators": [11, 12, 13, 14, 15, 16],
+    "predictors": [17, 18, 19],
+    "note": "Índices sobre las 20 cuentas por defecto de Hardhat (mnemonic 'test test test test test test test test test test test junk'). Los 10 autores se reparten los 20 artículos (2 c/u, realista: un autor publica varias piezas). Los 6 validadores son reutilizables libremente entre artículos: hasVoted es por (contentHash, address), no global."
   },
+  "profiles": [
+    { "signerIndex": 1, "displayName": "Marta Sánchez Ibáñez", "avatarImg": 1, "email": "marta.sanchez@example.com" },
+    { "signerIndex": 2, "displayName": "Alejandro Ruiz Molina", "avatarImg": 2 },
+    { "signerIndex": 3, "displayName": "Lucía Fernández Prieto", "avatarImg": 3, "email": "lucia.fernandez@example.com" },
+    { "signerIndex": 4, "displayName": "Diego Navarro Campos", "avatarImg": 4 },
+    { "signerIndex": 5, "displayName": "Sara Jiménez Ortega", "avatarImg": 5, "email": "sara.jimenez@example.com" },
+    { "signerIndex": 6, "displayName": "Pablo Herrera Vidal", "avatarImg": 6 },
+    { "signerIndex": 7, "displayName": "Elena Gil Rubio", "avatarImg": 7 },
+    { "signerIndex": 8, "displayName": "Nicolás Peña Aguilar", "avatarImg": 8, "email": "nicolas.pena@example.com" },
+    { "signerIndex": 9, "displayName": "Rocío Domínguez Salas", "avatarImg": 9 },
+    { "signerIndex": 10, "displayName": "Iván Cortés Lozano", "avatarImg": 10 },
+    { "signerIndex": 11, "displayName": "Javier Moreno Castillo", "avatarImg": 11 },
+    { "signerIndex": 12, "displayName": "Carmen Torres Delgado", "avatarImg": 12, "email": "carmen.torres@example.com" },
+    { "signerIndex": 13, "displayName": "@verifica_hechos", "avatarImg": 13 },
+    { "signerIndex": 14, "displayName": "Beatriz Serrano Marín", "avatarImg": 14 },
+    { "signerIndex": 15, "displayName": "@la_vigilante", "avatarImg": 15 },
+    { "signerIndex": 16, "displayName": "@dato_curioso", "avatarImg": 16 },
+    { "signerIndex": 17, "displayName": "@aprendiz_verdad", "avatarImg": 17 },
+    { "signerIndex": 18, "displayName": "@novato_2024", "avatarImg": 18 },
+    { "signerIndex": 19, "displayName": "Marcos Iglesias Pardo", "avatarImg": 19 }
+  ],
   "articles": [
     {
       "id": "p1",
-      "scenario": "PENDING - 0 votos",
+      "scenario": "PENDING_ZERO",
+      "authorIndex": 1,
       "title": "Detectan una nueva variante de la gripe aviar H5N1 en granjas de Castilla y León",
       "body": "El Ministerio de Agricultura confirmó este martes la detección de una nueva variante del virus H5N1 en tres explotaciones avícolas de la provincia de León. Las autoridades sanitarias han activado el protocolo de vigilancia reforzada y ordenado el sacrificio preventivo de los animales de las granjas afectadas. Por el momento no se ha confirmado transmisión a humanos ni riesgo para la cadena alimentaria, y los análisis genómicos de la nueva variante siguen en curso en el Centro Nacional de Microbiología.",
       "tags": ["salud", "actualidad"]
     },
     {
       "id": "p2",
-      "scenario": "PENDING - 1/3 votos",
+      "scenario": "PENDING_PARTIAL",
+      "authorIndex": 2,
       "title": "Un estudio de Harvard vincula el consumo moderado de café con un menor riesgo cardiovascular",
       "body": "Un equipo de la Escuela de Salud Pública de Harvard publicó los resultados preliminares de un estudio observacional con más de 40.000 participantes durante doce años, que encuentra una asociación entre el consumo de dos a tres tazas de café diarias y una reducción del riesgo de enfermedad cardiovascular. Los autores subrayan que se trata de una correlación, no de una relación causal probada, y que hacen falta ensayos controlados adicionales antes de emitir cualquier recomendación clínica.",
       "tags": ["salud", "ciencia"]
     },
     {
       "id": "p3",
-      "scenario": "DEFINITIVE / TRUE",
+      "scenario": "DEFINITIVE_TRUE",
+      "authorIndex": 3,
       "title": "El Congreso de los Diputados aprobó en 2021 la Ley de Cambio Climático y Transición Energética",
       "body": "El 13 de mayo de 2021, el Congreso de los Diputados aprobó definitivamente la Ley de Cambio Climático y Transición Energética, que establece el objetivo de neutralidad climática para España antes de 2050 y fija metas intermedias de reducción de emisiones de gases de efecto invernadero para 2030. La norma prohíbe también nuevas concesiones de explotación de hidrocarburos en todo el territorio nacional y regula la progresiva descarbonización del parque de vehículos.",
       "tags": ["política", "medioambiente"]
     },
     {
       "id": "p4",
-      "scenario": "DEFINITIVE / FALSE",
+      "scenario": "DEFINITIVE_FALSE",
+      "authorIndex": 4,
       "title": "Las antenas de telefonía 5G propagan el virus del COVID-19",
       "body": "Numerosos mensajes difundidos en redes sociales durante 2020 afirmaron que la instalación de antenas de telefonía móvil 5G estaba directamente relacionada con la propagación del SARS-CoV-2, llegando a provocar el incendio de varias antenas en distintos países europeos. La Organización Mundial de la Salud y múltiples estudios de física de radiofrecuencias han desmentido repetidamente esta afirmación: los virus no se transmiten a través de ondas de radio ni de redes de telecomunicaciones, y no existe ningún mecanismo biológico que sustente esa relación.",
       "tags": ["tecnología", "salud", "desinformación"]
     },
     {
       "id": "p5",
-      "scenario": "DEFINITIVE / UNVERIFIABLE",
+      "scenario": "DEFINITIVE_UNVERIFIABLE",
+      "authorIndex": 5,
       "title": "Existen instalaciones extraterrestres ocultas bajo la cara oculta de la Luna",
       "body": "Diversas teorías conspirativas sostienen que agencias espaciales y gobiernos ocultan desde hace décadas la existencia de bases extraterrestres bajo la superficie de la cara oculta de la Luna, y que las misiones Apollo habrían documentado estructuras artificiales sin hacerlas públicas. No existe evidencia fotográfica, geológica ni testimonial verificable que permita confirmar ni descartar esta afirmación con los medios de observación disponibles actualmente.",
       "tags": ["espacio", "conspiración"]
@@ -45,16 +71,122 @@
     {
       "id": "p6",
       "scenario": "DISPUTED",
+      "authorIndex": 6,
       "title": "El teletrabajo aumenta la productividad frente al trabajo presencial",
       "body": "El debate sobre si el teletrabajo mejora o empeora la productividad laboral sigue abierto entre economistas laborales. Algunos estudios señalan menos interrupciones y menor tiempo de desplazamiento como factores que favorecen el rendimiento individual, mientras que otros apuntan a una peor coordinación de equipos, más dificultad para la mentoría de perfiles junior y una frontera difusa entre vida laboral y personal que puede erosionar el rendimiento a medio plazo. Los resultados varían mucho según el sector y el tipo de tarea.",
       "tags": ["economía", "trabajo"]
     },
     {
       "id": "p7",
-      "scenario": "reabierto: ronda 0 DISPUTED -> ronda 1 DEFINITIVE / FALSE",
+      "scenario": "REOPEN_TO_FALSE",
+      "authorIndex": 7,
       "title": "Las vacunas de ARN mensajero contra la COVID-19 alteran el ADN humano",
       "body": "Circuló ampliamente la afirmación de que las vacunas de ARN mensajero (ARNm) contra la COVID-19 modifican permanentemente el material genético de las personas vacunadas. Desde el punto de vista bioquímico, el ARNm de estas vacunas se degrada en el citoplasma de la célula en cuestión de días y nunca entra en el núcleo celular, donde se encuentra el ADN, por lo que no existe mecanismo posible de alteración genética. Agencias reguladoras de medicamentos de múltiples países han confirmado este hecho tras la revisión de los ensayos clínicos y la farmacovigilancia posterior a la autorización.",
       "tags": ["salud", "vacunas", "desinformación"]
+    },
+    {
+      "id": "p8",
+      "scenario": "PENDING_ZERO",
+      "authorIndex": 1,
+      "title": "Confirman un brote de listeriosis en un lote de quesos artesanos distribuido en el norte de España",
+      "body": "Sanidad ha ordenado la retirada cautelar de varios lotes de queso de cabra artesano tras confirmarse cuatro casos de listeriosis en Asturias y Cantabria potencialmente vinculados a su consumo. La empresa productora ha suspendido la distribución mientras dura la investigación epidemiológica, y las autoridades recomiendan a la población que haya adquirido el producto en las últimas semanas que evite su consumo hasta nuevo aviso.",
+      "tags": ["salud", "alimentación"]
+    },
+    {
+      "id": "p9",
+      "scenario": "PENDING_ZERO",
+      "authorIndex": 2,
+      "title": "Investigadores detectan trazas de microplásticos en la nieve de zonas remotas del Pirineo",
+      "body": "Un equipo de glaciólogos ha identificado partículas de microplástico en muestras de nieve recogidas por encima de los 2.500 metros en el Pirineo aragonés, en zonas sin actividad industrial cercana. Los investigadores apuntan al transporte atmosférico de largo alcance como hipótesis principal, aunque el estudio completo, que analizará el origen y la concentración exacta de las partículas, todavía no ha sido publicado ni revisado por pares.",
+      "tags": ["medioambiente", "ciencia"]
+    },
+    {
+      "id": "p10",
+      "scenario": "PENDING_PARTIAL",
+      "authorIndex": 3,
+      "title": "Un ensayo clínico en fase temprana sugiere que un fármaco contra la diabetes podría ralentizar el Alzheimer",
+      "body": "Un ensayo clínico en fase II con un medicamento ya aprobado para la diabetes tipo 2 muestra una posible ralentización del deterioro cognitivo en un grupo reducido de pacientes con Alzheimer leve. Los propios autores insisten en la cautela: la muestra es pequeña, no hay grupo de control con placebo en esta fase, y serán necesarios ensayos de fase III con miles de participantes para confirmar si el efecto es real y clínicamente relevante.",
+      "tags": ["salud", "ciencia"]
+    },
+    {
+      "id": "p11",
+      "scenario": "DEFINITIVE_TRUE",
+      "authorIndex": 8,
+      "title": "España realizó en 2019 el primer trasplante de corazón en el mundo procedente de un donante en asistolia",
+      "body": "En junio de 2019, un equipo del Hospital Puerta de Hierro de Madrid realizó el primer trasplante cardíaco del mundo con un corazón procedente de un donante en asistolia (parada cardiorrespiratoria), una técnica hasta entonces considerada inviable para este órgano por su rápida pérdida de viabilidad. La Organización Nacional de Trasplantes confirmó el hito, que amplía significativamente el número de corazones aptos para trasplante.",
+      "tags": ["salud", "ciencia"]
+    },
+    {
+      "id": "p12",
+      "scenario": "DEFINITIVE_TRUE",
+      "authorIndex": 9,
+      "title": "La sonda Philae de la misión Rosetta logró posarse sobre un cometa en 2014",
+      "body": "El 12 de noviembre de 2014, el módulo de aterrizaje Philae, transportado por la sonda Rosetta de la Agencia Espacial Europea, se posó sobre la superficie del cometa 67P/Churyumov-Gerasimenko, convirtiéndose en el primer artefacto humano en aterrizar de forma controlada sobre un cometa. Pese a un anclaje imperfecto que dejó la sonda en una posición con poca luz solar, Philae logró transmitir datos científicos durante varios días.",
+      "tags": ["espacio", "ciencia"]
+    },
+    {
+      "id": "p13",
+      "scenario": "DEFINITIVE_TRUE",
+      "authorIndex": 4,
+      "title": "El Acuerdo de París sobre cambio climático fue adoptado por 196 partes en la COP21 de 2015",
+      "body": "En diciembre de 2015, durante la 21ª Conferencia de las Partes de Naciones Unidas sobre cambio climático celebrada en París, 196 partes adoptaron un acuerdo vinculante para limitar el calentamiento global muy por debajo de 2°C respecto a niveles preindustriales, con el objetivo de esforzarse por no superar 1,5°C. El acuerdo entró en vigor en noviembre de 2016 tras alcanzar el umbral de ratificaciones necesario.",
+      "tags": ["política", "medioambiente"]
+    },
+    {
+      "id": "p14",
+      "scenario": "DEFINITIVE_TRUE",
+      "authorIndex": 10,
+      "title": "La OMS declaró en mayo de 2023 el fin de la emergencia sanitaria internacional por COVID-19",
+      "body": "El director general de la Organización Mundial de la Salud anunció el 5 de mayo de 2023 el fin de la Emergencia de Salud Pública de Importancia Internacional por COVID-19, más de tres años después de su declaración inicial en enero de 2020. La OMS subrayó que esto no significa que la pandemia haya terminado como amenaza sanitaria global, sino que el virus ha pasado a gestionarse como el resto de enfermedades respiratorias establecidas.",
+      "tags": ["salud", "actualidad"]
+    },
+    {
+      "id": "p15",
+      "scenario": "DEFINITIVE_FALSE",
+      "authorIndex": 5,
+      "title": "Beber lejía diluida cura el COVID-19 y otras enfermedades graves",
+      "body": "Ciertos grupos en internet han promovido durante años el consumo de una solución de clorito de sodio diluido, comercializada bajo el nombre de 'Solución Mineral Milagrosa', afirmando que cura el COVID-19, el autismo, el cáncer y otras enfermedades. Agencias sanitarias de numerosos países han advertido de que se trata en realidad de una forma de lejía industrial cuya ingesta puede provocar daños graves e irreversibles en el sistema digestivo, y no existe ninguna evidencia científica que respalde su supuesta eficacia curativa.",
+      "tags": ["salud", "desinformación"]
+    },
+    {
+      "id": "p16",
+      "scenario": "DEFINITIVE_FALSE",
+      "authorIndex": 6,
+      "title": "La Tierra es plana y las agencias espaciales ocultan las pruebas",
+      "body": "El movimiento terraplanista sostiene que la Tierra tiene forma de disco plano y que gobiernos y agencias espaciales de todo el mundo colaboran en un encubrimiento a gran escala para ocultar este supuesto hecho. La evidencia observacional acumulada durante siglos —desde la curvatura observable desde gran altitud hasta la física orbital que permite predecir eclipses con precisión milimétrica— confirma de forma consistente que la Tierra es un esferoide achatado, tal y como establece el consenso científico desde hace más de dos mil años.",
+      "tags": ["ciencia", "conspiración", "desinformación"]
+    },
+    {
+      "id": "p17",
+      "scenario": "DEFINITIVE_FALSE",
+      "authorIndex": 7,
+      "title": "Las vacunas contra la COVID-19 contienen microchips para rastrear a la población",
+      "body": "Durante la campaña de vacunación contra la COVID-19 circuló ampliamente la afirmación de que las dosis contenían microchips capaces de rastrear la ubicación de las personas vacunadas. Un microchip funcional de rastreo requiere una fuente de energía, una antena y componentes electrónicos de un tamaño muy superior al que permite una aguja de vacunación; ningún análisis independiente de los viales ha encontrado jamás ese tipo de componentes, y la afirmación ha sido desmentida por agencias reguladoras y expertos en electrónica de todo el mundo.",
+      "tags": ["salud", "vacunas", "desinformación"]
+    },
+    {
+      "id": "p18",
+      "scenario": "DEFINITIVE_FALSE",
+      "authorIndex": 8,
+      "title": "El calentamiento global es un invento de la comunidad científica para conseguir financiación",
+      "body": "Se afirma con frecuencia que el consenso científico sobre el calentamiento global de origen humano es una fabricación orquestada por investigadores interesados en asegurarse subvenciones. Más del 97% de los estudios climáticos revisados por pares coinciden en que el calentamiento observado desde mediados del siglo XX es predominantemente antropogénico, una conclusión respaldada por múltiples líneas de evidencia independientes —registros de temperatura, núcleos de hielo, nivel del mar— recopiladas por miles de científicos de instituciones y países distintos sin relación entre sí.",
+      "tags": ["medioambiente", "ciencia", "desinformación"]
+    },
+    {
+      "id": "p19",
+      "scenario": "DEFINITIVE_UNVERIFIABLE",
+      "authorIndex": 9,
+      "title": "El Triángulo de las Bermudas provoca la desaparición de barcos y aviones por fenómenos paranormales",
+      "body": "Desde mediados del siglo XX se atribuye a una región del Atlántico conocida como el Triángulo de las Bermudas la desaparición inexplicable de embarcaciones y aeronaves debido a supuestos fenómenos paranormales o anomalías desconocidas. Estudios estadísticos posteriores muestran que la tasa de incidentes en la zona no es superior a la de otras rutas marítimas y aéreas con tráfico y condiciones meteorológicas comparables, pero no existe forma de verificar ni descartar por completo las causas atribuidas a cada desaparición histórica concreta con la información disponible.",
+      "tags": ["conspiración", "misterio"]
+    },
+    {
+      "id": "p20",
+      "scenario": "DISPUTED",
+      "authorIndex": 10,
+      "title": "Los videojuegos violentos incrementan el comportamiento agresivo en la adolescencia",
+      "body": "La relación entre el consumo de videojuegos violentos y la agresividad en adolescentes continúa siendo objeto de debate entre psicólogos. Algunos metaanálisis encuentran una asociación estadística modesta con medidas de agresividad a corto plazo en entorno de laboratorio, mientras que estudios longitudinales de mayor tamaño no logran replicar un efecto significativo sobre conducta violenta real fuera del laboratorio, y señalan otros factores familiares y sociales como predictores mucho más determinantes.",
+      "tags": ["psicología", "sociedad"]
     }
   ]
 }

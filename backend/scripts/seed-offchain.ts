@@ -1,12 +1,12 @@
 /**
- * Seed de datos off-chain sin equivalente on-chain: perfiles enriquecidos
- * (UserProfile), favoritos (Favorite), follows (Follow) y notificaciones
- * (Notification).
+ * Seed de datos off-chain sin equivalente on-chain: contenido real de las
+ * publicaciones, perfiles enriquecidos (UserProfile), favoritos (Favorite),
+ * follows (Follow) y notificaciones (Notification).
  *
  * Requiere que, antes de ejecutarse:
- * 1. `blockchain/scripts/seed.ts` haya registrado las 7 publicaciones de
- *    `docs/seed/articles.json` on-chain (p1..p7) y generado sus
- *    votos/reaperturas/reclamaciones/predicciones.
+ * 1. `blockchain/scripts/seed.ts` haya registrado las publicaciones de
+ *    `docs/seed/articles.json` on-chain y generado sus votos/reaperturas/
+ *    reclamaciones/predicciones.
  * 2. El indexador del backend (`src/services/indexer.ts`) ya haya procesado
  *    ese historial, de modo que las filas de `publications` (con sus
  *    `contentHash` reales) existan en Postgres.
@@ -45,18 +45,27 @@ function accountAddress(index: number): `0x${string}` {
 type SeedArticle = {
   id: string;
   scenario: string;
+  authorIndex: number;
   title: string;
   body: string;
   tags: string[];
 };
 
+type SeedProfile = {
+  signerIndex: number;
+  displayName: string;
+  avatarImg: number;
+  email?: string;
+};
+
 type SeedFile = {
   accounts: {
     admin: number;
-    authors: Record<string, number>;
+    authorPool: number[];
     validators: number[];
     predictors: number[];
   };
+  profiles: SeedProfile[];
   articles: SeedArticle[];
 };
 
@@ -74,18 +83,8 @@ async function main() {
   const articlesById = new Map(seed.articles.map((a) => [a.id, a]));
   const hashOf = (id: string): `0x${string}` => contentHashOf(articlesById.get(id)!);
 
-  // Direcciones reales derivadas del mnemonic de Hardhat.
-  const author = (id: string) => accountAddress(seed.accounts.authors[id]);
-  const validator = (i: number) => accountAddress(seed.accounts.validators[i]);
-
-  const p3Author = author("p3"); // DEFINITIVE / TRUE
-  const p4Author = author("p4"); // DEFINITIVE / FALSE
-  const p7Author = author("p7"); // reabierto: ronda 0 DISPUTED -> ronda 1 DEFINITIVE / FALSE
-  const val0 = validator(0);
-  const val1 = validator(1);
-  const val2 = validator(2);
-  const val3 = validator(3);
-  const val4 = validator(4);
+  const validators = seed.accounts.validators.map(accountAddress);
+  const [val0, val1, val2, val3, val4, val5] = validators;
 
   // 0. Título/cuerpo/tags reales — el indexador ya creó una fila por cada
   // contentHash (evento PublicationRegistered), pero solo con contentHash y
@@ -103,79 +102,76 @@ async function main() {
   }
   console.log(`Contenido real (título/cuerpo/tags) aplicado a ${seed.articles.length} publicaciones.`);
 
-  // 1. Perfiles enriquecidos — 5 direcciones distintas, mezcla autores y validadores.
-  const profiles: Array<{ address: `0x${string}`; displayName: string; avatarUrl: string; email?: string }> = [
-    { address: p3Author, displayName: "Marta Sánchez Ibáñez", avatarUrl: `https://i.pravatar.cc/150?u=${p3Author}`, email: "marta.sanchez@example.com" },
-    { address: p4Author, displayName: "Alejandro Ruiz Molina", avatarUrl: `https://i.pravatar.cc/150?u=${p4Author}` },
-    { address: p7Author, displayName: "Lucía Fernández Prieto", avatarUrl: `https://i.pravatar.cc/150?u=${p7Author}`, email: "lucia.fernandez@example.com" },
-    { address: val0, displayName: "Javier Moreno Castillo", avatarUrl: `https://i.pravatar.cc/150?u=${val0}` },
-    { address: val1, displayName: "Carmen Torres Delgado", avatarUrl: `https://i.pravatar.cc/150?u=${val1}`, email: "carmen.torres@example.com" },
-  ];
-
-  for (const p of profiles) {
-    await profileRepository.upsert(p.address, {
-      displayName: p.displayName,
-      avatarUrl: p.avatarUrl,
-      ...(p.email ? { email: p.email } : {}),
+  // 1. Perfiles enriquecidos — uno por cada autor/validador/predictor del
+  // dataset, con nombre o nickname y avatar creíbles (no fotos ni personas
+  // reales).
+  for (const profile of seed.profiles) {
+    const address = accountAddress(profile.signerIndex);
+    await profileRepository.upsert(address, {
+      displayName: profile.displayName,
+      avatarUrl: `https://i.pravatar.cc/150?img=${profile.avatarImg}`,
+      ...(profile.email ? { email: profile.email } : {}),
     });
   }
-  console.log(`Perfiles enriquecidos creados/actualizados: ${profiles.length}`);
+  console.log(`Perfiles enriquecidos creados/actualizados: ${seed.profiles.length}`);
 
-  // 2. Favoritos — 4 combinaciones (validador, contentHash), sin repetir.
-  const favorites: Array<{ user: `0x${string}`; articleId: string }> = [
-    { user: val0, articleId: "p3" },
-    { user: val0, articleId: "p5" },
-    { user: val1, articleId: "p4" },
-    { user: val2, articleId: "p7" },
-  ];
-
+  // 2. Favoritos — varias combinaciones (validador, artículo DEFINITIVE),
+  // sin repetir.
+  const favoriteArticleIds = ["p3", "p5", "p7", "p11", "p13", "p15", "p18", "p19"];
+  const favoriteUsers = [val0, val1, val2, val0, val1, val2, val0, val1];
   let favoritesCreated = 0;
-  for (const f of favorites) {
-    const contentHash = hashOf(f.articleId);
-    const already = await favoriteRepository.exists(f.user, contentHash);
-    if (already) continue;
-    await favoriteRepository.add(f.user, contentHash);
+  for (let i = 0; i < favoriteArticleIds.length; i++) {
+    const user = favoriteUsers[i];
+    const contentHash = hashOf(favoriteArticleIds[i]);
+    if (await favoriteRepository.exists(user, contentHash)) continue;
+    await favoriteRepository.add(user, contentHash);
     favoritesCreated++;
   }
   console.log(`Favoritos creados: ${favoritesCreated}`);
 
   // 3. Follows — combinaciones DISTINTAS a las de favoritos, para demostrar
   // que seguir no implica guardar como favorito ni viceversa.
-  const follows: Array<{ user: `0x${string}`; articleId: string }> = [
-    { user: val1, articleId: "p1" },
-    { user: val2, articleId: "p2" },
-    { user: val3, articleId: "p6" },
-    { user: val4, articleId: "p7" },
-  ];
-
+  const followArticleIds = ["p1", "p2", "p6", "p9", "p10", "p12", "p17", "p20"];
+  const followUsers = [val1, val2, val3, val4, val5, val3, val4, val5];
   let followsCreated = 0;
-  for (const f of follows) {
-    const contentHash = hashOf(f.articleId);
-    const already = await followRepository.exists(f.user, contentHash);
-    if (already) continue;
-    await followRepository.add(f.user, contentHash);
+  for (let i = 0; i < followArticleIds.length; i++) {
+    const user = followUsers[i];
+    const contentHash = hashOf(followArticleIds[i]);
+    if (await followRepository.exists(user, contentHash)) continue;
+    await followRepository.add(user, contentHash);
     followsCreated++;
   }
   console.log(`Follows creados: ${followsCreated}`);
 
-  // 4. Notificaciones — cubriendo los 3 tipos posibles.
-  // CONSENSUS_REACHED: artículos que ya resolvieron ronda (p3, p4, p5, p6, p7).
-  // REOPENED / RETROACTIVE_APPLIED: solo tienen sentido para p7 (el único
-  // artículo reabierto del dataset).
-  await notificationRepository.createMany([val0, val1], hashOf("p3"), "CONSENSUS_REACHED");
-  await notificationRepository.createMany([val2], hashOf("p4"), "CONSENSUS_REACHED");
-  await notificationRepository.createMany([val3, val4], hashOf("p7"), "REOPENED");
+  // 4. Notificaciones — cubriendo los 3 tipos posibles. CONSENSUS_REACHED
+  // sobre varios artículos ya DEFINITIVE/DISPUTED; REOPENED y
+  // RETROACTIVE_APPLIED solo tienen sentido para p7 (el único artículo
+  // reabierto del dataset).
+  const consensusNotifyTargets: Array<[string, `0x${string}`[]]> = [
+    ["p3", [val0, val1]],
+    ["p4", [val2]],
+    ["p5", [val3]],
+    ["p6", [val1, val2]],
+    ["p11", [val0]],
+    ["p15", [val4]],
+    ["p18", [val5]],
+    ["p19", [val0, val3]],
+  ];
+  for (const [articleId, users] of consensusNotifyTargets) {
+    await notificationRepository.createMany(users, hashOf(articleId), "CONSENSUS_REACHED");
+  }
+  await notificationRepository.createMany([val3, val4, val5], hashOf("p7"), "REOPENED");
   await notificationRepository.createMany([val0], hashOf("p7"), "RETROACTIVE_APPLIED");
-  await notificationRepository.createMany([val1, val2], hashOf("p6"), "CONSENSUS_REACHED");
   console.log("Notificaciones creadas (o ya existentes, deduplicadas por el repositorio).");
 
-  // Marcar 2-3 notificaciones ya existentes como leídas.
+  // Marcar varias notificaciones ya existentes como leídas.
   const toMarkRead = await prisma.notification.findMany({
     where: {
       OR: [
         { userAddress: val0, contentHash: hashOf("p3"), type: "CONSENSUS_REACHED" },
         { userAddress: val3, contentHash: hashOf("p7"), type: "REOPENED" },
         { userAddress: val1, contentHash: hashOf("p6"), type: "CONSENSUS_REACHED" },
+        { userAddress: val0, contentHash: hashOf("p19"), type: "CONSENSUS_REACHED" },
       ],
     },
   });
