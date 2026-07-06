@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, lightTheme, darkTheme } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { config } from "@/lib/wagmi";
@@ -16,11 +16,18 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 const queryClient = new QueryClient();
 
+// Azul de marca (#2563EB) también en la cartera conectada — RainbowKit no
+// lee tokens de Tailwind, así que se repite el valor aquí.
+const rainbowKitTheme = {
+  lightMode: lightTheme({ accentColor: "#2563EB" }),
+  darkMode: darkTheme({ accentColor: "#2563EB" }),
+};
+
 export default function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider theme={rainbowKitTheme}>
           <BrowserRouter>
             <Routes>
               <Route element={<Layout />}>

@@ -243,7 +243,7 @@ export default function Profile() {
               </p>
               <Link
                 to="/validate"
-                className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-dark"
               >
                 Practicar predicciones
               </Link>
