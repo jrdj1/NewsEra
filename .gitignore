@@ -4,6 +4,7 @@ node_modules/
 *.local
 dist/
 build/
+*.tsbuildinfo
 blockchain/artifacts/
 blockchain/cache/
 blockchain/deployments/localhost/

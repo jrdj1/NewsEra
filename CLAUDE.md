@@ -28,6 +28,8 @@ NewsEra/
 ├── backend/      → Node.js + TypeScript + Hono + Prisma + PostgreSQL
 ├── frontend/     → React + Vite (SPA) + TypeScript + Tailwind CSS v4 + shadcn/ui
 │                   + wagmi v2 + viem + RainbowKit + React Router v6
+├── demo/         → Copia estática de frontend/ para demo pública sin backend ni blockchain
+│                   reales (wagmi/RainbowKit sustituidos por shims, datos en memoria) — ver demo/README.md
 ├── docs/         → metricas.json (auto-generado), ERS.md, casos-de-uso.md, abis/, prompts/, reports/
 ├── scripts/      → generar-metricas.js y utilidades de automatización
 └── .github/      → GitHub Actions workflows

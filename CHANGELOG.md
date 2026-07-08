@@ -19,6 +19,7 @@ Versiones alineadas con sprints del TFG (Sprint 2 = v0.2.0, etc.).
 - Buscador de palabras clave (título/cuerpo, con debounce) y filtro por etiquetas en el feed de Inicio; nuevos `search` en `GET /api/v1/publications` y `GET /api/v1/publications/tags` (etiquetas realmente en uso — son libres, sin catálogo predefinido).
 - Página `/validate/welcome`: celebración al alcanzar `MIN_REPUTATION_TO_VALIDATE` y convertirse en validador, explicando qué cambia.
 - Nav de `Header.tsx`: el enlace `/validate` muestra "Predecir" en vez de "Validar" cuando la dirección conectada aún no puede votar de verdad.
+- Nueva carpeta `demo/`: copia estática e independiente de `frontend/` para publicar una demo pública gratuita (Vercel/Netlify/Cloudflare Pages) sin backend ni blockchain reales. `wagmi` y `@rainbow-me/rainbowkit` se sustituyen por shims locales vía alias de Vite (cartera fija ya elegible para validar, lecturas/escrituras resueltas contra datos en memoria); `lib/api.ts` mantiene la misma interfaz pero enruta contra ese estado en vez de hacer `fetch`. Reutiliza el dataset `docs/seed/articles.json` para reproducir fielmente el estado real sembrado. El estado mutable (votos, publicaciones, favoritos, notificaciones, perfil) se persiste en `localStorage` tras cada escritura y se restaura al cargar, con un botón "Reiniciar demo" en `/about` para volver al punto de partida. Ver `demo/README.md`.
 
 ### Cambiado
 - Puerto del frontend en Docker remapeado de `5174` a `8080` en el host (`docker-compose.yml`, `Makefile`) — el puerto interno del contenedor no cambia.
