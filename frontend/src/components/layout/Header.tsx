@@ -3,6 +3,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link, NavLink } from "react-router-dom";
 import { useAccount } from "wagmi";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useReputationStatus } from "@/hooks/useReputationStatus";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 
 function HomeIcon() {
@@ -38,6 +39,16 @@ function ValidateIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
       <path d="M9 12l2 2 4-4" />
       <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
+function PredictIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-2 1.8-2.5 3" strokeLinecap="round" />
+      <circle cx="12" cy="16.5" r="0.75" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -87,10 +98,18 @@ function NotificationBell({ address }: { address: string }) {
 
 export default function Header() {
   const { address, isConnected } = useAccount();
+  const { canValidate } = useReputationStatus(address);
+
+  const baseLinks =
+    isConnected && canValidate === false
+      ? navLinks.map((link) =>
+          link.to === "/validate" ? { ...link, label: "Predecir", Icon: PredictIcon } : link,
+        )
+      : navLinks;
 
   const links = isConnected
-    ? [...navLinks, { to: "/profile", label: "Perfil", end: false, Icon: ProfileIcon }]
-    : navLinks;
+    ? [...baseLinks, { to: "/profile", label: "Perfil", end: false, Icon: ProfileIcon }]
+    : baseLinks;
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-zinc-200 bg-white/90 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/90">

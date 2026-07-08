@@ -22,6 +22,7 @@ export const publicationService = {
     result?: string;
     tags?: string;
     author?: string;
+    search?: string;
     sort?: PublicationSort;
   }): Promise<Paginated<unknown>> {
     const page = Math.max(1, Number(params.page) || 1);
@@ -35,10 +36,15 @@ export const publicationService = {
       result: params.result,
       tags,
       author: params.author ? normalizeAddress(params.author) : undefined,
+      search: params.search?.trim() || undefined,
       sort: params.sort,
     });
 
     return { items, page, limit, total };
+  },
+
+  async listTags(): Promise<string[]> {
+    return publicationRepository.listDistinctTags();
   },
 
   async getByHash(hash: string) {

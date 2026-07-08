@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount, useReadContract, useReadContracts, useSignMessage } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useValidatorHistory, useReputationHistory } from "@/hooks/useValidatorProfile";
+import { useValidatorHistory, useReputationHistory, useActivity } from "@/hooks/useValidatorProfile";
 import { useUserDetail } from "@/hooks/useUsers";
 import { useEnrichedProfile, useFavorites, useInvalidateProfile } from "@/hooks/useProfile";
 import { usePublications } from "@/hooks/usePublications";
@@ -17,9 +17,12 @@ import { Badge, consensusTone } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/states";
 import { PublicationCard } from "@/components/PublicationCard";
+import { ReputationHistoryList } from "@/components/ReputationHistoryList";
+import { ActivityList } from "@/components/ActivityList";
 
 const TABS = [
   "reputacion",
+  "actividad",
   "validaciones",
   "retroactivas",
   "reaperturas",
@@ -31,6 +34,7 @@ type Tab = (typeof TABS)[number];
 
 const TAB_LABELS: Record<Tab, string> = {
   reputacion: "Reputación",
+  actividad: "Todas las transacciones",
   validaciones: "Mis votaciones",
   retroactivas: "Reclamaciones",
   reaperturas: "Reaperturas",
@@ -171,6 +175,7 @@ function EditProfileForm({ address }: { address: string }) {
 export default function Profile() {
   const { address, isConnected } = useAccount();
   const [tab, setTab] = useState<Tab>("reputacion");
+  const [activityPage, setActivityPage] = useState(1);
 
   const { data: reputation } = useReadContract({
     ...reputationSystem,
@@ -183,6 +188,7 @@ export default function Profile() {
   const { data: reputationHistory } = useReputationHistory(address);
   const { data: history } = useValidatorHistory(address);
   const { data: reopenRequests } = useReopenRequests(address);
+  const { data: activity } = useActivity(address, activityPage, 10);
   const { data: publications } = usePublications(address ? { author: address } : {});
   const { data: favorites } = useFavorites(address);
 
@@ -254,25 +260,18 @@ export default function Profile() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
               Evolución de reputación
             </h2>
-            {!reputationHistory || reputationHistory.length === 0 ? (
-              <EmptyState message="Sin variaciones de reputación registradas todavía." />
-            ) : (
-              <Card className="divide-y divide-zinc-100 p-0 dark:divide-zinc-800">
-                {reputationHistory.map((entry, i) => (
-                  <div key={i} className="flex items-center justify-between px-5 py-3 text-sm">
-                    <span className="font-mono text-xs text-zinc-400">
-                      {entry.contentHash.slice(0, 10)}… (ronda {entry.round})
-                    </span>
-                    <span className={entry.delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-                      {entry.delta > 0 ? "+" : ""}
-                      {entry.delta}
-                    </span>
-                  </div>
-                ))}
-              </Card>
-            )}
+            <ReputationHistoryList entries={reputationHistory?.items ?? []} />
           </div>
         </div>
+      )}
+
+      {tab === "actividad" && (
+        <ActivityList
+          entries={activity?.items ?? []}
+          page={activityPage}
+          totalPages={activity ? Math.max(1, Math.ceil(activity.total / activity.limit)) : 1}
+          onPageChange={setActivityPage}
+        />
       )}
 
       {tab === "validaciones" && (

@@ -1,6 +1,7 @@
 import { normalizeAddress } from "../lib/address.js";
 import { validatorRepository } from "../repositories/validator.repository.js";
 import { publicationRepository } from "../repositories/publication.repository.js";
+import { profileRepository } from "../repositories/profile.repository.js";
 import { validatorService } from "./validator.service.js";
 import type { Paginated } from "../types/api.js";
 
@@ -8,6 +9,8 @@ export interface UserSummary {
   address: string;
   reputationScore: number;
   articleCount: number;
+  displayName: string | null;
+  avatarUrl: string | null;
 }
 
 /**
@@ -30,18 +33,29 @@ export const userService = {
 
     const byAddress = new Map<string, UserSummary>();
     for (const v of validators) {
-      byAddress.set(v.address, { address: v.address, reputationScore: v.reputationScore, articleCount: 0 });
+      byAddress.set(v.address, { address: v.address, reputationScore: v.reputationScore, articleCount: 0, displayName: null, avatarUrl: null });
     }
     for (const a of authorStats) {
       const existing = byAddress.get(a.authorAddress);
       if (existing) existing.articleCount = a.articleCount;
-      else byAddress.set(a.authorAddress, { address: a.authorAddress, reputationScore: 0, articleCount: a.articleCount });
+      else byAddress.set(a.authorAddress, { address: a.authorAddress, reputationScore: 0, articleCount: a.articleCount, displayName: null, avatarUrl: null });
+    }
+
+    const profiles = await profileRepository.listByAddresses([...byAddress.keys()]);
+    for (const p of profiles) {
+      const existing = byAddress.get(p.address);
+      if (existing) {
+        existing.displayName = p.displayName;
+        existing.avatarUrl = p.avatarUrl;
+      }
     }
 
     let all = [...byAddress.values()];
     if (search) {
       const needle = search.toLowerCase();
-      all = all.filter((u) => u.address.toLowerCase().includes(needle));
+      all = all.filter(
+        (u) => u.address.toLowerCase().includes(needle) || u.displayName?.toLowerCase().includes(needle),
+      );
     }
     all.sort((a, b) =>
       sort === "articles" ? b.articleCount - a.articleCount : b.reputationScore - a.reputationScore,

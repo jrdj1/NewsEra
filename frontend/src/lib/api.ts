@@ -96,6 +96,8 @@ export interface UserSummary {
   address: string;
   reputationScore: number;
   articleCount: number;
+  displayName: string | null;
+  avatarUrl: string | null;
 }
 
 export interface ValidatorDetail {
@@ -117,10 +119,40 @@ export interface ValidationHistoryEntry {
   createdAt: string;
 }
 
+export type ReputationReason =
+  | "VOTE_REWARD"
+  | "VOTE_PENALTY"
+  | "PUBLISH_REWARD"
+  | "PUBLISH_PENALTY"
+  | "RETROACTIVE"
+  | "PREDICTION_REWARD"
+  | "PREDICTION_PENALTY"
+  | "REGISTERED";
+
 export interface ReputationHistoryEntry {
-  contentHash: string;
-  round: number;
+  id: number;
+  address: string;
+  contentHash: string | null;
+  round: number | null;
   delta: number;
+  newScore: number;
+  reason: ReputationReason;
+  txHash: string | null;
+  blockNumber: string;
+  createdAt: string;
+}
+
+export type ActivityType = "PUBLICATION" | "VALIDATION" | "REOPEN_REQUEST" | "RETROACTIVE_CLAIM";
+
+export interface ActivityItem {
+  type: ActivityType;
+  contentHash: string;
+  title: string;
+  round: number | null;
+  vote: string | null;
+  netDelta: number | null;
+  txHash: string | null;
+  createdAt: string;
 }
 
 export interface EnrichedProfile {

@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useUserDetail } from "@/hooks/useUsers";
-import { useValidatorHistory } from "@/hooks/useValidatorProfile";
+import { useValidatorHistory, useReputationHistory, useActivity } from "@/hooks/useValidatorProfile";
 import { useEnrichedProfile } from "@/hooks/useProfile";
 import { usePublications } from "@/hooks/usePublications";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
 import { PublicationCard } from "@/components/PublicationCard";
+import { ReputationHistoryList } from "@/components/ReputationHistoryList";
+import { ActivityList } from "@/components/ActivityList";
 
 const OUTCOME_LABELS: Record<string, { label: string; tone: "success" | "danger" | "neutral" }> = {
   won: { label: "Ganada", tone: "success" },
@@ -16,8 +19,11 @@ const OUTCOME_LABELS: Record<string, { label: string; tone: "success" | "danger"
 
 export default function UserProfile() {
   const { address } = useParams<{ address: string }>();
+  const [activityPage, setActivityPage] = useState(1);
   const { data: detail, isLoading, isError, refetch } = useUserDetail(address);
   const { data: history } = useValidatorHistory(address);
+  const { data: reputationHistory } = useReputationHistory(address);
+  const { data: activity } = useActivity(address, activityPage, 10);
   const { data: profile } = useEnrichedProfile(address);
   const { data: publications } = usePublications(address ? { author: address } : {});
 
@@ -73,6 +79,25 @@ export default function UserProfile() {
           ))}
         </Card>
       )}
+
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
+        Movimientos de reputación
+      </h2>
+      <div className="mb-10">
+        <ReputationHistoryList entries={reputationHistory?.items ?? []} />
+      </div>
+
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
+        Todas las transacciones
+      </h2>
+      <div className="mb-10">
+        <ActivityList
+          entries={activity?.items ?? []}
+          page={activityPage}
+          totalPages={activity ? Math.max(1, Math.ceil(activity.total / activity.limit)) : 1}
+          onPageChange={setActivityPage}
+        />
+      </div>
 
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-zinc-400">
         Artículos publicados

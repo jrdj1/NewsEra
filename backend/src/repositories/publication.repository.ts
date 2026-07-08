@@ -9,16 +9,25 @@ export interface ListPublicationsParams {
   result?: string;
   tags?: string[];
   author?: string;
+  search?: string;
   sort?: PublicationSort;
 }
 
 export const publicationRepository = {
-  async list({ page, limit, state, result, tags, author, sort = "recent" }: ListPublicationsParams) {
+  async list({ page, limit, state, result, tags, author, search, sort = "recent" }: ListPublicationsParams) {
     const where = {
       ...(state ? { consensusState: state } : {}),
       ...(result ? { currentResult: result } : {}),
       ...(author ? { authorAddress: author } : {}),
       ...(tags && tags.length > 0 ? { tags: { hasSome: tags } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: "insensitive" as const } },
+              { body: { contains: search, mode: "insensitive" as const } },
+            ],
+          }
+        : {}),
     };
 
     const orderBy =
@@ -126,6 +135,28 @@ export const publicationRepository = {
     return prisma.publication.update({
       where: { contentHash },
       data: { currentRound: newRound, reopenRequestCount: 0, consensusState: "PENDING", currentResult: null },
+    });
+  },
+
+  /**
+   * Etiquetas distintas ya en uso (las etiquetas son libres — cualquier autor
+   * puede escribir una nueva al publicar, no hay catálogo predefinido — así
+   * que el filtro del feed se puebla con lo que realmente existe en vez de
+   * una lista fija). Volumen de artículos bajo (prototipo): se listan todas
+   * y se deduplican en memoria en vez de un `unnest` SQL a mano.
+   */
+  async listDistinctTags(): Promise<string[]> {
+    const rows = await prisma.publication.findMany({ select: { tags: true } });
+    const set = new Set<string>();
+    for (const r of rows) for (const t of r.tags) set.add(t);
+    return [...set].sort((a, b) => a.localeCompare(b));
+  },
+
+  async findTitlesByHashes(contentHashes: string[]) {
+    if (contentHashes.length === 0) return [];
+    return prisma.publication.findMany({
+      where: { contentHash: { in: contentHashes } },
+      select: { contentHash: true, title: true },
     });
   },
 

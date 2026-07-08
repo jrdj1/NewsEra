@@ -1,13 +1,13 @@
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAccount, useReadContract } from "wagmi";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { usePredictableArticles, type PredictableArticle } from "@/hooks/usePredictableArticles";
 import { useVotableArticles } from "@/hooks/useVotableArticles";
+import { useReputationStatus } from "@/hooks/useReputationStatus";
 import { useTransactionState } from "@/hooks/useTransactionState";
 import {
   validationRegistry,
-  reputationSystem,
   voteToIndex,
   type VoteLabel,
   MIN_REPUTATION_TO_VALIDATE,
@@ -118,24 +118,25 @@ function ReputationHeader({ reputation, canValidate }: { reputation: number; can
 export default function Validate() {
   const { address, isConnected } = useAccount();
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  const { data: reputation } = useReadContract({
-    ...reputationSystem,
-    functionName: "getReputation",
-    args: address ? [address] : undefined,
-    query: { enabled: !!address },
-  });
-  const { data: canValidate } = useReadContract({
-    ...reputationSystem,
-    functionName: "canValidate",
-    args: address ? [address] : undefined,
-    query: { enabled: !!address },
-  });
+  const { reputation, canValidate } = useReputationStatus(address);
 
   const { data: votable, isLoading: isLoadingVotable } = useVotableArticles(canValidate ? address : undefined);
   const { data: predictable, isLoading: isLoadingPredictable } = usePredictableArticles(
     canValidate === false ? address : undefined,
   );
+
+  // Detecta la transición predictor -> validador (solo dentro de esta sesión:
+  // si ya eras validador al entrar, `prevCanValidate` arranca en `true` y no
+  // se dispara la celebración de nuevo en cada recarga).
+  const prevCanValidateRef = useRef<boolean | undefined>(undefined);
+  useEffect(() => {
+    if (prevCanValidateRef.current === false && canValidate === true) {
+      navigate("/validate/welcome");
+    }
+    prevCanValidateRef.current = canValidate;
+  }, [canValidate, navigate]);
 
   if (!isConnected || !address) {
     return (
@@ -147,12 +148,11 @@ export default function Validate() {
     );
   }
 
-  const repValue = reputation !== undefined ? Number(reputation) : 0;
   const isLoading = canValidate === undefined || isLoadingVotable || isLoadingPredictable;
 
   return (
     <div>
-      <ReputationHeader reputation={repValue} canValidate={!!canValidate} />
+      <ReputationHeader reputation={reputation} canValidate={!!canValidate} />
 
       {isLoading && <LoadingState label="Buscando artículos..." />}
 
@@ -178,6 +178,7 @@ export default function Validate() {
               key={article.publication.contentHash}
               publication={article.publication}
               actions={<PredictActions article={article} />}
+              hideConsensus
             />
           ))}
         </div>

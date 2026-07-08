@@ -21,6 +21,8 @@ import { ConsensusBadge } from "@/components/ui/ConsensusBadge";
 import { Card } from "@/components/ui/card";
 import { LoadingState, ErrorState } from "@/components/ui/states";
 import { PublicationCard } from "@/components/PublicationCard";
+import { UserLabel } from "@/components/UserLabel";
+import { tagColor } from "@/lib/tagColor";
 
 const STATE_LABELS: Record<string, string> = {
   PENDING: "En votación",
@@ -33,10 +35,6 @@ const VOTE_LABELS_ES: Record<VoteLabel, string> = {
   FALSE: "Falso",
   UNVERIFIABLE: "No verificable",
 };
-
-function shortAddress(a: string) {
-  return `${a.slice(0, 6)}…${a.slice(-4)}`;
-}
 
 export default function Article() {
   const { hash } = useParams<{ hash: string }>();
@@ -189,18 +187,21 @@ export default function Article() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <ConsensusBadge state={publication.consensusState} result={publication.currentResult} />
         <span className="text-xs text-zinc-400">Ronda {publication.currentRound}</span>
+        <Link
+          to={`/article/${hash}/votes`}
+          className="text-xs text-zinc-400 underline-offset-2 hover:text-brand hover:underline"
+        >
+          {publication.validations?.length ?? 0} voto{(publication.validations?.length ?? 0) === 1 ? "" : "s"} — ver recuento
+        </Link>
       </div>
 
       <h1 className="mb-2 text-3xl font-bold tracking-tight">{publication.title || "(sin título)"}</h1>
-      <p className="mb-6 font-mono text-xs text-zinc-400">
-        Autor:{" "}
-        <Link to={`/users/${publication.authorAddress}`} className="underline underline-offset-2">
-          {shortAddress(publication.authorAddress)}
-        </Link>{" "}
-        · {new Date(publication.createdAt).toLocaleString()}
+      <p className="mb-6 flex flex-wrap items-center gap-1 text-xs text-zinc-400">
+        Autor: <UserLabel address={publication.authorAddress} />
+        <span>· {new Date(publication.createdAt).toLocaleString()}</span>
       </p>
 
       <article className="mb-8 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
@@ -222,7 +223,7 @@ export default function Article() {
       {publication.tags.length > 0 && (
         <div className="mb-8 flex flex-wrap gap-2">
           {publication.tags.map((t) => (
-            <span key={t} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800">
+            <span key={t} className={`rounded-full px-2.5 py-1 text-xs font-medium ${tagColor(t)}`}>
               #{t}
             </span>
           ))}
@@ -266,11 +267,9 @@ export default function Article() {
           {voters.length > 0 && (
             <div>
               <p className="mb-1 text-xs text-zinc-400">Ya han votado (sin revelar el sentido del voto):</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {voters.map((v) => (
-                  <span key={v} className="font-mono text-xs text-zinc-500">
-                    {shortAddress(v)}
-                  </span>
+                  <UserLabel key={v} address={v} className="text-xs text-zinc-500" />
                 ))}
               </div>
             </div>
@@ -328,8 +327,9 @@ export default function Article() {
         <p className="mb-8 text-sm text-zinc-500">Ya has votado este artículo en la ronda actual.</p>
       )}
 
-      {/* Reapertura */}
-      {isConcluded && isConnected && !alreadyVoted && (
+      {/* Reapertura — solo para quienes ya tienen reputación suficiente para
+          validar (el contrato revierte con InsufficientReputation si no) */}
+      {isConcluded && isConnected && !!canValidate && !alreadyVoted && (
         <Card className="mb-8 p-5">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
             Solicitar reapertura

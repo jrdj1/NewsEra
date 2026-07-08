@@ -18,7 +18,16 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    hardhat: {},
+    hardhat: {
+      // count > 20 (por defecto): el script de seed reserva el índice 20 para
+      // una cuenta "lista para validar" (10 predicciones acertadas reales,
+      // ver blockchain/scripts/seed.ts) sin pisar ninguna de las 20 cuentas
+      // por defecto ya repartidas entre admin/autores/validadores/predictores.
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk",
+        count: 25,
+      },
+    },
     localhost: {
       url: "http://127.0.0.1:8545",
       chainId: 31337,

@@ -40,4 +40,11 @@ export const retroactiveClaimRepository = {
       create: data,
     });
   },
+
+  async listByValidator(validatorAddress: string) {
+    return prisma.retroactiveClaim.findMany({
+      where: { validatorAddress },
+      orderBy: { createdAt: "desc" },
+    });
+  },
 };

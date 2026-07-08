@@ -957,6 +957,149 @@ petición explícita de mejorar la interfaz para audiencias más jóvenes. Cambi
   `processHistoricalEvents` escaneara un rango de bloques ya corto y
   perdiera eventos reales. Corregido con `cacheTime: 0` en el cliente.
 
+**Nota de implementación (cambio de puerto del frontend en Docker):** el
+servicio `frontend` de `docker-compose.yml` remapea su puerto al host de
+`5174` a **`8080`** (`"8080:5174"`) — el puerto interno del contenedor
+(donde corre `vite --host 0.0.0.0 --port 5174`, ver `frontend/Dockerfile`)
+y el healthcheck (`wget http://127.0.0.1:5174`) no cambian, solo el puerto
+expuesto en el host. Actualizado también en `Makefile` (mensaje final de
+`make fresh-start`, target `make frontend`, target `make dev` para el modo
+fuera de Docker). Acceso: `http://localhost:8080`.
+
+**Nota de implementación (infraestructura de siembra de estado de prueba —
+`make fresh-start`):** trabajo fuera del backlog numerado de sprints, pero
+necesario para poder testear manualmente cualquier HU sin partir de una
+base de datos y una blockchain vacías en cada arranque. Enfoque: en vez de
+escribir Postgres a mano, `make fresh-start` ejecuta **transacciones
+on-chain reales** contra los contratos recién desplegados
+(`blockchain/scripts/seed.ts`) y deja que el indexador ya existente rellene
+Postgres él solo; solo lo que no tiene equivalente on-chain (perfiles
+enriquecidos, favoritos, follows, notificaciones) se siembra aparte
+(`backend/scripts/seed-offchain.ts`), después de que el indexador haya
+terminado. Dataset único y compartido entre ambos scripts:
+`docs/seed/articles.json` (20 artículos cubriendo las 7 combinaciones de
+`consensusState`/veredicto/reapertura, 19 perfiles enriquecidos con
+nombre-o-nickname realista).
+- **Avatares por género:** cada perfil de `docs/seed/articles.json` declara
+  `"gender": "male"|"female"` (inferido del nombre; arbitrario para los
+  nicknames anónimos, que no revelan género). `seed-offchain.ts` construye
+  el avatar con `randomuser.me/api/portraits/{men|women}/{n}.jpg` en vez de
+  `pravatar.cc` (que no permite elegir género) — así el nombre mostrado y
+  la foto son coherentes entre sí.
+- **Cuenta "lista para validar":** `hardhat.config.ts` sube el nº de
+  cuentas de la red `hardhat` de 20 (por defecto) a 25
+  (`networks.hardhat.accounts.count`, mismo mnemonic — no cambia ninguna
+  dirección ya repartida), reservando el índice 20
+  (`docs/seed/articles.json`, `accounts.readyValidator`). El script de seed
+  le hace realizar 10 predicciones (`submitPrediction`) reales y acertadas
+  sobre los primeros 10 artículos `DEFINITIVE` encontrados, alcanzando
+  reputación exactamente `MIN_REPUTATION_TO_VALIDATE` (10) — no vía
+  `registerValidator` (bootstrapping manual), sino por el mismo camino
+  meritocrático que seguiría un usuario real. Al final del resumen de
+  `make fresh-start` se imprime su dirección y clave privada derivada del
+  mnemonic (`ethers.HDNodeWallet.fromMnemonic`) para poder importarla en
+  una cartera de pruebas.
+- **Bug corregido (orden de eventos del indexador):** `processLogs`
+  (`backend/src/services/indexer.ts`) ordenaba los logs de un lote solo por
+  `logIndex`, que se reinicia en cada bloque — al procesar de una vez el
+  historial completo sembrado (muchos bloques), eventos de bloques
+  distintos podían intercalarse en el orden incorrecto (p. ej. un
+  `ReputationUpdated` de un bloque temprano procesándose después de uno de
+  un bloque posterior). Esto corrompía el ledger de reputación descrito más
+  abajo (deltas absurdos como `newScore − before` negativos y grandes).
+  Corregido ordenando primero por `blockNumber` y solo como desempate por
+  `logIndex`.
+- **Bug corregido (`seed.ts` crasheaba el proceso Node en Windows):** el
+  script terminaba de imprimir su resumen y entonces el proceso Node
+  abortaba con `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)`
+  (bug conocido de libuv en Windows al cerrar el bucle de eventos con
+  handles de red JSON-RPC aún vivos), lo que interrumpía el resto de
+  `make fresh-start` a mitad. Corregido forzando `process.exit(0)` /
+  `process.exit(1)` explícito al final de `main()` en vez de dejar que Node
+  cierre solo.
+- `Makefile`: el `TRUNCATE` de `fresh-start` no incluía la tabla
+  `reputation_events` (añadida más abajo) — cada re-siembra duplicaba sus
+  filas en vez de partir de cero.
+
+**Nota de implementación (ledger completo de reputación, "por qué tengo
+esta reputación"):** nuevo modelo `ReputationEvent` (Prisma, migración
+`add_reputation_events`) y `repositories/reputation-event.repository.ts`.
+El evento on-chain `ReputationUpdated` no lleva razón ni `contentHash`, así
+que el indexador (`classifyReputationEvent` en `indexer.ts`) recupera el
+recibo completo de la transacción (`getTransactionReceipt`, cacheado por
+`txHash`) y decodifica los demás eventos emitidos en la misma tx
+(`ConsensusReached`/`RetroactiveClaimed`/`PredictionSubmitted`) para
+clasificar cada cambio como `VOTE_REWARD/PENALTY`, `PUBLISH_REWARD/PENALTY`
+(por magnitud: 8/15), `RETROACTIVE`, `PREDICTION_REWARD/PENALTY` o
+`REGISTERED`. `GET /api/v1/validators/:address/reputation-history`
+reescrito para leer directamente de este ledger (antes reconstruía un
+resumen parcial cruzando `Validation`/`Round`). En el frontend,
+`components/ReputationHistoryList.tsx` (paginado) se muestra tanto en
+`/profile` (propio) como en `/users/:address` (público) bajo "Movimientos
+de reputación".
+
+**Nota de implementación (historial completo de transacciones on-chain):**
+nuevo endpoint `GET /api/v1/validators/:address/activity` (`validator.service.ts`,
+`getActivity`) que une publicaciones, votos, solicitudes de reapertura y
+reclamaciones retroactivas de una dirección en un único feed cronológico
+(agregado y paginado en memoria — volumen de prototipo, evita un `UNION`
+SQL a mano). No incluye predicciones (no se indexan off-chain, ver Sprint
+6) ni datos confidenciales. Frontend: `components/ActivityList.tsx`
+(paginado), pestaña "Todas las transacciones" en `/profile` y sección en
+`/users/:address`.
+
+**Nota de implementación (etiquetas y hash+nombre visibles en más sitios):**
+- `Article.tsx` muestra ahora las etiquetas con color (`lib/tagColor.ts`,
+  ya usado en `ArticleFullscreenCard`) también en la página de detalle, y
+  el recuento de votos enlaza a la nueva página `/article/:hash/votes`
+  (`pages/ArticleVotes.tsx`) con el desglose por ronda y veredicto.
+- Nuevo componente `components/UserLabel.tsx` (dirección + nombre si tiene
+  perfil enriquecido, enlazando a `/users/:address`) reutilizado en la
+  línea de autor y la lista de votantes de `Article.tsx`, en la lista de
+  votos de `ArticleVotes.tsx`. `GET /api/v1/users` ahora hace join con
+  `UserProfile` (`profileRepository.listByAddresses`) y expone
+  `displayName`/`avatarUrl`, mostrados junto al hash en `/users`; su
+  buscador ahora filtra también por nombre, no solo por dirección.
+- `Feed.tsx` (Inicio): además de los filtros de consenso ya existentes,
+  buscador de palabras clave (con debounce, busca en título y cuerpo —
+  nuevo parámetro `search` en `GET /api/v1/publications`, `contains`
+  case-insensitive) y desplegable de etiquetas. Como las etiquetas son
+  **libres** (cualquier autor escribe las suyas al publicar, sin catálogo
+  predefinido — UC~14), el desplegable se puebla dinámicamente desde un
+  nuevo `GET /api/v1/publications/tags` (etiquetas distintas realmente en
+  uso) en vez de una lista fija en el código.
+
+**Nota de implementación (UX de predicción — acceso guiado sin revelar la
+respuesta ni el logro de convertirse en validador):**
+- **Bug corregido:** el contador "`X / 10` — te faltan N aciertos" no se
+  actualizaba tras cada predicción porque `getReputation`/`canValidate` se
+  leían una sola vez al montar el componente. Nuevo hook
+  `hooks/useReputationStatus.ts` (sustituye a `useCanValidate.ts`) que se
+  suscribe a `ReputationUpdated` (`useWatchContractEvent`) y refresca
+  ambos valores cuando el evento afecta a la dirección conectada — usado
+  también por `Header.tsx`.
+- **Bug corregido:** al alcanzar los 10 puntos de reputación no había
+  ningún aviso; el usuario seguía viendo el feed de predicción y al
+  intentar predecir el contrato revertía (`NotEligibleForPrediction`).
+  `Validate.tsx` detecta ahora la transición `canValidate: false → true`
+  dentro de la sesión y navega a la nueva ruta `/validate/welcome`
+  (`pages/ValidatorWelcome.tsx`), que explica qué cambia al ser validador.
+- El enlace de navegación `/validate` de `Header.tsx` cambia su etiqueta a
+  "Predecir" (icono propio) cuando la dirección conectada tiene
+  `canValidate === false`.
+- `ArticleFullscreenCard.tsx` acepta un prop `hideConsensus` (activado en
+  el feed de predicción de `Validate.tsx`): oculta el badge de
+  estado/veredicto, el enlace al recuento de votos y el botón "Ver
+  artículo completo" — el artículo objetivo de una predicción ya es
+  `DEFINITIVE` (por eso se puede predecir sobre él), así que mostrar su
+  estado o dejar navegar al detalle revelaría la respuesta antes de
+  predecir.
+- **Bug corregido:** la sección "Solicitar reapertura" de `Article.tsx` se
+  mostraba a cualquier dirección conectada que no hubiera votado, aunque
+  el contrato revierte con `InsufficientReputation` si no tiene
+  reputación suficiente para validar. Añadida la misma comprobación
+  `canValidate` que ya protege la sección de emitir voto.
+
 ---
 
 ### Sprint 9 — Integración, despliegue Sepolia y métricas (OE7) `[ TODO ]`

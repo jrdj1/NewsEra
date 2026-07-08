@@ -54,6 +54,7 @@ type SeedArticle = {
 type SeedProfile = {
   signerIndex: number;
   displayName: string;
+  gender: "male" | "female";
   avatarImg: number;
   email?: string;
 };
@@ -104,12 +105,15 @@ async function main() {
 
   // 1. Perfiles enriquecidos — uno por cada autor/validador/predictor del
   // dataset, con nombre o nickname y avatar creíbles (no fotos ni personas
-  // reales).
+  // reales). El avatar coincide con el género del perfil (randomuser.me
+  // separa sus retratos estáticos en /portraits/men/ y /portraits/women/)
+  // para reforzar el realismo del nombre mostrado.
   for (const profile of seed.profiles) {
     const address = accountAddress(profile.signerIndex);
+    const genderPath = profile.gender === "male" ? "men" : "women";
     await profileRepository.upsert(address, {
       displayName: profile.displayName,
-      avatarUrl: `https://i.pravatar.cc/150?img=${profile.avatarImg}`,
+      avatarUrl: `https://randomuser.me/api/portraits/${genderPath}/${profile.avatarImg}.jpg`,
       ...(profile.email ? { email: profile.email } : {}),
     });
   }

@@ -1,3 +1,4 @@
+import { decodeEventLog } from "viem";
 import { publicClient } from "../lib/viem.js";
 import {
   publicationRegistryAbi,
@@ -13,6 +14,7 @@ import { retroactiveClaimRepository } from "../repositories/retroactive-claim.re
 import { followRepository } from "../repositories/follow.repository.js";
 import { notificationRepository } from "../repositories/notification.repository.js";
 import { indexerStateRepository } from "../repositories/indexer-state.repository.js";
+import { reputationEventRepository } from "../repositories/reputation-event.repository.js";
 
 const VOTE_LABELS = ["TRUE", "FALSE", "UNVERIFIABLE"] as const;
 const STATE_LABELS = ["PENDING", "DEFINITIVE", "DISPUTED", "PENDING_REOPEN"] as const;
@@ -88,9 +90,111 @@ async function handleConsensusReached(log: any) {
   }
 }
 
+// Caché de logs por transacción para clasificar ReputationUpdated sin repetir
+// la misma llamada RPC cuando varias direcciones cambian de reputación en la
+// misma transacción (p. ej. 3 votantes + el autor al alcanzar DEFINITIVE, o
+// varios ajustes ±1 de una sola reclamación retroactiva). No tiene TTL/límite
+// de tamaño: el proceso del indexador vive lo que vive el backend, y el
+// volumen de transacciones de un prototipo no lo hace un problema real.
+const receiptLogsCache = new Map<string, any[]>();
+
+async function getReceiptLogs(txHash: string): Promise<any[]> {
+  const cached = receiptLogsCache.get(txHash);
+  if (cached) return cached;
+  const receipt = await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
+  receiptLogsCache.set(txHash, receipt.logs);
+  return receipt.logs;
+}
+
+interface ReputationEventContext {
+  reason: string;
+  contentHash: string | null;
+  round: number | null;
+}
+
+/**
+ * El evento ReputationUpdated (ReputationSystem) no lleva contentHash ni
+ * motivo — solo `(validator, newScore, increased)`. Para saber SI el cambio
+ * viene de un voto, de la recompensa/penalización por publicar, de una
+ * reclamación retroactiva o de una predicción, se buscan en la MISMA
+ * transacción los eventos de ValidationRegistry que lo disparan
+ * (ConsensusReached / RetroactiveClaimed / PredictionSubmitted) y se usa la
+ * magnitud del delta para distinguir voto (±5/±3) de publicación (+8/−8/−15)
+ * dentro de un ConsensusReached.
+ */
+async function classifyReputationEvent(
+  log: any,
+  delta: number,
+): Promise<ReputationEventContext> {
+  const txHash = log.transactionHash as string | undefined;
+  const validationRegistryAddress = process.env.VALIDATION_REGISTRY_ADDRESS?.toLowerCase();
+  if (!txHash || !validationRegistryAddress) {
+    return { reason: "REGISTERED", contentHash: null, round: null };
+  }
+
+  const logs = await getReceiptLogs(txHash);
+  let consensusInfo: { contentHash: string; round: bigint } | undefined;
+  let retroInfo: { contentHash: string } | undefined;
+  let predictionInfo: { contentHash: string; round: bigint } | undefined;
+
+  for (const l of logs) {
+    if ((l.address as string)?.toLowerCase() !== validationRegistryAddress) continue;
+    try {
+      const decoded = decodeEventLog({ abi: validationRegistryAbi as never, data: l.data, topics: l.topics });
+      if (decoded.eventName === "ConsensusReached") {
+        consensusInfo = decoded.args as never;
+      } else if (decoded.eventName === "RetroactiveClaimed") {
+        retroInfo = decoded.args as never;
+      } else if (decoded.eventName === "PredictionSubmitted") {
+        predictionInfo = decoded.args as never;
+      }
+    } catch {
+      // log de otro evento del mismo contrato (p. ej. ValidationSubmitted), se ignora.
+    }
+  }
+
+  if (predictionInfo) {
+    return {
+      reason: delta > 0 ? "PREDICTION_REWARD" : "PREDICTION_PENALTY",
+      contentHash: predictionInfo.contentHash,
+      round: Number(predictionInfo.round),
+    };
+  }
+  if (retroInfo) {
+    return { reason: "RETROACTIVE", contentHash: retroInfo.contentHash, round: null };
+  }
+  if (consensusInfo) {
+    const isPublish = Math.abs(delta) === 8 || Math.abs(delta) === 15;
+    const reason = isPublish
+      ? delta > 0
+        ? "PUBLISH_REWARD"
+        : "PUBLISH_PENALTY"
+      : delta > 0
+        ? "VOTE_REWARD"
+        : "VOTE_PENALTY";
+    return { reason, contentHash: consensusInfo.contentHash, round: Number(consensusInfo.round) };
+  }
+  return { reason: "REGISTERED", contentHash: null, round: null };
+}
+
 async function handleReputationUpdated(log: any) {
   const { validator, newScore } = log.args as { validator: string; newScore: bigint };
+  const before = await validatorRepository.getByAddress(validator);
+  const delta = Number(newScore) - (before?.reputationScore ?? 0);
+
   await validatorRepository.upsertReputation(validator, Number(newScore), log.blockNumber ?? 0n);
+
+  const { reason, contentHash, round } = await classifyReputationEvent(log, delta);
+  await reputationEventRepository.create({
+    address: validator,
+    delta,
+    newScore: Number(newScore),
+    reason,
+    contentHash,
+    round,
+    txHash: log.transactionHash ?? null,
+    blockNumber: log.blockNumber ?? 0n,
+  });
 }
 
 async function handleReopenRequested(log: any) {
@@ -149,9 +253,15 @@ const EVENT_HANDLERS: Record<string, (log: any) => Promise<void>> = {
  * lote de eventos "en vivo" sin depender de `watchContractEvent` real.
  */
 export async function processLogs(logs: any[]) {
-  // Orden estable: los eventos de una misma transacción/bloque deben aplicarse
-  // en el orden en que el nodo los emite (logIndex ascendente).
-  const sorted = [...logs].sort((a, b) => Number(a.logIndex ?? 0) - Number(b.logIndex ?? 0));
+  // Orden estable: primero por bloque (logIndex se reinicia en cada bloque,
+  // así que ordenar solo por logIndex mezcla mal eventos de bloques distintos
+  // al procesar un rango histórico completo), y dentro del mismo bloque, en
+  // el orden en que el nodo los emite (logIndex ascendente).
+  const sorted = [...logs].sort((a, b) => {
+    const blockDiff = Number((a.blockNumber ?? 0n) - (b.blockNumber ?? 0n));
+    if (blockDiff !== 0) return blockDiff;
+    return Number(a.logIndex ?? 0) - Number(b.logIndex ?? 0);
+  });
   const startBlock = lastProcessedBlock;
   for (const log of sorted) {
     const handler = EVENT_HANDLERS[log.eventName as string];

@@ -3,7 +3,22 @@ import { normalizeAddress } from "../lib/address.js";
 import { validatorRepository } from "../repositories/validator.repository.js";
 import { validationRepository } from "../repositories/validation.repository.js";
 import { roundRepository } from "../repositories/round.repository.js";
+import { reputationEventRepository } from "../repositories/reputation-event.repository.js";
+import { publicationRepository } from "../repositories/publication.repository.js";
+import { reopenRequestRepository } from "../repositories/reopen-request.repository.js";
+import { retroactiveClaimRepository } from "../repositories/retroactive-claim.repository.js";
 import type { Paginated, ValidationOutcome } from "../types/api.js";
+
+type ActivityItem = {
+  type: "PUBLICATION" | "VALIDATION" | "REOPEN_REQUEST" | "RETROACTIVE_CLAIM";
+  contentHash: string;
+  title: string;
+  round: number | null;
+  vote: string | null;
+  netDelta: number | null;
+  txHash: string | null;
+  createdAt: Date;
+};
 
 function classify(vote: string, round: { state: string; result: string | null } | undefined): ValidationOutcome {
   if (!round || round.state !== "DEFINITIVE") return "unresolved";
@@ -68,31 +83,90 @@ export const validatorService = {
   },
 
   /**
-   * Serie temporal de variaciones de reputación. Derivada de los deltas ya
-   * aplicados en Validation/Round (efectos ±5/±3 de ronda propia) porque no
-   * existe una tabla dedicada a ReputationUpdated por bloque; ver nota en
-   * CLAUDE.md/ERS (D4). No distingue el origen del delta (voto, publicación
-   * o predicción) — todos comparten el mismo evento on-chain.
+   * Ledger completo de variaciones de reputación (voto, recompensa/
+   * penalización por publicar, reclamación retroactiva, predicción, registro
+   * inicial), poblado por el indexador a partir de ReputationUpdated
+   * correlacionado con su transacción — ver indexer.ts, handleReputationUpdated.
    */
-  async getReputationHistory(rawAddress: string) {
+  async getReputationHistory(rawAddress: string, page = 1, limit = 100) {
     const address = normalizeAddress(rawAddress);
-    const validations = await validationRepository.findRoundsForValidator(address);
-    const rounds = await roundRepository.findByContentHashes(validations.map((v) => v.contentHash));
-    const roundByKey = new Map(rounds.map((r) => [`${r.contentHash}:${r.round}`, r]));
+    const { items, total } = await reputationEventRepository.listByAddress(address, page, limit);
+    // blockNumber es BigInt en Prisma — no serializa en JSON.stringify sin convertir.
+    const shaped = items.map(({ blockNumber, ...rest }) => ({ ...rest, blockNumber: blockNumber.toString() }));
+    return { items: shaped, page, limit, total };
+  },
 
-    const REWARD = 5;
-    const PENALTY = -3;
+  /**
+   * Todas las interacciones on-chain de `address` (publicar, votar, solicitar
+   * reapertura, reclamar retroactiva) unidas en un único feed cronológico. No
+   * incluye predicciones (no se indexan off-chain, ver Sprint 6) ni datos
+   * confidenciales (email del perfil enriquecido no forma parte de esto).
+   * Se agregan las 4 fuentes en memoria y se pagina el resultado combinado —
+   * asumible para el volumen de un prototipo, evita un UNION SQL a mano.
+   */
+  async getActivity(rawAddress: string, page = 1, limit = 20): Promise<Paginated<ActivityItem>> {
+    const address = normalizeAddress(rawAddress);
 
-    return validations
-      .map((v) => {
-        const round = roundByKey.get(`${v.contentHash}:${v.round}`);
-        if (!round || round.state !== "DEFINITIVE") return null;
-        return {
-          contentHash: v.contentHash,
-          round: v.round,
-          delta: v.vote === round.result ? REWARD : PENALTY,
-        };
-      })
-      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    const [publications, validations, reopenRequests, retroactiveClaims] = await Promise.all([
+      publicationRepository.list({ page: 1, limit: 1000, author: address, sort: "recent" }),
+      validationRepository.listByValidator(address, 1, 1000),
+      reopenRequestRepository.listByRequester(address),
+      retroactiveClaimRepository.listByValidator(address),
+    ]);
+
+    const retroactiveHashes = retroactiveClaims.map((c) => c.contentHash);
+    const retroactiveTitles = await publicationRepository.findTitlesByHashes(retroactiveHashes);
+    const titleByHash = new Map(retroactiveTitles.map((p) => [p.contentHash, p.title]));
+
+    const items: ActivityItem[] = [
+      ...publications.items.map((p) => ({
+        type: "PUBLICATION" as const,
+        contentHash: p.contentHash,
+        title: p.title,
+        round: null,
+        vote: null,
+        netDelta: null,
+        txHash: null,
+        createdAt: p.createdAt,
+      })),
+      ...validations.items.map((v) => ({
+        type: "VALIDATION" as const,
+        contentHash: v.contentHash,
+        title: v.publication.title,
+        round: v.round,
+        vote: v.vote,
+        netDelta: null,
+        txHash: v.txHash,
+        createdAt: v.createdAt,
+      })),
+      ...reopenRequests.map((r) => ({
+        type: "REOPEN_REQUEST" as const,
+        contentHash: r.contentHash,
+        title: r.publication.title,
+        round: null,
+        vote: null,
+        netDelta: null,
+        txHash: r.txHash,
+        createdAt: r.createdAt,
+      })),
+      ...retroactiveClaims.map((c) => ({
+        type: "RETROACTIVE_CLAIM" as const,
+        contentHash: c.contentHash,
+        title: titleByHash.get(c.contentHash) ?? "",
+        round: null,
+        vote: null,
+        netDelta: c.netDelta,
+        txHash: c.txHash,
+        createdAt: c.createdAt,
+      })),
+    ];
+
+    items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    const total = items.length;
+    const start = (page - 1) * limit;
+    const paged = items.slice(start, start + limit);
+
+    return { items: paged, page, limit, total };
   },
 };

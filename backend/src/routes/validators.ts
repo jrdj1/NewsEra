@@ -25,6 +25,21 @@ validatorsRouter.get("/:address/history", async (c) => {
 });
 
 validatorsRouter.get("/:address/reputation-history", async (c) => {
-  const history = await validatorService.getReputationHistory(c.req.param("address"));
+  const { page, limit } = c.req.query();
+  const history = await validatorService.getReputationHistory(
+    c.req.param("address"),
+    page ? Number(page) : undefined,
+    limit ? Number(limit) : undefined,
+  );
   return c.json(history);
+});
+
+validatorsRouter.get("/:address/activity", async (c) => {
+  const { page, limit } = c.req.query();
+  const activity = await validatorService.getActivity(
+    c.req.param("address"),
+    page ? Number(page) : undefined,
+    limit ? Number(limit) : undefined,
+  );
+  return c.json(activity);
 });

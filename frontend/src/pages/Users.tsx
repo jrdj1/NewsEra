@@ -30,7 +30,7 @@ export default function Users() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          placeholder="Buscar por dirección..."
+          placeholder="Buscar por nombre o dirección..."
           className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
         <select
@@ -63,7 +63,13 @@ export default function Users() {
                 <span className="w-6 text-sm font-medium text-zinc-400">
                   {(page - 1) * 20 + i + 1}
                 </span>
-                <span className="font-mono text-sm">{shortAddress(u.address)}</span>
+                {u.avatarUrl && (
+                  <img src={u.avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                )}
+                <div>
+                  {u.displayName && <p className="text-sm font-medium">{u.displayName}</p>}
+                  <span className="font-mono text-xs text-zinc-400">{shortAddress(u.address)}</span>
+                </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-zinc-400">

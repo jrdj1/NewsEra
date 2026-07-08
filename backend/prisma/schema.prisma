@@ -133,6 +133,29 @@ model Notification {
   @@map("notifications")
 }
 
+// Ledger de todos los cambios de reputación (evento ReputationUpdated),
+// clasificados por origen correlacionando la transacción con el evento de
+// ValidationRegistry que la disparó (ConsensusReached/RetroactiveClaimed/
+// PredictionSubmitted) — ver indexer.ts, handleReputationUpdated. Sin FK a
+// Publication (igual que Notification): contentHash es null para el
+// registro inicial de un validador (REGISTERED), que no está ligado a
+// ningún artículo.
+model ReputationEvent {
+  id          Int      @id @default(autoincrement())
+  address     String
+  delta       Int
+  newScore    Int
+  reason      String // "VOTE_REWARD" | "VOTE_PENALTY" | "PUBLISH_REWARD" | "PUBLISH_PENALTY" | "RETROACTIVE" | "PREDICTION_REWARD" | "PREDICTION_PENALTY" | "REGISTERED"
+  contentHash String?
+  round       Int?
+  txHash      String?
+  blockNumber BigInt
+  createdAt   DateTime @default(now())
+
+  @@index([address])
+  @@map("reputation_events")
+}
+
 // Bookkeeping interno del indexador (no forma parte del catálogo de datos del
 // ERS): persiste el último bloque procesado para que un reinicio del backend
 // reanude en lugar de reprocesar el historial completo desde DEPLOY_BLOCK.

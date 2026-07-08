@@ -56,7 +56,7 @@ fresh-start: ## Levanta todo, redespliega contratos, siembra estado de prueba y 
 	node scripts/update-env-addresses.js
 	@echo "Parando el backend antes de truncar (evita bloqueos de Postgres por conexiones abiertas)..."
 	$(COMPOSE) stop backend
-	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state RESTART IDENTITY CASCADE;" 2>/dev/null
+	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state, reputation_events RESTART IDENTITY CASCADE;" 2>/dev/null
 	@echo "Arrancando el backend con la BD limpia y las direcciones correctas..."
 	$(COMPOSE) up -d backend
 	@echo "Esperando a que el indexador procese el historial sembrado (maximo 30s)..."
@@ -70,7 +70,7 @@ fresh-start: ## Levanta todo, redespliega contratos, siembra estado de prueba y 
 	cd backend && npm run seed:offchain
 	@echo ""
 	@echo "Todo listo, con estado de prueba completo cargado:"
-	@echo "  Frontend:  http://localhost:5174"
+	@echo "  Frontend:  http://localhost:8080"
 	@echo "  Backend:   http://localhost:3001"
 	@echo "  Hardhat:   http://localhost:8545"
 	@echo "  Postgres:  localhost:5433 (usuario/clave/bd: newsera)"
@@ -78,7 +78,7 @@ fresh-start: ## Levanta todo, redespliega contratos, siembra estado de prueba y 
 # ─── Servicios individuales ───────────────────────────────────────────────────
 
 .PHONY: frontend
-frontend: ## Levantar solo el frontend (puerto 5174)
+frontend: ## Levantar solo el frontend (puerto 8080)
 	$(COMPOSE) up frontend -d --build
 
 .PHONY: backend
@@ -167,7 +167,7 @@ export-abis: ## Exportar ABIs a docs/abis/ (requiere compilacion previa)
 
 .PHONY: dev
 dev: ## Arrancar frontend en el host (fuera de Docker) en modo dev
-	cd frontend && npm run dev -- --port 5174
+	cd frontend && npm run dev -- --port 8080
 
 .PHONY: build-frontend
 build-frontend: ## Compilar frontend para produccion

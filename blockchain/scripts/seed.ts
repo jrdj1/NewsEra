@@ -10,6 +10,7 @@
  * ignition/deployments/chain-<chainId>/deployed_addresses.json.
  */
 import { ethers, network } from "hardhat";
+import { HDNodeWallet, Mnemonic } from "ethers";
 import fs from "node:fs";
 import path from "node:path";
 import type {
@@ -27,6 +28,17 @@ const CONSENSUS_STATE_NAMES = ["PENDING", "DEFINITIVE", "DISPUTED", "PENDING_REO
 const VOTE_NAMES = ["TRUE", "FALSE", "UNVERIFIABLE"];
 
 const INITIAL_REPUTATION = 10n;
+
+// Mnemonic estándar de Hardhat (mismo usado por backend/scripts/seed-offchain.ts
+// para derivar direcciones sin necesitar un signer real). El índice 20 queda
+// libre de propósito porque hardhat.config.ts sube el conteo de cuentas a 25
+// (por defecto solo genera 20, índices 0-19, todos ya repartidos entre
+// admin/autores/validadores/predictores en docs/seed/articles.json).
+const HARDHAT_MNEMONIC = "test test test test test test test test test test test junk";
+
+function deriveHardhatWallet(index: number): HDNodeWallet {
+  return HDNodeWallet.fromMnemonic(Mnemonic.fromPhrase(HARDHAT_MNEMONIC), `m/44'/60'/0'/0/${index}`);
+}
 
 type Scenario =
   | "PENDING_ZERO"
@@ -51,6 +63,7 @@ interface SeedAccounts {
   authorPool: number[];
   validators: number[];
   predictors: number[];
+  readyValidator: number;
 }
 
 interface SeedData {
@@ -251,6 +264,43 @@ async function main(): Promise<void> {
     );
   }
 
+  // ── 5. Cuenta "lista para validar": 10 predicciones acertadas reales ──────
+  // Objetivo: reputación == MIN_REPUTATION_TO_VALIDATE (10) con solo
+  // predicciones (PREDICTION_REWARD=1 c/u), para poder importarla en una
+  // cartera y usarla ya mismo en /article/:hash o /validate como validador.
+  console.log("\n--- 5. Preparando cuenta lista para validar (10 predicciones acertadas) ---");
+  const readyValidatorSigner = signers[seed.accounts.readyValidator];
+  const readyValidatorWallet = deriveHardhatWallet(seed.accounts.readyValidator);
+  if (readyValidatorWallet.address.toLowerCase() !== readyValidatorSigner.address.toLowerCase()) {
+    throw new Error(
+      `Derivación de clave privada inconsistente: signer=${readyValidatorSigner.address} ` +
+        `derivado=${readyValidatorWallet.address}. Revisa accounts.readyValidator/HARDHAT_MNEMONIC.`,
+    );
+  }
+
+  let readyPredictions = 0;
+  for (const article of seed.articles) {
+    if (readyPredictions >= 10) break;
+    const hash = hashOf(article.id);
+    const state = await val.consensusState(hash);
+    if (CONSENSUS_STATE_NAMES[Number(state)] !== "DEFINITIVE") continue;
+
+    const currentRound = await val.currentRound(hash);
+    const roundInfo = await val.rounds(hash, currentRound);
+    const tx = await val.connect(readyValidatorSigner).submitPrediction(hash, roundInfo.result);
+    await tx.wait();
+    readyPredictions++;
+    console.log(
+      `  [${article.id}] predicción #${readyPredictions}/10 -> ${VOTE_NAMES[Number(roundInfo.result)]} (acierto)`,
+    );
+  }
+  if (readyPredictions < 10) {
+    console.warn(
+      `  Aviso: solo se encontraron ${readyPredictions} artículos DEFINITIVE — añade más escenarios ` +
+        `DEFINITIVE_* en docs/seed/articles.json para completar las 10 predicciones.`,
+    );
+  }
+
   // ── Resumen final leído del estado real de la cadena ──────────────────────
   console.log("\n\n=========================================");
   console.log("=          RESUMEN FINAL (on-chain)      =");
@@ -303,10 +353,20 @@ async function main(): Promise<void> {
     console.log(`\nnetDelta real de la reclamación retroactiva de ${reopenedArticleId}: ${retroactiveNetDelta}`);
   }
 
+  const readyReputation = await rep.getReputation(readyValidatorSigner.address);
+  const readyCanValidate = await rep.canValidate(readyValidatorSigner.address);
+  console.log("\nCuenta lista para validar (importar en MetaMask para probar /validate o /article/:hash):");
+  console.log(`  Dirección:    ${readyValidatorSigner.address}`);
+  console.log(`  Clave privada: ${readyValidatorWallet.privateKey}`);
+  console.log(`  Reputación:   ${readyReputation} | canValidate: ${readyCanValidate}`);
+  console.log("  ⚠ Cuenta de prueba de Hardhat (mnemonic público, sin fondos reales) — solo para red local.");
+
   console.log("\n=== Seed completado ===");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

@@ -12,7 +12,7 @@ import type {
 export const publicationsRouter = new Hono();
 
 publicationsRouter.get("/", async (c) => {
-  const { page, limit, state, result, tags, author, sort } = c.req.query();
+  const { page, limit, state, result, tags, author, search, sort } = c.req.query();
   const list = await publicationService.list({
     page: page ? Number(page) : undefined,
     limit: limit ? Number(limit) : undefined,
@@ -20,9 +20,16 @@ publicationsRouter.get("/", async (c) => {
     result,
     tags,
     author,
+    search,
     sort: sort as PublicationSort | undefined,
   });
   return c.json(list);
+});
+
+// Antes de "/:hash": si no, Hono la interpreta como una búsqueda por hash literal "tags".
+publicationsRouter.get("/tags", async (c) => {
+  const tags = await publicationService.listTags();
+  return c.json(tags);
 });
 
 publicationsRouter.get("/:hash", async (c) => {
