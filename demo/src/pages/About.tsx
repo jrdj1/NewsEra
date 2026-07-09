@@ -1,70 +1,75 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { resetDemoState } from "@/demo/store";
+import { ABOUT_IMAGES, type AboutImage } from "@/demo/about-images";
 
 interface SlideDef {
   id: string;
   eyebrow: string;
   headline: string;
   body?: string;
-  visual: string;
   accent: string;
+  image?: AboutImage;
 }
+
+// Tratamiento vintage uniforme para todas las fotos — blanco y negro con un
+// punto de tono "sucio" (sepia leve), igual en las 6 imágenes sin importar
+// su tono original. Aplicado por CSS, nunca editando los archivos.
+const VINTAGE_FILTER = "grayscale sepia-[.35] contrast-125 brightness-[.6]";
 
 const SLIDES: SlideDef[] = [
   {
     id: "problema",
-    eyebrow: "El problema",
-    headline: "La verdad tiene dueño.",
-    body: "Hoy deciden qué es cierto unos pocos — medios, plataformas, gobiernos. Quien controla la respuesta, controla la conversación.",
-    visual: "🔒",
-    accent: "text-consensus-false",
+    eyebrow: "El problema (con datos)",
+    headline: "Lo falso viaja más rápido que lo cierto.",
+    body: 'Un estudio del MIT (revista Science, 2018) descubrió que las noticias falsas se comparten un 70% más que las verdaderas, y llegan a 1.500 personas 6 veces más rápido.',
+    accent: "text-red-400",
+    image: ABOUT_IMAGES.problema,
   },
   {
     id: "solucion",
     eyebrow: "La solución",
-    headline: "Que decida todo el mundo.",
-    body: "NewsEra reparte esa decisión entre miles de personas, con reglas que nadie controla en solitario — ni siquiera quien lo creó.",
-    visual: "🌍",
-    accent: "text-brand",
+    headline: "Que decida todo el mundo, no unos pocos.",
+    body: "NewsEra reparte la verificación entre miles de personas, con reglas que nadie controla en solitario — ni siquiera quien lo creó.",
+    accent: "text-blue-400",
+    image: ABOUT_IMAGES.solucion,
   },
   {
     id: "verdad",
     eyebrow: '¿Qué es "verdad" aquí?',
-    headline: "No una autoridad. Un consenso.",
-    body: "Aquí nadie dicta la verdad desde arriba: la construye la comunidad votando, y queda anotada para siempre.",
-    visual: "🗳️",
-    accent: "text-consensus-unverifiable",
+    headline: "No la dicta una autoridad. La vota un jurado.",
+    body: "La comunidad vota si un hecho es verdadero, falso o no verificable — y ese consenso queda anotado para siempre.",
+    accent: "text-amber-400",
+    image: ABOUT_IMAGES.verdad,
   },
   {
     id: "pilares",
     eyebrow: "Los pilares",
     headline: "Tres reglas que no se rompen.",
-    visual: "🏛️",
-    accent: "text-brand",
+    accent: "text-blue-400",
+    image: ABOUT_IMAGES.pilares,
   },
   {
     id: "innovacion",
     eyebrow: "Lo nuevo",
     headline: "No mejora al árbitro. Cambia el juego.",
     body: "No es un verificador más encima de los de siempre — es una cancha nueva donde nadie empieza con ventaja.",
-    visual: "⚡",
-    accent: "text-violet-500",
+    accent: "text-violet-400",
+    image: ABOUT_IMAGES.innovacion,
   },
   {
     id: "blockchain",
     eyebrow: "La tecnología",
     headline: "Un cuaderno que nadie puede tachar.",
     body: "La blockchain es un registro compartido por miles de ordenadores. Lo que se escribe, se queda escrito — y cualquiera puede comprobarlo.",
-    visual: "📖",
-    accent: "text-brand",
+    accent: "text-blue-400",
+    image: ABOUT_IMAGES.blockchain,
   },
   {
     id: "slogan",
     eyebrow: "",
     headline: "La verdad ya no se pide. Se demuestra.",
     body: "Tú también puedes votar, publicar y decidir.",
-    visual: "✊",
     accent: "text-white",
   },
   {
@@ -72,8 +77,8 @@ const SLIDES: SlideDef[] = [
     eyebrow: "Para saber más",
     headline: "¿Quieres el detalle técnico completo?",
     body: "Arquitectura, contratos inteligentes y evaluación del sistema, documentados a fondo.",
-    visual: "📚",
-    accent: "text-zinc-400",
+    accent: "text-zinc-300",
+    image: ABOUT_IMAGES.memoria,
   },
 ];
 
@@ -85,31 +90,49 @@ const PILARES = [
 
 const CONTRATOS = ["PublicationRegistry", "ValidationRegistry", "ReputationSystem"];
 
+const IMAGE_CREDITS = SLIDES.map((s) => s.image?.credit).filter((c): c is NonNullable<typeof c> => !!c);
+
 function SlideShell({
   id,
   eyebrow,
   headline,
   body,
-  visual,
   accent,
+  image,
   className = "",
   children,
 }: SlideDef & { className?: string; children?: ReactNode }) {
   return (
     <section
       id={id}
-      className={`flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center px-6 py-10 text-center sm:px-12 ${className}`}
+      className={`relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center overflow-hidden px-6 py-10 text-center sm:px-12 ${className}`}
     >
-      <div className="mx-auto flex max-w-xl flex-col items-center gap-3 sm:gap-5">
-        <span className="text-6xl sm:text-7xl" aria-hidden="true">
-          {visual}
-        </span>
+      {image && (
+        <>
+          <img
+            src={image.url}
+            alt=""
+            aria-hidden="true"
+            className={`absolute inset-0 h-full w-full object-cover ${VINTAGE_FILTER}`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/60 to-black/75" />
+        </>
+      )}
+      <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-3 sm:gap-5">
         {eyebrow && (
           <p className={`text-xs font-bold uppercase tracking-[0.2em] ${accent}`}>{eyebrow}</p>
         )}
-        <h2 className="text-3xl font-bold leading-tight tracking-tight sm:text-5xl">{headline}</h2>
+        <h2
+          className={`text-3xl font-bold leading-tight tracking-tight sm:text-5xl ${image ? "text-white" : ""}`}
+        >
+          {headline}
+        </h2>
         {body && (
-          <p className="text-balance text-base leading-relaxed text-zinc-500 dark:text-zinc-400 sm:text-lg">
+          <p
+            className={`text-balance text-base leading-relaxed sm:text-lg ${
+              image ? "text-zinc-200" : "text-zinc-500 dark:text-zinc-400"
+            }`}
+          >
             {body}
           </p>
         )}
@@ -131,8 +154,8 @@ function DotNav({ active }: { active: string }) {
           href={`#${s.id}`}
           aria-label={s.eyebrow || s.headline}
           aria-current={active === s.id}
-          className={`h-2 w-2 rounded-full transition-all ${
-            active === s.id ? "h-5 bg-brand" : "bg-zinc-300 hover:bg-zinc-400 dark:bg-zinc-700"
+          className={`h-2 w-2 rounded-full ring-1 ring-white/40 transition-all ${
+            active === s.id ? "h-5 bg-brand" : "bg-white/50 hover:bg-white/80"
           }`}
         />
       ))}
@@ -173,17 +196,17 @@ export default function About() {
         <SlideShell {...verdad} />
 
         <SlideShell {...pilares}>
-          <div className="mt-2 grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mt-2 grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
             {PILARES.map((p) => (
               <div
                 key={p.label}
-                className="flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-100 p-5 dark:border-zinc-900"
+                className="flex flex-col items-center gap-1.5 rounded-2xl border border-white/15 bg-black/20 p-5 backdrop-blur-sm"
               >
                 <span className="text-3xl" aria-hidden="true">
                   {p.icon}
                 </span>
-                <p className="font-semibold">{p.label}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">{p.desc}</p>
+                <p className="font-semibold text-white">{p.label}</p>
+                <p className="text-xs text-zinc-300">{p.desc}</p>
               </div>
             ))}
           </div>
@@ -196,7 +219,7 @@ export default function About() {
             {CONTRATOS.map((c) => (
               <span
                 key={c}
-                className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 font-mono text-xs text-brand"
+                className="rounded-full border border-white/30 bg-white/10 px-3 py-1 font-mono text-xs text-white backdrop-blur-sm"
               >
                 {c}
               </span>
@@ -223,19 +246,19 @@ export default function About() {
             href="https://github.com/jrdj1/TFG-NewsEra-memoria"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="mt-1 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
           >
             Leer la memoria (GitHub)
           </a>
 
-          <div className="mt-8 space-y-0.5 text-xs text-zinc-400">
+          <div className="mt-8 space-y-0.5 text-xs text-zinc-300">
             <p>
               Jorge Rafael de Julián Vicedo — Grado en Ingeniería Informática, EPS, Universidad de Alicante
             </p>
             <p>Tutor: Dr. Higinio Mora Mora — 2026</p>
           </div>
 
-          <div className="mt-6 max-w-sm rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+          <div className="mt-6 max-w-sm rounded-xl border border-amber-300/40 bg-amber-950/60 p-3 text-xs text-amber-200 backdrop-blur-sm">
             🧪 Estás en el modo demo: datos simulados y guardados solo en este navegador.{" "}
             <button
               type="button"
@@ -249,6 +272,21 @@ export default function About() {
               Reiniciar demo
             </button>
           </div>
+
+          {IMAGE_CREDITS.length > 0 && (
+            <p className="mt-6 max-w-sm text-[10px] leading-relaxed text-zinc-400">
+              Fotografías:{" "}
+              {IMAGE_CREDITS.map((c, i) => (
+                <span key={c.href}>
+                  <a href={c.href} target="_blank" rel="noopener noreferrer" className="underline">
+                    {c.text}
+                  </a>
+                  {i < IMAGE_CREDITS.length - 1 ? " · " : ""}
+                </span>
+              ))}{" "}
+              (Wikimedia Commons)
+            </p>
+          )}
         </SlideShell>
       </div>
     </div>

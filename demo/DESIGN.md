@@ -96,9 +96,42 @@ enlazar directamente a la pantalla relevante.
 | 7 | `#slogan` | Eslogan y llamada de atención directa a quien lee ("tú puedes..."). |
 | 8 | `#memoria` | Enlace a la memoria del TFG (whitepaper) para quien quiera el detalle técnico completo. |
 
-Cada pantalla: tipografía grande, una idea, un apoyo visual (icono, forma,
-color de marca/consenso ya definidos en la identidad visual del proyecto —
-ver `CLAUDE.md` §13). Nada de bloques de texto largos.
+Cada pantalla: tipografía grande, una idea, y una fotografía real a pantalla
+completa como fondo (ver "Fotografías", más abajo) — nada de bloques de
+texto largos ni de emojis genéricos. La única excepción deliberada es la
+pantalla 7 (`#slogan`): color de marca sólido, sin foto, como respiro
+visual antes del cierre.
+
+**Contenido con datos, no con acusaciones.** La pantalla 1 (`#problema`) no
+apela a un "ellos" difuso — cita una fuente concreta y verificable: el
+estudio de Vosoughi, Roy y Aral publicado en *Science* (2018), que midió la
+difusión de noticias verdaderas y falsas en Twitter (~126.000 historias,
+~3M de personas, 4.5M de veces compartidas) y encontró que lo falso se
+comparte un 70% más y llega a 1.500 personas 6 veces más rápido que lo
+cierto. Mismo criterio para cualquier cifra futura en el resto de
+pantallas: solo datos verificables, nunca una afirmación vaga.
+
+### Fotografías
+
+Fotografías reales, no ilustraciones ni emojis, todas con el mismo
+tratamiento visual — blanco y negro con un punto de tono sucio/sepia —
+aplicado por CSS de forma uniforme (`grayscale sepia contrast brightness`
+compartido, ver `about-images.ts` / `SlideShell`), nunca editando los
+archivos originales. Todas proceden de Wikimedia Commons, de dominio
+público o licencia libre, con la URL directa y la licencia verificadas
+antes de usarlas — con crédito visible en la pantalla 8 para las que la
+licencia (CC BY / CC BY-SA) lo exige.
+
+| Pantalla | Fotografía |
+|----------|------------|
+| `#problema` | Sala de rotativas de un periódico, h. 1960 |
+| `#solucion` | Una multitud de personas |
+| `#verdad` | *The Jury* (1861), un jurado deliberando |
+| `#pilares` | Columnas del templo de Luxor, en pie desde hace milenios |
+| `#innovacion` | Una bombilla incandescente encendida |
+| `#blockchain` | Libro de cuentas bancario del s. XIX (1831-1870) |
+| `#slogan` | (sin foto — color de marca sólido) |
+| `#memoria` | Estanterías de una biblioteca |
 
 ---
 
@@ -122,6 +155,11 @@ ver `CLAUDE.md` §13). Nada de bloques de texto largos.
   todo momento.
 - La página de artículos se llama **"Noticias"** en toda la interfaz
   (menú, enlaces, textos) — nunca "feed" de cara al usuario.
+- El tono debe apoyarse en **datos verificables**, no en un lenguaje que
+  suene a teoría de la conspiración — ver "Contenido con datos" en §2.
+- Los visuales de `/about` son **fotografías reales** (Wikimedia Commons,
+  licencia libre/dominio público), no emojis ni ilustraciones — con un
+  tratamiento vintage uniforme (blanco y negro + sepia leve) vía CSS.
 
 ## 5. Pendiente de definir en la implementación
 
