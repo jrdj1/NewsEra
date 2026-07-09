@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from "react";
+import { MiniPreview, type PreviewKind } from "./MiniPreview";
 
 /**
  * Envuelve un enlace y muestra, al pasar el ratón o el foco (accesible por
- * teclado), una tarjeta con una vista previa en vivo real de esa ruta —
- * un iframe de la propia demo escalado, no una captura estática, así
- * siempre refleja el estado real (incluida la persistencia en
- * localStorage, ver demo/src/demo/store.ts).
+ * teclado), una tarjeta con una maqueta en miniatura de esa pantalla —
+ * dibujada con nuestros propios componentes (ver MiniPreview.tsx), no un
+ * iframe de la app entera: renderizar la SPA dentro de sí misma a escala
+ * reducida se veía roto (barra de navegador, avisos del navegador, etc.).
  */
-export function LivePreviewCard({ path, children }: { path: string; children: ReactNode }) {
+export function LivePreviewCard({ kind, children }: { kind: PreviewKind; children: ReactNode }) {
   const [visible, setVisible] = useState(false);
 
   return (
@@ -20,19 +21,9 @@ export function LivePreviewCard({ path, children }: { path: string; children: Re
     >
       {children}
       {visible && (
-        <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-3 w-64 -translate-x-1/2 overflow-hidden rounded-xl border border-white/15 bg-zinc-900 shadow-2xl sm:w-80">
-          <div className="h-40 w-full overflow-hidden sm:h-52">
-            <iframe
-              src={path}
-              title=""
-              tabIndex={-1}
-              aria-hidden="true"
-              className="h-[400%] w-[400%] origin-top-left scale-[.25] border-0"
-            />
-          </div>
-          <p className="border-t border-white/10 px-3 py-1.5 text-[10px] text-zinc-400">
-            Vista previa en vivo
-          </p>
+        <div className="pointer-events-none absolute left-1/2 top-full z-30 mt-3 w-56 -translate-x-1/2 rounded-xl border border-white/15 bg-zinc-950/95 p-2 shadow-2xl sm:w-64">
+          <MiniPreview kind={kind} />
+          <p className="pt-2 text-center text-[10px] text-zinc-400">Vista previa</p>
         </div>
       )}
     </div>

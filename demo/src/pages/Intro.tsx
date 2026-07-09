@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
 import { LivePreviewCard } from "@/components/LivePreviewCard";
-import { ABOUT_IMAGES } from "@/demo/about-images";
+import type { PreviewKind } from "@/components/MiniPreview";
 
 /**
  * Cinemática de apertura de la demo (§1 de DESIGN.md) — se muestra siempre
@@ -11,7 +11,7 @@ import { ABOUT_IMAGES } from "@/demo/about-images";
  */
 
 interface Feature {
-  id: string;
+  id: PreviewKind;
   title: string;
   desc: string;
   to: string;
@@ -120,30 +120,23 @@ export default function Intro() {
 
       <div
         ref={containerRef}
-        className="h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth bg-zinc-950 text-white"
+        className="aurora-bg h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
       >
         {/* Escena 0 — Portada */}
         <section
           id="portada"
-          className="flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-5 px-6 text-center"
+          className="relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-5 px-6 text-center"
         >
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">Bienvenido a</p>
           <h1 className="text-5xl font-black tracking-tight sm:text-7xl">NewsEra</h1>
-          <p className="max-w-xs text-zinc-400 sm:text-lg">La verdad, verificada por todos.</p>
+          <p className="max-w-xs text-zinc-300 sm:text-lg">La verdad, verificada por todos.</p>
 
           <Link to="/about#problema" className="mt-3">
             <TiltCard>
-              <div className="relative h-56 w-40 overflow-hidden rounded-2xl border border-white/10 shadow-2xl shadow-black/50 sm:h-64 sm:w-48">
-                <img
-                  src={ABOUT_IMAGES.problema.url}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-full w-full object-cover grayscale sepia-[.35] contrast-125 brightness-[.65]"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-end bg-gradient-to-t from-black/90 via-black/10 to-transparent p-4">
-                  <p className="text-sm font-semibold text-white">Descubre la idea completa</p>
-                  <p className="text-xs text-zinc-300">Sobre el proyecto →</p>
-                </div>
+              <div className="relative flex h-56 w-40 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-48">
+                <span className="text-4xl font-black text-white sm:text-5xl">N</span>
+                <p className="text-sm font-semibold text-white">Descubre la idea completa</p>
+                <p className="text-xs text-zinc-300">Sobre el proyecto →</p>
               </div>
             </TiltCard>
           </Link>
@@ -154,12 +147,12 @@ export default function Intro() {
           <section
             key={f.id}
             id={f.id}
-            className="flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-4 px-6 text-center sm:px-12"
+            className="relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-4 px-6 text-center sm:px-12"
           >
             <h2 className="text-3xl font-bold sm:text-5xl">{f.title}</h2>
-            <p className="max-w-md text-balance text-zinc-400 sm:text-lg">{f.desc}</p>
+            <p className="max-w-md text-balance text-zinc-300 sm:text-lg">{f.desc}</p>
 
-            <LivePreviewCard path={f.to}>
+            <LivePreviewCard kind={f.id}>
               <Link
                 to={f.to}
                 className="mt-1 inline-flex items-center gap-2 rounded-full border border-white/25 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:border-white/50 hover:bg-white/5"
@@ -170,7 +163,7 @@ export default function Intro() {
 
             <Link
               to={`/about#${f.aboutAnchor}`}
-              className="text-xs text-zinc-500 underline underline-offset-2 hover:text-zinc-300"
+              className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-200"
             >
               Por qué existe esta sección →
             </Link>
@@ -180,7 +173,7 @@ export default function Intro() {
         {/* Escena final — Empezar */}
         <section
           id="empezar"
-          className="flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-6 bg-brand px-6 text-center text-white"
+          className="relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-6 bg-brand px-6 text-center text-white"
         >
           <h2 className="text-3xl font-bold sm:text-5xl">Ya sabes por dónde empezar.</h2>
           <Link

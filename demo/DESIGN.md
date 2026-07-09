@@ -61,9 +61,9 @@ enseña esa pieza del juego. Estructura común a las cinco:
   completo sin salir del hilo.
 - **Tarjeta de pre-visualización**: al pasar el ratón (o el foco, por
   accesibilidad) sobre el enlace de la sección, aparece una tarjeta con una
-  vista previa real de esa página (screenshot o mini-render en vivo de un
-  fragmento de la UI) — así quien quiera puede "leerlo" con solo pasar el
-  ratón, sin necesidad de clicar a ciegas.
+  maqueta en miniatura de esa pantalla (ver "Vista previa", en Notas
+  técnicas) — así quien quiera puede "leerlo" con solo pasar el ratón, sin
+  necesidad de clicar a ciegas.
 
 ### Escena final — Empezar
 
@@ -87,7 +87,7 @@ enlazar directamente a la pantalla relevante.
 
 | # | Ancla | Contenido |
 |---|-------|-----------|
-| 1 | `#problema` | El problema actual detectado: la desinformación y la captura de los verificadores tradicionales. |
+| 1 | `#problema` | Los 2 problemas actuales detectados: la transmisión de información falsa y el control/industria de la información. |
 | 2 | `#solucion` | La solución que propone NewsEra: verificación colectiva sobre reglas que nadie controla en solitario. |
 | 3 | `#verdad` | Qué es "la verdad" aquí: no una autoridad que la dicta, sino un consenso verificable de la comunidad. |
 | 4 | `#pilares` | Los pilares fundamentales de NewsEra (inmutabilidad, validación colectiva, resistencia a la captura). |
@@ -96,42 +96,39 @@ enlazar directamente a la pantalla relevante.
 | 7 | `#slogan` | Eslogan y llamada de atención directa a quien lee ("tú puedes..."). |
 | 8 | `#memoria` | Enlace a la memoria del TFG (whitepaper) para quien quiera el detalle técnico completo. |
 
-Cada pantalla: tipografía grande, una idea, y una fotografía real a pantalla
-completa como fondo (ver "Fotografías", más abajo) — nada de bloques de
-texto largos ni de emojis genéricos. La única excepción deliberada es la
-pantalla 7 (`#slogan`): color de marca sólido, sin foto, como respiro
-visual antes del cierre.
+Cada pantalla: tipografía grande, un fondo "aurora boreal" compartido (ver
+"Fondo aurora", más abajo) y una explicación con más recorrido que un mero
+titular — `/about` es precisamente el sitio para extenderse un poco más
+que en la cinemática de `/`, que sí se mantiene ultra-breve. La única
+excepción es la pantalla 7 (`#slogan`): color de marca sólido, como
+respiro visual antes del cierre.
 
-**Contenido con datos, no con acusaciones.** La pantalla 1 (`#problema`) no
-apela a un "ellos" difuso — cita una fuente concreta y verificable: el
-estudio de Vosoughi, Roy y Aral publicado en *Science* (2018), que midió la
-difusión de noticias verdaderas y falsas en Twitter (~126.000 historias,
-~3M de personas, 4.5M de veces compartidas) y encontró que lo falso se
-comparte un 70% más y llega a 1.500 personas 6 veces más rápido que lo
-cierto. Mismo criterio para cualquier cifra futura en el resto de
-pantallas: solo datos verificables, nunca una afirmación vaga.
+**Contenido con datos, no con acusaciones.** La pantalla 1 (`#problema`)
+no apela a un "ellos" difuso — expone dos problemas concretos, cada uno
+con una fuente verificable:
+1. **La transmisión de información falsa**: estudio de Vosoughi, Roy y
+   Aral publicado en *Science* (2018), que midió la difusión de noticias
+   verdaderas y falsas en Twitter (~126.000 historias, ~3M de personas,
+   4.5M de veces compartidas) — lo falso se comparte un 70% más y llega a
+   1.500 personas 6 veces más rápido que lo cierto.
+2. **El control y la industria de la información**: en EE. UU. (2026),
+   más de la mitad del tráfico a las grandes webs de noticias se
+   concentra en sitios controlados por solo siete familias o grupos
+   empresariales; en Reino Unido, tres empresas controlan el 90% de los
+   periódicos nacionales.
 
-### Fotografías
+Mismo criterio para cualquier cifra futura en el resto de pantallas: solo
+datos verificables, nunca una afirmación vaga.
 
-Fotografías reales, no ilustraciones ni emojis, todas con el mismo
-tratamiento visual — blanco y negro con un punto de tono sucio/sepia —
-aplicado por CSS de forma uniforme (`grayscale sepia contrast brightness`
-compartido, ver `about-images.ts` / `SlideShell`), nunca editando los
-archivos originales. Todas proceden de Wikimedia Commons, de dominio
-público o licencia libre, con la URL directa y la licencia verificadas
-antes de usarlas — con crédito visible en la pantalla 8 para las que la
-licencia (CC BY / CC BY-SA) lo exige.
+### Fondo aurora
 
-| Pantalla | Fotografía |
-|----------|------------|
-| `#problema` | Sala de rotativas de un periódico, h. 1960 |
-| `#solucion` | Una multitud de personas |
-| `#verdad` | *The Jury* (1861), un jurado deliberando |
-| `#pilares` | Columnas del templo de Luxor, en pie desde hace milenios |
-| `#innovacion` | Una bombilla incandescente encendida |
-| `#blockchain` | Libro de cuentas bancario del s. XIX (1831-1870) |
-| `#slogan` | (sin foto — color de marca sólido) |
-| `#memoria` | Estanterías de una biblioteca |
+Ni fotografías ni emojis genéricos: un fondo animado en tonos azules/
+violetas/cian — "aurora boreal" — compartido entre `/` y `/about` (clase
+`.aurora-bg` en `index.css`, una capa `position: fixed` con varios
+degradados radiales desenfocados que se desplazan muy despacio). Una única
+capa continua detrás de todo el scroll, no una imagen distinta por
+pantalla — refuerza la sensación de estar en un mismo espacio mientras se
+avanza. `prefers-reduced-motion` desactiva la animación.
 
 ---
 
@@ -144,12 +141,13 @@ licencia (CC BY / CC BY-SA) lo exige.
 - **Tilt 3D**: efecto CSS puro (`transform: perspective(...) rotateX() rotateY()`
   actualizado en `onMouseMove`, componente `TiltCard` en `pages/Intro.tsx`),
   sin dependencias nuevas.
-- **Tarjetas de pre-visualización**: `components/LivePreviewCard.tsx` — un
-  `<iframe>` de la propia demo escalado con CSS (`scale-[.25]` sobre un
-  contenedor `overflow-hidden`), no una captura estática: siempre refleja
-  el estado real de la demo, incluida la persistencia en `localStorage`.
-  Visible en `:hover` y también en `:focus`/`:blur` (navegación por
-  teclado) — nunca solo con el ratón, por accesibilidad.
+- **Vista previa**: `components/LivePreviewCard.tsx` + `MiniPreview.tsx` —
+  una maqueta en miniatura dibujada con nuestros propios componentes
+  (barras, círculos, badges de color), no un `<iframe>` de la demo entera:
+  se probó esa vía primero y el resultado se veía roto (barra de
+  navegador, avisos internos del navegador) al escalar la SPA completa
+  dentro de sí misma. Visible en `:hover` y también en `:focus`/`:blur`
+  (navegación por teclado) — nunca solo con el ratón, por accesibilidad.
 - **Sin cambios en el proyecto real**: todo esto vive únicamente en
   `demo/`, igual que el resto de shims y datos en memoria (ver
   `demo/README.md`).
@@ -162,11 +160,16 @@ licencia (CC BY / CC BY-SA) lo exige.
   (menú, enlaces, textos) y vive en `/noticias` — nunca "feed" de cara al
   usuario, y `/` deja de ser esa página (ahora es la cinemática).
 - El tono debe apoyarse en **datos verificables**, no en un lenguaje que
-  suene a teoría de la conspiración — ver "Contenido con datos" en §2.
-- Los visuales de `/about` y de la Escena 0 de `/` son **fotografías
-  reales** (Wikimedia Commons, licencia libre/dominio público), no emojis
-  ni ilustraciones — con un tratamiento vintage uniforme (blanco y negro +
-  sepia leve) vía CSS.
+  suene a teoría de la conspiración — ver "Contenido con datos" en §2. El
+  problema se expone como **2 problemas concretos**: la transmisión de
+  información falsa, y el control/industria de la información.
+- Los visuales de `/about` y de `/` son un **fondo "aurora boreal"**
+  animado (tonos azules), no fotografías ni emojis — ver "Fondo aurora"
+  en §2. Se probaron fotografías vintage primero; se descartaron a favor
+  de un fondo de color por preferencia explícita.
+- `/about` puede (y debe) extenderse más que la cinemática de `/` en sus
+  explicaciones — es la pieza pensada para profundizar, no para
+  enganchar en dos segundos.
 - Cada escena del "mapa del tesoro" (`/`) enlaza a su ancla correspondiente
   en `/about`: Noticias→`#solucion`, Usuarios→`#pilares`,
   Publicar→`#blockchain`, Validar→`#verdad`, Perfil→`#innovacion`.

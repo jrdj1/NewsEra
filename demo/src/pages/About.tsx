@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { resetDemoState } from "@/demo/store";
-import { ABOUT_IMAGES, type AboutImage } from "@/demo/about-images";
 import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
 
 interface SlideDef {
@@ -10,61 +9,49 @@ interface SlideDef {
   headline: string;
   body?: string;
   accent: string;
-  image?: AboutImage;
 }
-
-// Tratamiento vintage uniforme para todas las fotos — blanco y negro con un
-// punto de tono "sucio" (sepia leve), igual en las 6 imágenes sin importar
-// su tono original. Aplicado por CSS, nunca editando los archivos.
-const VINTAGE_FILTER = "grayscale sepia-[.35] contrast-125 brightness-[.6]";
 
 const SLIDES: SlideDef[] = [
   {
     id: "problema",
-    eyebrow: "El problema (con datos)",
-    headline: "Lo falso viaja más rápido que lo cierto.",
-    body: 'Un estudio del MIT (revista Science, 2018) descubrió que las noticias falsas se comparten un 70% más que las verdaderas, y llegan a 1.500 personas 6 veces más rápido.',
+    eyebrow: "El problema",
+    headline: "Dos grietas, un mismo síntoma.",
+    body: "No es solo que se cuele alguna mentira de vez en cuando. Es que el propio sistema para separar lo cierto de lo falso tiene grietas estructurales.",
     accent: "text-red-400",
-    image: ABOUT_IMAGES.problema,
   },
   {
     id: "solucion",
     eyebrow: "La solución",
     headline: "Que decida todo el mundo, no unos pocos.",
-    body: "NewsEra reparte la verificación entre miles de personas, con reglas que nadie controla en solitario — ni siquiera quien lo creó.",
+    body: 'NewsEra traslada esa decisión desde una redacción, una plataforma o un gobierno hacia miles de personas corrientes. Cómo se vota, cuándo se declara "verdad" y cómo se reparte la reputación está escrito en un contrato inteligente — código público que se ejecuta igual para todos. Ni siquiera quien lo programó puede cambiarlo de un día para otro sin que la comunidad entera lo note.',
     accent: "text-blue-400",
-    image: ABOUT_IMAGES.solucion,
   },
   {
     id: "verdad",
     eyebrow: '¿Qué es "verdad" aquí?',
     headline: "No la dicta una autoridad. La vota un jurado.",
-    body: "La comunidad vota si un hecho es verdadero, falso o no verificable — y ese consenso queda anotado para siempre.",
+    body: "Cuando se publica un artículo, se abre una votación. La comunidad decide, con su propia reputación en juego, si es verdadero, falso o si sencillamente no hay pruebas suficientes todavía. Hace falta una mayoría de dos tercios — no una simple mitad más uno — para dar el veredicto por definitivo, así una votación reñida no se confunde con un consenso real. El resultado queda anotado para siempre, junto con quién votó qué.",
     accent: "text-amber-400",
-    image: ABOUT_IMAGES.verdad,
   },
   {
     id: "pilares",
     eyebrow: "Los pilares",
     headline: "Tres reglas que no se rompen.",
     accent: "text-blue-400",
-    image: ABOUT_IMAGES.pilares,
   },
   {
     id: "innovacion",
     eyebrow: "Lo nuevo",
     headline: "No mejora al árbitro. Cambia el juego.",
-    body: "No es un verificador más encima de los de siempre — es una cancha nueva donde nadie empieza con ventaja.",
+    body: "Los verificadores tradicionales añaden una capa de revisión encima de un sistema que ya tiene sus propios intereses. NewsEra no revisa ese sistema — lo sustituye por uno nuevo, donde publicar, votar y ganar reputación siguen exactamente las mismas reglas para quien fundó el proyecto que para la primera persona que se registra hoy.",
     accent: "text-violet-400",
-    image: ABOUT_IMAGES.innovacion,
   },
   {
     id: "blockchain",
     eyebrow: "La tecnología",
     headline: "Un cuaderno que nadie puede tachar.",
-    body: "La blockchain es un registro compartido por miles de ordenadores. Lo que se escribe, se queda escrito — y cualquiera puede comprobarlo.",
+    body: "La blockchain es, en esencia, un registro compartido por miles de ordenadores en vez de guardado en un único servidor. Cada anotación nueva se enlaza criptográficamente a todas las anteriores, así que alterar una implicaría rehacer todo el historial a la vista de toda la red — en la práctica, imposible. Estos tres contratos son ese cuaderno:",
     accent: "text-blue-400",
-    image: ABOUT_IMAGES.blockchain,
   },
   {
     id: "slogan",
@@ -77,21 +64,29 @@ const SLIDES: SlideDef[] = [
     id: "memoria",
     eyebrow: "Para saber más",
     headline: "¿Quieres el detalle técnico completo?",
-    body: "Arquitectura, contratos inteligentes y evaluación del sistema, documentados a fondo.",
+    body: "La memoria del TFG documenta la arquitectura completa: el diseño de cada contrato, las decisiones de seguridad, los casos de uso y la evaluación del sistema con datos reales.",
     accent: "text-zinc-300",
-    image: ABOUT_IMAGES.memoria,
+  },
+];
+
+const PROBLEMAS = [
+  {
+    title: "Lo falso viaja más rápido",
+    desc: 'Un estudio del MIT publicado en Science (2018) analizó 126.000 noticias compartidas 4,5 millones de veces en Twitter: las falsas se comparten un 70% más y alcanzan a 1.500 personas seis veces más rápido que las verdaderas.',
+  },
+  {
+    title: "Pocas manos controlan la conversación",
+    desc: "En EE. UU., más de la mitad del tráfico a las grandes webs de noticias se concentra en sitios controlados por solo siete familias o grupos empresariales (2026). En Reino Unido, tres empresas controlan el 90% de los periódicos nacionales.",
   },
 ];
 
 const PILARES = [
-  { icon: "🔗", label: "Inmutable", desc: "Nada se borra." },
-  { icon: "👥", label: "Colectivo", desc: "Nadie decide solo." },
-  { icon: "🛡️", label: "Resistente", desc: "Nadie lo captura." },
+  { icon: "🔗", label: "Inmutable", desc: "Una vez publicado o votado, nada se borra ni se reescribe." },
+  { icon: "👥", label: "Colectivo", desc: "Ninguna persona ni entidad decide sola qué es verdad." },
+  { icon: "🛡️", label: "Resistente", desc: "Sin una autoridad central que capturar, no hay un único punto de fallo." },
 ];
 
 const CONTRATOS = ["PublicationRegistry", "ValidationRegistry", "ReputationSystem"];
-
-const IMAGE_CREDITS = SLIDES.map((s) => s.image?.credit).filter((c): c is NonNullable<typeof c> => !!c);
 
 function SlideShell({
   id,
@@ -99,43 +94,21 @@ function SlideShell({
   headline,
   body,
   accent,
-  image,
   className = "",
   children,
 }: SlideDef & { className?: string; children?: ReactNode }) {
   return (
     <section
       id={id}
-      className={`relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center overflow-hidden px-6 py-10 text-center sm:px-12 ${className}`}
+      className={`relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center px-6 py-10 text-center sm:px-12 ${className}`}
     >
-      {image && (
-        <>
-          <img
-            src={image.url}
-            alt=""
-            aria-hidden="true"
-            className={`absolute inset-0 h-full w-full object-cover ${VINTAGE_FILTER}`}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/60 to-black/75" />
-        </>
-      )}
-      <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-3 sm:gap-5">
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-3 sm:gap-5">
         {eyebrow && (
           <p className={`text-xs font-bold uppercase tracking-[0.2em] ${accent}`}>{eyebrow}</p>
         )}
-        <h2
-          className={`text-3xl font-bold leading-tight tracking-tight sm:text-5xl ${image ? "text-white" : ""}`}
-        >
-          {headline}
-        </h2>
+        <h2 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">{headline}</h2>
         {body && (
-          <p
-            className={`text-balance text-base leading-relaxed sm:text-lg ${
-              image ? "text-zinc-200" : "text-zinc-500 dark:text-zinc-400"
-            }`}
-          >
-            {body}
-          </p>
+          <p className="text-balance text-base leading-relaxed text-zinc-300 sm:text-lg">{body}</p>
         )}
         {children}
       </div>
@@ -170,9 +143,19 @@ export default function About() {
       <SlideDotNav slides={DOT_NAV_SLIDES} active={active} />
       <div
         ref={containerRef}
-        className="h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth"
+        className="aurora-bg h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
       >
-        <SlideShell {...problema} />
+        <SlideShell {...problema}>
+          <div className="mt-2 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+            {PROBLEMAS.map((p) => (
+              <div key={p.title} className="rounded-2xl border border-white/15 bg-white/5 p-5 text-left backdrop-blur-sm">
+                <p className="mb-1.5 font-semibold text-white">{p.title}</p>
+                <p className="text-sm leading-relaxed text-zinc-300">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </SlideShell>
+
         <SlideShell {...solucion} />
         <SlideShell {...verdad} />
 
@@ -181,7 +164,7 @@ export default function About() {
             {PILARES.map((p) => (
               <div
                 key={p.label}
-                className="flex flex-col items-center gap-1.5 rounded-2xl border border-white/15 bg-black/20 p-5 backdrop-blur-sm"
+                className="flex flex-col items-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm"
               >
                 <span className="text-3xl" aria-hidden="true">
                   {p.icon}
@@ -208,7 +191,7 @@ export default function About() {
           </div>
         </SlideShell>
 
-        <SlideShell {...slogan} className="bg-brand text-white">
+        <SlideShell {...slogan} className="bg-brand">
           <Link
             to="/noticias"
             className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand shadow-lg transition-transform hover:scale-105"
@@ -251,21 +234,6 @@ export default function About() {
               Reiniciar demo
             </button>
           </div>
-
-          {IMAGE_CREDITS.length > 0 && (
-            <p className="mt-6 max-w-sm text-[10px] leading-relaxed text-zinc-400">
-              Fotografías:{" "}
-              {IMAGE_CREDITS.map((c, i) => (
-                <span key={c.href}>
-                  <a href={c.href} target="_blank" rel="noopener noreferrer" className="underline">
-                    {c.text}
-                  </a>
-                  {i < IMAGE_CREDITS.length - 1 ? " · " : ""}
-                </span>
-              ))}{" "}
-              (Wikimedia Commons)
-            </p>
-          )}
         </SlideShell>
       </div>
     </div>
