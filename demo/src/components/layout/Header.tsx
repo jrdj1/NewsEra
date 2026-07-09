@@ -63,7 +63,7 @@ function ProfileIcon() {
 }
 
 const navLinks = [
-  { to: "/", label: "Inicio", end: true, Icon: HomeIcon },
+  { to: "/noticias", label: "Noticias", end: true, Icon: HomeIcon },
   { to: "/users", label: "Usuarios", end: false, Icon: UsersIcon },
   { to: "/publish", label: "Publicar", end: false, Icon: PublishIcon },
   { to: "/validate", label: "Validar", end: false, Icon: ValidateIcon },
@@ -114,7 +114,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-zinc-200 bg-white/90 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/90">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-2 sm:px-4">
-        <Link to="/" className="mr-1 shrink-0 sm:mr-2">
+        <Link to="/noticias" className="mr-1 shrink-0 sm:mr-2">
           <img src="/logo.jpg" alt="NewsEra" className="h-9 w-9 rounded-lg object-cover" />
         </Link>
 

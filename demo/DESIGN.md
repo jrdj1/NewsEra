@@ -139,12 +139,17 @@ licencia (CC BY / CC BY-SA) lo exige.
 
 - **Scroll-snap**: reutilizar la clase ya usada en `ArticleFullscreenCard`
   (`h-[calc(100dvh-4rem)] snap-start` dentro de un contenedor
-  `snap-y snap-mandatory overflow-y-auto`).
+  `snap-y snap-mandatory overflow-y-auto`). Navegación por puntos
+  compartida entre `/` y `/about` vía `components/SlideDotNav.tsx`.
 - **Tilt 3D**: efecto CSS puro (`transform: perspective(...) rotateX() rotateY()`
-  actualizado en `onMouseMove`), sin dependencias nuevas.
-- **Tarjetas de pre-visualización**: un componente compartido, visible en
-  `:hover` y también en `:focus-visible` (navegación por teclado) — nunca
-  solo con el ratón, por accesibilidad.
+  actualizado en `onMouseMove`, componente `TiltCard` en `pages/Intro.tsx`),
+  sin dependencias nuevas.
+- **Tarjetas de pre-visualización**: `components/LivePreviewCard.tsx` — un
+  `<iframe>` de la propia demo escalado con CSS (`scale-[.25]` sobre un
+  contenedor `overflow-hidden`), no una captura estática: siempre refleja
+  el estado real de la demo, incluida la persistencia en `localStorage`.
+  Visible en `:hover` y también en `:focus`/`:blur` (navegación por
+  teclado) — nunca solo con el ratón, por accesibilidad.
 - **Sin cambios en el proyecto real**: todo esto vive únicamente en
   `demo/`, igual que el resto de shims y datos en memoria (ver
   `demo/README.md`).
@@ -152,17 +157,20 @@ licencia (CC BY / CC BY-SA) lo exige.
 ## 4. Decisiones ya cerradas
 
 - La cinemática de `/` se muestra **siempre**, con opción de saltarla en
-  todo momento.
+  todo momento (enlace fijo "Saltar intro" visible desde la Escena 0).
 - La página de artículos se llama **"Noticias"** en toda la interfaz
-  (menú, enlaces, textos) — nunca "feed" de cara al usuario.
+  (menú, enlaces, textos) y vive en `/noticias` — nunca "feed" de cara al
+  usuario, y `/` deja de ser esa página (ahora es la cinemática).
 - El tono debe apoyarse en **datos verificables**, no en un lenguaje que
   suene a teoría de la conspiración — ver "Contenido con datos" en §2.
-- Los visuales de `/about` son **fotografías reales** (Wikimedia Commons,
-  licencia libre/dominio público), no emojis ni ilustraciones — con un
-  tratamiento vintage uniforme (blanco y negro + sepia leve) vía CSS.
+- Los visuales de `/about` y de la Escena 0 de `/` son **fotografías
+  reales** (Wikimedia Commons, licencia libre/dominio público), no emojis
+  ni ilustraciones — con un tratamiento vintage uniforme (blanco y negro +
+  sepia leve) vía CSS.
+- Cada escena del "mapa del tesoro" (`/`) enlaza a su ancla correspondiente
+  en `/about`: Noticias→`#solucion`, Usuarios→`#pilares`,
+  Publicar→`#blockchain`, Validar→`#verdad`, Perfil→`#innovacion`.
 
 ## 5. Pendiente de definir en la implementación
 
-- Contenido final (copy) de cada una de las 8 pantallas de `/about` y de
-  las escenas de `/`.
-- Qué captura/fragmento de UI usar en cada tarjeta de pre-visualización.
+Todo lo anterior está implementado — sin pendientes abiertos por ahora.

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { resetDemoState } from "@/demo/store";
 import { ABOUT_IMAGES, type AboutImage } from "@/demo/about-images";
+import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
 
 interface SlideDef {
   id: string;
@@ -142,26 +143,7 @@ function SlideShell({
   );
 }
 
-function DotNav({ active }: { active: string }) {
-  return (
-    <nav
-      aria-label="Navegación de la introducción"
-      className="fixed right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2.5 sm:right-4"
-    >
-      {SLIDES.map((s) => (
-        <a
-          key={s.id}
-          href={`#${s.id}`}
-          aria-label={s.eyebrow || s.headline}
-          aria-current={active === s.id}
-          className={`h-2 w-2 rounded-full ring-1 ring-white/40 transition-all ${
-            active === s.id ? "h-5 bg-brand" : "bg-white/50 hover:bg-white/80"
-          }`}
-        />
-      ))}
-    </nav>
-  );
-}
+const DOT_NAV_SLIDES = SLIDES.map((s) => ({ id: s.id, label: s.eyebrow || s.headline }));
 
 export default function About() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -173,9 +155,8 @@ export default function About() {
 
     function handleScroll() {
       if (!root) return;
-      const index = Math.round(root.scrollTop / root.clientHeight);
-      const slide = SLIDES[Math.min(SLIDES.length - 1, Math.max(0, index))];
-      if (slide) setActive(slide.id);
+      const index = slideIndexFromScroll(root, SLIDES.length);
+      setActive(SLIDES[index].id);
     }
 
     root.addEventListener("scroll", handleScroll, { passive: true });
@@ -186,7 +167,7 @@ export default function About() {
 
   return (
     <div className="relative">
-      <DotNav active={active} />
+      <SlideDotNav slides={DOT_NAV_SLIDES} active={active} />
       <div
         ref={containerRef}
         className="h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth"
@@ -228,10 +209,8 @@ export default function About() {
         </SlideShell>
 
         <SlideShell {...slogan} className="bg-brand text-white">
-          {/* TODO: apuntar a /noticias cuando llegue la fase 2 (cinemática
-              de inicio + renombrado del feed a "Noticias", ver DESIGN.md). */}
           <Link
-            to="/"
+            to="/noticias"
             className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand shadow-lg transition-transform hover:scale-105"
           >
             Entrar a NewsEra
