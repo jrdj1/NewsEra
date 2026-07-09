@@ -34,53 +34,65 @@ export default function About() {
         </button>
       </div>
 
-      {/* El problema */}
+      {/* La idea, en cristiano */}
       <section className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold">El problema</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          La desinformación no se resuelve mejorando los mecanismos de verificación sobre
-          los sistemas actuales. Los medios, las plataformas y los organismos de
-          verificación son susceptibles de captura por grupos de poder económico, político
-          o institucional. Mientras las reglas del juego las fijen entidades controlables,
-          el problema persiste.
-        </p>
-      </section>
+        <h2 className="mb-4 text-2xl font-bold">💡 La idea, en cristiano</h2>
 
-      {/* La solución */}
-      <section className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold">La solución</h2>
         <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-          NewsEra traslada las reglas de publicación, verificación y gobernanza desde
-          entidades controlables hacia <strong>contratos inteligentes</strong> desplegados
-          en una blockchain pública. Ningún actor puede modificarlos unilateralmente.
+          Imagina que en vez de confiar en que <em>"esto es verdad porque lo dice tal medio"</em>,
+          la verdad la decide un jurado popular gigante — miles de personas normales, no una
+          sola empresa ni un solo gobierno — y que <strong>nadie puede sobornar al jurado
+          entero</strong>. Eso, resumido a lo bruto, es NewsEra.
         </p>
-        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          El contenido se almacena en IPFS (descentralizado y resistente a la censura) y
-          su integridad se garantiza mediante el hash <code className="text-sm bg-zinc-100 dark:bg-zinc-800 px-1 rounded">keccak256</code> registrado
-          on-chain. Cualquier persona puede verificar que el artículo que lee es exactamente
-          el que se publicó.
+
+        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+          Cualquiera puede publicar una noticia. La comunidad vota si es verdadera, falsa o
+          si todavía no hay pruebas suficientes para saberlo. Y aquí está la magia: esas
+          reglas de votación no las controla nadie de forma unilateral, porque están escritas
+          en la <strong>blockchain</strong> — piénsala como un cuaderno gigante, compartido
+          por miles de ordenadores repartidos por el mundo, donde cualquiera puede escribir
+          una página nueva, pero <strong>nadie puede arrancar una página ya escrita ni
+          cambiar las reglas a mitad de partido</strong>. Ni siquiera quien construyó NewsEra.
         </p>
+
+        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+          🕵️ <strong>¿Y cómo evitamos que la gente vote a lo loco o en bloque?</strong> Con
+          reputación, como en un barrio de toda la vida: si sueles acertar cuando algo es
+          verdad o mentira, te ganas la confianza del vecindario y tu voto empieza a pesar
+          más. Si te equivocas — o intentas hacer trampas — la pierdes. Y como esa confianza
+          no se compra ni se fabrica de la nada, es muy difícil colarse creando cien cuentas
+          falsas para votar mil veces: todas empiezan desde cero, sin ningún peso.
+        </p>
+
+        <div className="rounded-xl bg-zinc-50 p-5 dark:bg-zinc-900">
+          <p className="mb-2 font-medium">En resumen, con NewsEra:</p>
+          <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+            <li>📌 Nadie puede borrar lo que ya se publicó.</li>
+            <li>👥 Nadie decide en solitario qué es verdad — lo decide la comunidad.</li>
+            <li>🔍 Cualquiera puede comprobar con sus propios ojos cómo se llegó a esa conclusión.</li>
+          </ul>
+        </div>
       </section>
 
       {/* Cómo funciona */}
       <section className="mb-12">
-        <h2 className="mb-6 text-xl font-semibold">Cómo funciona</h2>
+        <h2 className="mb-6 text-xl font-semibold">🧭 Cómo funciona, paso a paso</h2>
         <ol className="space-y-4">
           {[
             {
               n: "1",
-              title: "Publicación",
-              desc: "Cualquier usuario con cartera conectada puede registrar un artículo. El hash de su contenido queda inscrito de forma permanente en la blockchain.",
+              title: "Alguien publica",
+              desc: "Cualquier persona puede escribir y publicar un artículo. Queda registrado de forma permanente — nadie puede editarlo a escondidas ni hacerlo desaparecer después.",
             },
             {
               n: "2",
-              title: "Validación",
-              desc: "Los validadores con reputación suficiente votan TRUE, FALSE o UNVERIFIABLE. Cuando se alcanza el quórum, el contrato determina el consenso por mayoría.",
+              title: "El barrio vota",
+              desc: "Quienes tienen reputación suficiente votan si el artículo es verdadero, falso o si aún no se puede saber. Cuando vota suficiente gente, se calcula el resultado por mayoría.",
             },
             {
               n: "3",
-              title: "Reputación",
-              desc: "Los validadores que aciertan el consenso ganan reputación; los que se equivocan la pierden. Esto incentiva la honestidad y desincentiva los ataques Sybil.",
+              title: "La reputación se mueve",
+              desc: "Acertar con la mayoría te suma reputación (y más peso en futuras votaciones); quedarte en minoría te la resta. Así el sistema premia acertar de verdad, no votar por votar.",
             },
           ].map(({ n, title, desc }) => (
             <li key={n} className="flex gap-4">
@@ -98,7 +110,11 @@ export default function About() {
 
       {/* Contratos */}
       <section className="mb-12 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
-        <h2 className="mb-4 text-xl font-semibold">Contratos inteligentes</h2>
+        <h2 className="mb-1 text-xl font-semibold">🔧 Para quien quiera meterse en el motor</h2>
+        <p className="mb-4 text-xs text-zinc-500">
+          Opcional — el "cuaderno compartido" del que hablábamos arriba en realidad son estos
+          tres contratos inteligentes:
+        </p>
         <div className="space-y-3 text-sm">
           {[
             {
