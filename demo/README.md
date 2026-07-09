@@ -7,6 +7,9 @@ proyecto real: vive en su propia carpeta, con su propio `package.json`,
 puerto de desarrollo (`4173`, frente a `5173`/`8080` del proyecto real) y
 sin variables de entorno.
 
+Desplegada en Vercel desde esta rama (`demo`) con Root Directory `demo`,
+Build Command `npm run build` y Output Directory `dist`.
+
 ## Cómo funciona
 
 - **Datos**: `src/demo/store.ts` reconstruye en memoria, en el propio
