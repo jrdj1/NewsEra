@@ -59,11 +59,13 @@ enseña esa pieza del juego. Estructura común a las cinco:
 - **Enlace a la porción concreta de `/about`** que profundiza en esa
   función (anclas por pantalla, ver §2), para quien quiera el porqué
   completo sin salir del hilo.
-- **Tarjeta de pre-visualización**: al pasar el ratón (o el foco, por
-  accesibilidad) sobre el enlace de la sección, aparece una tarjeta con una
-  maqueta en miniatura de esa pantalla (ver "Vista previa", en Notas
-  técnicas) — así quien quiera puede "leerlo" con solo pasar el ratón, sin
-  necesidad de clicar a ciegas.
+- **Icono, número de paso y explicación en dos niveles**: una frase corta
+  (qué se hace) más un párrafo breve (por qué importa / cómo afecta a la
+  reputación), no un titular seco.
+- **Tarjeta de pre-visualización con datos reales**, siempre visible junto
+  al texto (no oculta tras el ratón — ver "Vista previa", en Notas
+  técnicas): así cualquier persona ve de un vistazo qué hay hoy mismo en
+  esa pantalla, también desde el móvil.
 
 ### Escena final — Empezar
 
@@ -130,6 +132,12 @@ capa continua detrás de todo el scroll, no una imagen distinta por
 pantalla — refuerza la sensación de estar en un mismo espacio mientras se
 avanza. `prefers-reduced-motion` desactiva la animación.
 
+`.aurora-bg` necesita `isolation: isolate` además de `position: relative`:
+sin ello, el degradado (`::before` con `z-index: -1`) no queda contenido en
+el contexto de apilamiento propio de `.aurora-bg`, sino en el más cercano
+por encima (normalmente `<body>`), y termina pintándose detrás de fondos
+sólidos ajenos — invisible en la práctica pese a calcularse bien.
+
 ---
 
 ## 3. Notas técnicas
@@ -141,13 +149,16 @@ avanza. `prefers-reduced-motion` desactiva la animación.
 - **Tilt 3D**: efecto CSS puro (`transform: perspective(...) rotateX() rotateY()`
   actualizado en `onMouseMove`, componente `TiltCard` en `pages/Intro.tsx`),
   sin dependencias nuevas.
-- **Vista previa**: `components/LivePreviewCard.tsx` + `MiniPreview.tsx` —
-  una maqueta en miniatura dibujada con nuestros propios componentes
-  (barras, círculos, badges de color), no un `<iframe>` de la demo entera:
-  se probó esa vía primero y el resultado se veía roto (barra de
-  navegador, avisos internos del navegador) al escalar la SPA completa
-  dentro de sí misma. Visible en `:hover` y también en `:focus`/`:blur`
-  (navegación por teclado) — nunca solo con el ratón, por accesibilidad.
+- **Vista previa**: `components/MiniPreview.tsx` — una maqueta en miniatura
+  con **datos reales del store de la demo** (`demo/src/demo/store.ts`):
+  títulos y etiquetas de artículos reales, usuarios reales con su avatar y
+  reputación, el hash `keccak256` real de un artículo, votos y quórum
+  reales. No un `<iframe>` de la demo entera (se probó primero y el
+  resultado se veía roto al escalar la SPA completa dentro de sí misma) ni
+  una maqueta abstracta de barras y círculos (no comunicaba qué hay
+  realmente en cada pantalla). Se muestra **siempre visible**, no solo al
+  pasar el ratón — en móvil, que es la mayoría de las visitas, no hay
+  hover.
 - **Sin cambios en el proyecto real**: todo esto vive únicamente en
   `demo/`, igual que el resto de shims y datos en memoria (ver
   `demo/README.md`).
