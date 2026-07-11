@@ -30,8 +30,12 @@ function stopPropagation(e: MouseEvent) {
 }
 
 /**
- * Tarjeta de artículo a pantalla completa (menos la altura del header fijo),
- * pensada para un feed de scroll-snap vertical estilo TikTok. Puramente
+ * Tarjeta de artículo a pantalla completa: `h-full`, no un `calc(100dvh-…)`
+ * fijo, para encajar siempre con la altura real de su contenedor con scroll
+ * — que varía según la página tenga barra de filtros, cabecera de
+ * reputación, etc. por encima. Un valor fijo aquí desincronizaría el
+ * snap-scroll en cuanto esa altura cambiara.
+ * Pensada para un feed de scroll-snap vertical estilo TikTok. Puramente
  * presentacional: el pie interactivo (votar, predecir, o nada en el caso de
  * un feed de solo lectura) se inyecta vía `actions`. La propia tarjeta tiene
  * marco propio (no solo texto flotando sobre el fondo) y es clicable en su
@@ -71,7 +75,7 @@ export function ArticleFullscreenCard({
   return (
     <div
       id={publication.contentHash}
-      className="flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start items-center justify-center overflow-hidden px-4 py-8 sm:px-8"
+      className="flex h-full w-full shrink-0 snap-start items-center justify-center overflow-hidden px-4 py-8 sm:px-8"
     >
       <div
         role={clickable ? "link" : undefined}

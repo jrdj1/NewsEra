@@ -105,7 +105,7 @@ function PredictActions({ article }: { article: PredictableArticle }) {
 
 function ReputationHeader({ reputation, canValidate }: { reputation: number; canValidate: boolean }) {
   return (
-    <div className="sticky top-16 z-10 border-b border-zinc-100 bg-white/90 px-4 py-3 text-center text-sm backdrop-blur-sm dark:border-zinc-900 dark:bg-zinc-950/90">
+    <div className="shrink-0 border-b border-zinc-100 bg-white/90 px-4 py-3 text-center text-sm backdrop-blur-sm dark:border-zinc-900 dark:bg-zinc-950/90">
       {canValidate ? (
         <span className="text-zinc-500">Reputación actual: <strong className="text-zinc-900 dark:text-white">{reputation}</strong> — ya puedes votar de verdad</span>
       ) : (
@@ -171,55 +171,57 @@ export default function Validate() {
   const isLoading = canValidate === undefined || isLoadingVotable || isLoadingPredictable;
 
   return (
-    <div>
+    <div className="flex h-[calc(100dvh-4rem)] flex-col">
       <ReputationHeader reputation={reputation} canValidate={!!canValidate} />
 
-      {isLoading && <LoadingState label="Buscando artículos..." />}
+      <div className="min-h-0 flex-1">
+        {isLoading && <LoadingState label="Buscando artículos..." />}
 
-      {!isLoading && canValidate && votable.length === 0 && (
-        <EmptyState message="No hay artículos pendientes de votar ahora mismo." />
-      )}
-      {!isLoading && canValidate === false && predictable.length === 0 && (
-        <EmptyState message="No hay artículos nuevos disponibles para predecir ahora mismo." />
-      )}
+        {!isLoading && canValidate && votable.length === 0 && (
+          <EmptyState message="No hay artículos pendientes de votar ahora mismo." />
+        )}
+        {!isLoading && canValidate === false && predictable.length === 0 && (
+          <EmptyState message="No hay artículos nuevos disponibles para predecir ahora mismo." />
+        )}
 
-      {!isLoading && canValidate && votable.length > 0 && (
-        <>
-          <SlideDotNav
-            slides={votable.map((p) => ({ id: p.contentHash, label: p.title || "Artículo" }))}
-            active={activeSlide}
-          />
-          <SlideArrows key="votable" containerRef={containerRef} />
-          <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
-            {votable.map((p) => (
-              <ArticleFullscreenCard key={p.contentHash} publication={p} actions={<VoteActions publication={p} />} />
-            ))}
-          </div>
-        </>
-      )}
+        {!isLoading && canValidate && votable.length > 0 && (
+          <>
+            <SlideDotNav
+              slides={votable.map((p) => ({ id: p.contentHash, label: p.title || "Artículo" }))}
+              active={activeSlide}
+            />
+            <SlideArrows key="votable" containerRef={containerRef} />
+            <div ref={containerRef} className="h-full snap-y snap-mandatory overflow-y-auto">
+              {votable.map((p) => (
+                <ArticleFullscreenCard key={p.contentHash} publication={p} actions={<VoteActions publication={p} />} />
+              ))}
+            </div>
+          </>
+        )}
 
-      {!isLoading && canValidate === false && predictable.length > 0 && (
-        <>
-          <SlideDotNav
-            slides={predictable.map((a) => ({ id: a.publication.contentHash, label: a.publication.title || "Artículo" }))}
-            active={activeSlide}
-          />
-          <SlideArrows key="predictable" containerRef={containerRef} />
-          <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
-            {predictable.map((article) => (
-              <ArticleFullscreenCard
-                key={article.publication.contentHash}
-                publication={article.publication}
-                actions={<PredictActions article={article} />}
-                hideConsensus
-              />
-            ))}
-          </div>
-        </>
-      )}
+        {!isLoading && canValidate === false && predictable.length > 0 && (
+          <>
+            <SlideDotNav
+              slides={predictable.map((a) => ({ id: a.publication.contentHash, label: a.publication.title || "Artículo" }))}
+              active={activeSlide}
+            />
+            <SlideArrows key="predictable" containerRef={containerRef} />
+            <div ref={containerRef} className="h-full snap-y snap-mandatory overflow-y-auto">
+              {predictable.map((article) => (
+                <ArticleFullscreenCard
+                  key={article.publication.contentHash}
+                  publication={article.publication}
+                  actions={<PredictActions article={article} />}
+                  hideConsensus
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       {!isLoading && canValidate === false && (
-        <p className="mx-auto max-w-2xl px-4 py-6 text-center text-xs text-zinc-400">
+        <p className="shrink-0 mx-auto max-w-2xl px-4 py-3 text-center text-xs text-zinc-400">
           Como el artículo ya está resuelto públicamente, cualquiera puede consultar la respuesta antes
           de predecir — es una vía de acceso deliberadamente accesible, no una prueba de criterio.{" "}
           <Link to="/about" className="underline underline-offset-2">Saber más</Link>

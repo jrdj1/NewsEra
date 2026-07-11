@@ -90,8 +90,8 @@ export default function Feed() {
   }
 
   return (
-    <div>
-      <div className="sticky top-16 z-10 space-y-2 border-b border-zinc-100 bg-white/90 px-4 py-3 backdrop-blur-sm dark:border-zinc-900 dark:bg-zinc-950/90">
+    <div className="flex h-[calc(100dvh-4rem)] flex-col">
+      <div className="shrink-0 space-y-2 border-b border-zinc-100 bg-white/90 px-4 py-3 backdrop-blur-sm dark:border-zinc-900 dark:bg-zinc-950/90">
         <div className="flex justify-start gap-2 overflow-x-auto sm:justify-center">
           {FILTERS.map((f) => (
             <button
@@ -130,30 +130,32 @@ export default function Feed() {
         </div>
       </div>
 
-      {isLoading && page === 1 && <LoadingState label="Cargando artículos..." />}
-      {isError && <ErrorState onRetry={() => refetch()} />}
-      {!isLoading && !isError && items.length === 0 && (
-        <EmptyState message="No hay artículos que coincidan con este filtro todavía." />
-      )}
+      <div className="min-h-0 flex-1">
+        {isLoading && page === 1 && <LoadingState label="Cargando artículos..." />}
+        {isError && <ErrorState onRetry={() => refetch()} />}
+        {!isLoading && !isError && items.length === 0 && (
+          <EmptyState message="No hay artículos que coincidan con este filtro todavía." />
+        )}
 
-      {items.length > 0 && (
-        <>
-          <SlideDotNav
-            slides={items.map((p) => ({ id: p.contentHash, label: p.title || "Artículo" }))}
-            active={activeSlide}
-          />
-          <SlideArrows containerRef={containerRef} />
-          <div
-            ref={containerRef}
-            onScroll={handleScroll}
-            className="h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto"
-          >
-            {items.map((p) => (
-              <ArticleFullscreenCard key={p.contentHash} publication={p} />
-            ))}
-          </div>
-        </>
-      )}
+        {items.length > 0 && (
+          <>
+            <SlideDotNav
+              slides={items.map((p) => ({ id: p.contentHash, label: p.title || "Artículo" }))}
+              active={activeSlide}
+            />
+            <SlideArrows containerRef={containerRef} />
+            <div
+              ref={containerRef}
+              onScroll={handleScroll}
+              className="h-full snap-y snap-mandatory overflow-y-auto"
+            >
+              {items.map((p) => (
+                <ArticleFullscreenCard key={p.contentHash} publication={p} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
