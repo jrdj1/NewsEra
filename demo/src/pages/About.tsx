@@ -22,8 +22,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "solucion",
     eyebrow: "La solución",
-    headline: "Que decida todo el mundo, no unos pocos.",
-    body: 'NewsEra traslada esa decisión desde una redacción, una plataforma o un gobierno hacia miles de personas corrientes. Cómo se vota, cuándo se declara "verdad" y cómo se reparte la reputación está escrito en un contrato inteligente — código público que se ejecuta igual para todos. Ni siquiera quien lo programó puede cambiarlo de un día para otro sin que la comunidad entera lo note.',
+    headline: "Un periódico que no tiene redacción.",
+    body: 'NewsEra es un periódico comunitario: nadie decide en su nombre qué es noticia ni qué es verdad. Esa decisión se traslada desde una redacción, una plataforma o un gobierno hacia miles de personas corrientes. Cómo se vota, cuándo se declara "verdad" y cómo se reparte la reputación está escrito en un contrato inteligente — código público que se ejecuta igual para todos. Ni siquiera quien lo programó puede cambiarlo de un día para otro sin que la comunidad entera lo note.',
     accent: "text-blue-400",
   },
   {
