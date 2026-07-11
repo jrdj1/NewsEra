@@ -18,6 +18,7 @@ import {
 } from "@/lib/contracts";
 import { ArticleFullscreenCard } from "@/components/ArticleFullscreenCard";
 import { SlideArrows } from "@/components/SlideArrows";
+import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
 import { Button } from "@/components/ui/button";
 import { LoadingState, EmptyState } from "@/components/ui/states";
 import type { Publication } from "@/lib/api";
@@ -128,6 +129,24 @@ export default function Validate() {
     canValidate === false ? address : undefined,
   );
 
+  const [activeSlide, setActiveSlide] = useState("");
+  const slideHashes = canValidate
+    ? votable.map((p) => p.contentHash)
+    : predictable.map((a) => a.publication.contentHash);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || slideHashes.length === 0) return;
+    function update() {
+      if (!el) return;
+      setActiveSlide(slideHashes[slideIndexFromScroll(el, slideHashes.length)] ?? "");
+    }
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    return () => el.removeEventListener("scroll", update);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canValidate, slideHashes.join(",")]);
+
   // Detecta la transición predictor -> validador (solo dentro de esta sesión:
   // si ya eras validador al entrar, `prevCanValidate` arranca en `true` y no
   // se dispara la celebración de nuevo en cada recarga).
@@ -166,6 +185,10 @@ export default function Validate() {
 
       {!isLoading && canValidate && votable.length > 0 && (
         <>
+          <SlideDotNav
+            slides={votable.map((p) => ({ id: p.contentHash, label: p.title || "Artículo" }))}
+            active={activeSlide}
+          />
           <SlideArrows key="votable" containerRef={containerRef} />
           <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
             {votable.map((p) => (
@@ -177,6 +200,10 @@ export default function Validate() {
 
       {!isLoading && canValidate === false && predictable.length > 0 && (
         <>
+          <SlideDotNav
+            slides={predictable.map((a) => ({ id: a.publication.contentHash, label: a.publication.title || "Artículo" }))}
+            active={activeSlide}
+          />
           <SlideArrows key="predictable" containerRef={containerRef} />
           <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
             {predictable.map((article) => (

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePublications, usePublicationTags } from "@/hooks/usePublications";
 import { ArticleFullscreenCard } from "@/components/ArticleFullscreenCard";
 import { SlideArrows } from "@/components/SlideArrows";
+import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
 import type { Publication } from "@/lib/api";
 
@@ -45,6 +46,7 @@ export default function Feed() {
   const [tag, setTag] = useState("");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<Publication[]>([]);
+  const [activeSlide, setActiveSlide] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -63,6 +65,7 @@ export default function Feed() {
 
   useEffect(() => {
     setItems([]);
+    setActiveSlide("");
     setPage(1);
     containerRef.current?.scrollTo({ top: 0 });
   }, [filter, debouncedSearch, tag]);
@@ -70,11 +73,16 @@ export default function Feed() {
   useEffect(() => {
     if (!data) return;
     setItems((prev) => (page === 1 ? data.items : [...prev, ...data.items]));
+    if (page === 1) setActiveSlide(data.items[0]?.contentHash ?? "");
   }, [data, page]);
 
   function handleScroll() {
     const el = containerRef.current;
-    if (!el || !data || isLoading) return;
+    if (!el) return;
+    if (items.length > 0) {
+      setActiveSlide(items[slideIndexFromScroll(el, items.length)]?.contentHash ?? "");
+    }
+    if (!data || isLoading) return;
     const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - el.clientHeight / 2;
     if (nearBottom && items.length < data.total) {
       setPage((p) => p + 1);
@@ -130,6 +138,10 @@ export default function Feed() {
 
       {items.length > 0 && (
         <>
+          <SlideDotNav
+            slides={items.map((p) => ({ id: p.contentHash, label: p.title || "Artículo" }))}
+            active={activeSlide}
+          />
           <SlideArrows containerRef={containerRef} />
           <div
             ref={containerRef}
