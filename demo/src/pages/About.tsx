@@ -145,7 +145,7 @@ export default function About() {
       <SlideArrows containerRef={containerRef} variant="dark" />
       <div
         ref={containerRef}
-        className="aurora-bg h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
+        className="aurora-bg no-scrollbar h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
       >
         <SlideShell {...problema}>
           <div className="mt-2 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">

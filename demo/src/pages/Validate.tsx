@@ -191,7 +191,7 @@ export default function Validate() {
               active={activeSlide}
             />
             <SlideArrows key="votable" containerRef={containerRef} />
-            <div ref={containerRef} className="h-full snap-y snap-mandatory overflow-y-auto">
+            <div ref={containerRef} className="no-scrollbar h-full snap-y snap-mandatory overflow-y-auto">
               {votable.map((p) => (
                 <ArticleFullscreenCard key={p.contentHash} publication={p} actions={<VoteActions publication={p} />} />
               ))}
@@ -206,7 +206,7 @@ export default function Validate() {
               active={activeSlide}
             />
             <SlideArrows key="predictable" containerRef={containerRef} />
-            <div ref={containerRef} className="h-full snap-y snap-mandatory overflow-y-auto">
+            <div ref={containerRef} className="no-scrollbar h-full snap-y snap-mandatory overflow-y-auto">
               {predictable.map((article) => (
                 <ArticleFullscreenCard
                   key={article.publication.contentHash}

@@ -177,7 +177,7 @@ export default function Intro() {
 
       <div
         ref={containerRef}
-        className="aurora-bg h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
+        className="aurora-bg no-scrollbar h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
       >
         {/* Escena 0 — Portada */}
         <section

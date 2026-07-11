@@ -147,7 +147,7 @@ export default function Feed() {
             <div
               ref={containerRef}
               onScroll={handleScroll}
-              className="h-full snap-y snap-mandatory overflow-y-auto"
+              className="no-scrollbar h-full snap-y snap-mandatory overflow-y-auto"
             >
               {items.map((p) => (
                 <ArticleFullscreenCard key={p.contentHash} publication={p} />
