@@ -17,6 +17,7 @@ import {
   PREDICTION_PENALTY,
 } from "@/lib/contracts";
 import { ArticleFullscreenCard } from "@/components/ArticleFullscreenCard";
+import { SlideArrows } from "@/components/SlideArrows";
 import { Button } from "@/components/ui/button";
 import { LoadingState, EmptyState } from "@/components/ui/states";
 import type { Publication } from "@/lib/api";
@@ -164,24 +165,30 @@ export default function Validate() {
       )}
 
       {!isLoading && canValidate && votable.length > 0 && (
-        <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
-          {votable.map((p) => (
-            <ArticleFullscreenCard key={p.contentHash} publication={p} actions={<VoteActions publication={p} />} />
-          ))}
-        </div>
+        <>
+          <SlideArrows key="votable" containerRef={containerRef} />
+          <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
+            {votable.map((p) => (
+              <ArticleFullscreenCard key={p.contentHash} publication={p} actions={<VoteActions publication={p} />} />
+            ))}
+          </div>
+        </>
       )}
 
       {!isLoading && canValidate === false && predictable.length > 0 && (
-        <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
-          {predictable.map((article) => (
-            <ArticleFullscreenCard
-              key={article.publication.contentHash}
-              publication={article.publication}
-              actions={<PredictActions article={article} />}
-              hideConsensus
-            />
-          ))}
-        </div>
+        <>
+          <SlideArrows key="predictable" containerRef={containerRef} />
+          <div ref={containerRef} className="h-[calc(100dvh-7.5rem)] snap-y snap-mandatory overflow-y-auto">
+            {predictable.map((article) => (
+              <ArticleFullscreenCard
+                key={article.publication.contentHash}
+                publication={article.publication}
+                actions={<PredictActions article={article} />}
+                hideConsensus
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {!isLoading && canValidate === false && (

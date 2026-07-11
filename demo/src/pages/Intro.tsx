@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
+import { SlideArrows } from "@/components/SlideArrows";
 import { MiniPreview, type PreviewKind } from "@/components/MiniPreview";
 
 /**
@@ -172,6 +173,7 @@ export default function Intro() {
       </Link>
 
       <SlideDotNav slides={DOT_NAV_SLIDES} active={active} />
+      <SlideArrows containerRef={containerRef} variant="dark" />
 
       <div
         ref={containerRef}
@@ -246,10 +248,14 @@ export default function Intro() {
                 </div>
               </div>
 
-              <div className="mx-auto w-full max-w-xs rounded-2xl border border-white/15 bg-white/5 p-2 shadow-2xl shadow-black/40 backdrop-blur-md sm:max-w-sm">
+              <Link
+                to={f.to}
+                aria-label={`Ir a ${f.title}`}
+                className="mx-auto block w-full max-w-xs rounded-2xl border border-white/15 bg-white/5 p-2 shadow-2xl shadow-black/40 backdrop-blur-md transition-colors hover:border-white/30 hover:bg-white/10 sm:max-w-sm"
+              >
                 <MiniPreview kind={f.id} />
-                <p className="pt-2 text-center text-[10px] text-zinc-400">Así se ve ahora mismo en la demo</p>
-              </div>
+                <p className="pt-2 text-center text-[10px] text-zinc-400">Así se ve ahora mismo en la demo — toca para entrar</p>
+              </Link>
             </div>
           </section>
         ))}

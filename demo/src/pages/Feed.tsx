@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePublications, usePublicationTags } from "@/hooks/usePublications";
 import { ArticleFullscreenCard } from "@/components/ArticleFullscreenCard";
+import { SlideArrows } from "@/components/SlideArrows";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/states";
 import type { Publication } from "@/lib/api";
 
@@ -128,15 +129,18 @@ export default function Feed() {
       )}
 
       {items.length > 0 && (
-        <div
-          ref={containerRef}
-          onScroll={handleScroll}
-          className="h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto"
-        >
-          {items.map((p) => (
-            <ArticleFullscreenCard key={p.contentHash} publication={p} />
-          ))}
-        </div>
+        <>
+          <SlideArrows containerRef={containerRef} />
+          <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto"
+          >
+            {items.map((p) => (
+              <ArticleFullscreenCard key={p.contentHash} publication={p} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

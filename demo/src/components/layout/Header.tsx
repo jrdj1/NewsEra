@@ -26,6 +26,25 @@ function UsersIcon() {
   );
 }
 
+function NewsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="h-5 w-5">
+      <path d="M4 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z" />
+      <path d="M4 5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2" />
+      <path d="M7 9h9M7 12.5h9M7 16h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AboutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8h.01M11 11.5h1v5h1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function PublishIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
@@ -63,11 +82,14 @@ function ProfileIcon() {
 }
 
 const navLinks = [
-  { to: "/noticias", label: "Noticias", end: true, Icon: HomeIcon },
+  { to: "/", label: "Inicio", end: true, Icon: HomeIcon },
+  { to: "/noticias", label: "Noticias", end: true, Icon: NewsIcon },
   { to: "/users", label: "Usuarios", end: false, Icon: UsersIcon },
   { to: "/publish", label: "Publicar", end: false, Icon: PublishIcon },
   { to: "/validate", label: "Validar", end: false, Icon: ValidateIcon },
 ];
+
+const ABOUT_LINK = { to: "/about", label: "Sobre", end: false, Icon: AboutIcon };
 
 function NotificationBell({ address }: { address: string }) {
   const [open, setOpen] = useState(false);
@@ -108,13 +130,13 @@ export default function Header() {
       : navLinks;
 
   const links = isConnected
-    ? [...baseLinks, { to: "/profile", label: "Perfil", end: false, Icon: ProfileIcon }]
-    : baseLinks;
+    ? [...baseLinks, { to: "/profile", label: "Perfil", end: false, Icon: ProfileIcon }, ABOUT_LINK]
+    : [...baseLinks, ABOUT_LINK];
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-zinc-200 bg-white/90 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/90">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-2 sm:px-4">
-        <Link to="/noticias" className="mr-1 shrink-0 sm:mr-2">
+        <Link to="/" className="mr-1 shrink-0 sm:mr-2">
           <img src="/logo.jpg" alt="NewsEra" className="h-9 w-9 rounded-lg object-cover" />
         </Link>
 

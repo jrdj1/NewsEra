@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { resetDemoState } from "@/demo/store";
 import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
+import { SlideArrows } from "@/components/SlideArrows";
 
 interface SlideDef {
   id: string;
@@ -141,6 +142,7 @@ export default function About() {
   return (
     <div className="relative">
       <SlideDotNav slides={DOT_NAV_SLIDES} active={active} />
+      <SlideArrows containerRef={containerRef} variant="dark" />
       <div
         ref={containerRef}
         className="aurora-bg h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
