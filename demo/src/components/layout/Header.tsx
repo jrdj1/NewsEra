@@ -89,7 +89,7 @@ const navLinks = [
   { to: "/validate", label: "Validar", end: false, Icon: ValidateIcon },
 ];
 
-const ABOUT_LINK = { to: "/about", label: "Sobre", end: false, Icon: AboutIcon };
+const ABOUT_LINK = { to: "/about", label: "Sobre Nosotros", end: false, Icon: AboutIcon };
 
 function NotificationBell({ address }: { address: string }) {
   const [open, setOpen] = useState(false);

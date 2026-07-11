@@ -24,10 +24,10 @@ const VARIANT_CLASS: Record<"dark" | "light", string> = {
 
 /**
  * Botones de flecha arriba/abajo para páginas de scroll-snap vertical
- * (cinemática de inicio, /about, /noticias, /validate) — centrados abajo y
- * con contraste fuerte para que se noten a simple vista, no un detalle
- * secundario. Avanzan una pantalla exacta (`clientHeight`) y se atenúan en
- * los extremos.
+ * (cinemática de inicio, /about, /noticias, /validate) — centrados en el
+ * borde derecho de la pantalla (a la izquierda de `SlideDotNav`, que ocupa
+ * ese mismo borde), con contraste fuerte para que se noten a simple vista.
+ * Avanzan una pantalla exacta (`clientHeight`) y se atenúan en los extremos.
  */
 export function SlideArrows({
   containerRef,
@@ -67,7 +67,7 @@ export function SlideArrows({
   const cls = VARIANT_CLASS[variant];
 
   return (
-    <div className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-2.5 sm:bottom-8">
+    <div className="fixed right-10 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2.5 sm:right-16">
       <button
         type="button"
         aria-label="Pantalla anterior"
