@@ -113,9 +113,9 @@ const DOT_NAV_SLIDES = [
 ];
 
 const STATS = [
-  { value: "3", label: "contratos inteligentes" },
-  { value: "2/3", label: "mayoría para cerrar un veredicto" },
-  { value: "0", label: "intermediarios con poder de veto" },
+  { value: "Público", label: "cada voto queda anotado, nunca en secreto" },
+  { value: "Permanente", label: "nada se borra ni se reescribe" },
+  { value: "0", label: "dueños con poder de censura" },
 ];
 
 function TiltCard({ children }: { children: ReactNode }) {
@@ -185,15 +185,15 @@ export default function Intro() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">Bienvenido a</p>
           <h1 className="text-5xl font-black tracking-tight sm:text-7xl">NewsEra</h1>
           <p className="max-w-sm text-balance text-zinc-300 sm:max-w-md sm:text-lg">
-            Una red social de verificación de noticias donde la comunidad decide qué es verdad —
+            El periódico comunitario donde decides tú, no una redacción ni un algoritmo —
             con las reglas escritas en blockchain, no en la letra pequeña de una empresa.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3 pt-1 sm:gap-4">
             {STATS.map((s) => (
               <div key={s.label} className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 backdrop-blur-sm">
-                <p className="text-lg font-black text-brand sm:text-xl">{s.value}</p>
-                <p className="max-w-[6rem] text-[10px] leading-tight text-zinc-400">{s.label}</p>
+                <p className="text-base font-black text-brand sm:text-lg">{s.value}</p>
+                <p className="max-w-[7rem] text-[10px] leading-tight text-zinc-400">{s.label}</p>
               </div>
             ))}
           </div>
