@@ -290,19 +290,21 @@ o se despliegan contratos. La comunicación es **unidireccional**: este repo →
 ## 12. Rutas del frontend (React Router v6)
 
 Rediseñadas tras Sprint 8 (rediseño "estilo TikTok": barra de navegación
-superior fija con 5 accesos, feed de inicio a pantalla completa) — ver nota
-de implementación al final de Sprint 8.
+superior fija, feed a pantalla completa) y ampliadas con la cinemática de
+apertura (`/`), nacida en la demo pública y portada después al producto
+real — ver notas de implementación al final de Sprint 8.
 
 | Ruta | Vista |
 |------|-------|
-| `/` | Inicio: feed de tarjetas a pantalla completa (scroll-snap), filtro por defecto artículos `DEFINITIVE` + veredicto `TRUE` |
+| `/` | Cinemática de apertura: presenta el proyecto y hace de mapa del menú (una escena por sección, con vista previa en vivo de datos reales), con opción de saltarla en todo momento hacia `/noticias` |
+| `/noticias` | Feed de tarjetas a pantalla completa (scroll-snap), filtro por defecto artículos `DEFINITIVE` + veredicto `TRUE` |
 | `/users` | Descubrir usuarios: validadores y publicadores unidos, con búsqueda y orden |
 | `/publish` | Formulario de publicación |
 | `/validate` | Validar: feed a pantalla completa que se adapta según `canValidate` — vota artículos `PENDING` si ya puedes, predice sobre artículos ya `DEFINITIVE` si aún no |
 | `/profile` | Panel personal: reputación propia, historial de validaciones, perfil enriquecido, favoritos y solicitudes de reapertura |
 | `/article/:hash` | Detalle de artículo + votos |
 | `/users/:address` | Perfil público de un usuario (validador y/o publicador) |
-| `/about` | Información sobre el proyecto y enlace a la memoria del TFG — accesible desde el pie de página, no está en la barra principal |
+| `/about` | 8 pantallas a modo de cinemática (scroll-snap) sobre el proyecto, con enlace a la memoria del TFG — accesible desde la barra principal ("Sobre Nosotros") y desde el pie de página en el resto de rutas |
 
 ---
 
@@ -1101,6 +1103,65 @@ respuesta ni el logro de convertirse en validador):**
   el contrato revierte con `InsufficientReputation` si no tiene
   reputación suficiente para validar. Añadida la misma comprobación
   `canValidate` que ya protege la sección de emitir voto.
+
+**Nota de implementación (cinemática de apertura y refresco visual,
+prototipada primero en `demo/` y portada después al producto real):**
+petición explícita de llevar a `frontend/` las mejoras de UI validadas en
+la demo pública. Cambios:
+- Nueva ruta `/` = cinemática de apertura (`pages/Intro.tsx`): presenta el
+  proyecto y hace de mapa del menú (una escena a pantalla completa por
+  sección — Noticias/Usuarios/Publicar/Validar/Perfil — con icono, texto
+  en dos niveles y una vista previa en vivo con datos reales del backend/
+  blockchain, siempre visible, no solo al pasar el ratón). Enlaza a las
+  secciones concretas de `/about` para quien quiera el porqué completo.
+  Con opción de saltarla en todo momento hacia `/noticias` (persistente,
+  no solo en la primera visita).
+- El feed de artículos, antes en `/`, se traslada a **`/noticias`**
+  (`pages/Feed.tsx` sin cambios de lógica) — nombre en español claro,
+  nunca "feed" de cara al usuario. `Header.tsx` gana los enlaces "Inicio"
+  (`/`) y "Noticias" (`/noticias`) como entradas separadas; el logo enlaza
+  a `/`.
+- `/about` deja de ser solo accesible desde el pie de página: nuevo
+  enlace "Sobre Nosotros" en la barra principal (`Header.tsx`).
+  Rediseñada como 8 pantallas a modo de cinemática (scroll-snap,
+  `components/SlideDotNav.tsx` + `components/SlideArrows.tsx`, reutilizados
+  también en `/`, `/noticias` y `/validate`), con un fondo animado "aurora
+  boreal" compartido (`.aurora-bg` en `index.css`) y dos problemas
+  expuestos con datos verificables (estudio Vosoughi/Roy/Aral en *Science*
+  2018 sobre difusión de desinformación; concentración de la propiedad
+  mediática en EE. UU./Reino Unido, 2026) en vez de lenguaje vago.
+- `components/ArticleFullscreenCard.tsx`: gana marco propio (borde, fondo,
+  sombra — antes el texto flotaba directamente sobre el fondo de la
+  página) y toda la tarjeta navega al artículo completo al clicarla,
+  excepto en modo predicción (`hideConsensus`), donde se mantiene
+  desactivado a propósito para no revelar el veredicto antes de predecir.
+  Pasa de una altura fija `calc(100dvh-4rem)` a `h-full`, para encajar
+  siempre con el contenedor real que la aloje (evita que se desincronice
+  el snap-scroll si ese contenedor tiene una barra superior — filtros en
+  `/noticias`, cabecera de reputación en `/validate` — de altura distinta).
+- `pages/Feed.tsx` y `pages/Validate.tsx` ganan flechas de scroll
+  (`SlideArrows`, centradas en el borde derecho) y el mismo menú de puntos
+  lateral que `/` y `/about` (`SlideDotNav`), con el artículo activo
+  resaltado según el scroll. Ambas páginas pasan a un layout flex-column
+  de altura fija en vez de una barra de filtros/reputación `sticky` más un
+  contenedor con altura fija por separado — la suma de ambas superaba la
+  altura real de la pantalla y el navegador añadía su propia barra de
+  scroll a nivel de página, redundante con la navegación propia.
+- Nueva clase `.no-scrollbar` en `index.css`: oculta la barra de scroll
+  nativa en las cuatro páginas de scroll-snap — redundante con
+  `SlideDotNav`/`SlideArrows`, que ya indican posición y permiten avanzar/
+  retroceder. El scroll sigue funcionando igual (rueda, gestos, teclado).
+- `components/MiniPreview.tsx` (usado por `/`): a diferencia de la demo
+  (que leía de un store en memoria), consulta el backend real
+  (`usePublications`, `useUsers`/`useUserDetail`, `useEnrichedProfile`) y
+  un valor on-chain (`quorumThreshold` de `ValidationRegistry`) vía los
+  mismos hooks que ya usa el resto de la app — con estado de carga
+  (esqueleto) y vacío (mensaje) explícitos, nunca una pantalla en blanco.
+  La vista previa de "Perfil" depende de la cartera conectada: sin cartera
+  muestra una invitación a conectar en vez de datos inventados.
+- No portado de la demo: el banner "modo demo" con botón "Reiniciar demo"
+  de `/about` — no aplica a datos reales ni a un estado que no tiene
+  sentido "reiniciar" arbitrariamente.
 
 ---
 

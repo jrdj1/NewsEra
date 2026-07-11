@@ -4,6 +4,7 @@ import { WagmiProvider } from "wagmi";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { config } from "@/lib/wagmi";
 import Layout from "@/components/layout/Layout";
+import Intro from "@/pages/Intro";
 import Feed from "@/pages/Feed";
 import About from "@/pages/About";
 import Publish from "@/pages/Publish";
@@ -33,7 +34,8 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route element={<Layout />}>
-                <Route path="/" element={<Feed />} />
+                <Route path="/" element={<Intro />} />
+                <Route path="/noticias" element={<Feed />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/publish" element={<Publish />} />
                 <Route path="/article/:hash" element={<Article />} />

@@ -1,128 +1,227 @@
-export default function About() {
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { SlideDotNav, slideIndexFromScroll } from "@/components/SlideDotNav";
+import { SlideArrows } from "@/components/SlideArrows";
+
+interface SlideDef {
+  id: string;
+  eyebrow: string;
+  headline: string;
+  body?: string;
+  accent: string;
+}
+
+const SLIDES: SlideDef[] = [
+  {
+    id: "problema",
+    eyebrow: "El problema",
+    headline: "Dos grietas, un mismo síntoma.",
+    body: "No es solo que se cuele alguna mentira de vez en cuando. Es que el propio sistema para separar lo cierto de lo falso tiene grietas estructurales.",
+    accent: "text-red-400",
+  },
+  {
+    id: "solucion",
+    eyebrow: "La solución",
+    headline: "Un periódico que no tiene redacción.",
+    body: 'NewsEra es un periódico comunitario: nadie decide en su nombre qué es noticia ni qué es verdad. Esa decisión se traslada desde una redacción, una plataforma o un gobierno hacia miles de personas corrientes. Cómo se vota, cuándo se declara "verdad" y cómo se reparte la reputación está escrito en un contrato inteligente — código público que se ejecuta igual para todos. Ni siquiera quien lo programó puede cambiarlo de un día para otro sin que la comunidad entera lo note.',
+    accent: "text-blue-400",
+  },
+  {
+    id: "verdad",
+    eyebrow: '¿Qué es "verdad" aquí?',
+    headline: "No la dicta una autoridad. La vota un jurado.",
+    body: "Cuando se publica un artículo, se abre una votación. La comunidad decide, con su propia reputación en juego, si es verdadero, falso o si sencillamente no hay pruebas suficientes todavía. Hace falta una mayoría de dos tercios — no una simple mitad más uno — para dar el veredicto por definitivo, así una votación reñida no se confunde con un consenso real. El resultado queda anotado para siempre, junto con quién votó qué.",
+    accent: "text-amber-400",
+  },
+  {
+    id: "pilares",
+    eyebrow: "Los pilares",
+    headline: "Tres reglas que no se rompen.",
+    accent: "text-blue-400",
+  },
+  {
+    id: "innovacion",
+    eyebrow: "Lo nuevo",
+    headline: "No mejora al árbitro. Cambia el juego.",
+    body: "Los verificadores tradicionales añaden una capa de revisión encima de un sistema que ya tiene sus propios intereses. NewsEra no revisa ese sistema — lo sustituye por uno nuevo, donde publicar, votar y ganar reputación siguen exactamente las mismas reglas para quien fundó el proyecto que para la primera persona que se registra hoy.",
+    accent: "text-violet-400",
+  },
+  {
+    id: "blockchain",
+    eyebrow: "La tecnología",
+    headline: "Un cuaderno que nadie puede tachar.",
+    body: "La blockchain es, en esencia, un registro compartido por miles de ordenadores en vez de guardado en un único servidor. Cada anotación nueva se enlaza criptográficamente a todas las anteriores, así que alterar una implicaría rehacer todo el historial a la vista de toda la red — en la práctica, imposible. Estos tres contratos son ese cuaderno:",
+    accent: "text-blue-400",
+  },
+  {
+    id: "slogan",
+    eyebrow: "",
+    headline: "La verdad ya no se pide. Se demuestra.",
+    body: "Tú también puedes votar, publicar y decidir.",
+    accent: "text-white",
+  },
+  {
+    id: "memoria",
+    eyebrow: "Para saber más",
+    headline: "¿Quieres el detalle técnico completo?",
+    body: "La memoria del TFG documenta la arquitectura completa: el diseño de cada contrato, las decisiones de seguridad, los casos de uso y la evaluación del sistema con datos reales.",
+    accent: "text-zinc-300",
+  },
+];
+
+const PROBLEMAS = [
+  {
+    title: "Lo falso viaja más rápido",
+    desc: 'Un estudio del MIT publicado en Science (2018) analizó 126.000 noticias compartidas 4,5 millones de veces en Twitter: las falsas se comparten un 70% más y alcanzan a 1.500 personas seis veces más rápido que las verdaderas.',
+  },
+  {
+    title: "Pocas manos controlan la conversación",
+    desc: "En EE. UU., más de la mitad del tráfico a las grandes webs de noticias se concentra en sitios controlados por solo siete familias o grupos empresariales (2026). En Reino Unido, tres empresas controlan el 90% de los periódicos nacionales.",
+  },
+];
+
+const PILARES = [
+  { icon: "🔗", label: "Inmutable", desc: "Una vez publicado o votado, nada se borra ni se reescribe." },
+  { icon: "👥", label: "Colectivo", desc: "Ninguna persona ni entidad decide sola qué es verdad." },
+  { icon: "🛡️", label: "Resistente", desc: "Sin una autoridad central que capturar, no hay un único punto de fallo." },
+];
+
+const CONTRATOS = ["PublicationRegistry", "ValidationRegistry", "ReputationSystem"];
+
+function SlideShell({
+  id,
+  eyebrow,
+  headline,
+  body,
+  accent,
+  className = "",
+  children,
+}: SlideDef & { className?: string; children?: ReactNode }) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="mb-2 text-4xl font-bold tracking-tight">Sobre NewsEra</h1>
-      <p className="mb-12 text-lg text-zinc-500">
-        Una infraestructura descentralizada para la información veraz
-      </p>
+    <section
+      id={id}
+      className={`relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center px-6 py-10 text-center sm:px-12 ${className}`}
+    >
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-3 sm:gap-5">
+        {eyebrow && (
+          <p className={`text-xs font-bold uppercase tracking-[0.2em] ${accent}`}>{eyebrow}</p>
+        )}
+        <h2 className="text-3xl font-bold leading-tight tracking-tight text-white sm:text-5xl">{headline}</h2>
+        {body && (
+          <p className="text-balance text-base leading-relaxed text-zinc-300 sm:text-lg">{body}</p>
+        )}
+        {children}
+      </div>
+    </section>
+  );
+}
 
-      {/* El problema */}
-      <section className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold">El problema</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          La desinformación no se resuelve mejorando los mecanismos de verificación sobre
-          los sistemas actuales. Los medios, las plataformas y los organismos de
-          verificación son susceptibles de captura por grupos de poder económico, político
-          o institucional. Mientras las reglas del juego las fijen entidades controlables,
-          el problema persiste.
-        </p>
-      </section>
+const DOT_NAV_SLIDES = SLIDES.map((s) => ({ id: s.id, label: s.eyebrow || s.headline }));
 
-      {/* La solución */}
-      <section className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold">La solución</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-          NewsEra traslada las reglas de publicación, verificación y gobernanza desde
-          entidades controlables hacia <strong>contratos inteligentes</strong> desplegados
-          en una blockchain pública. Ningún actor puede modificarlos unilateralmente.
-        </p>
-        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          El contenido se almacena en IPFS (descentralizado y resistente a la censura) y
-          su integridad se garantiza mediante el hash <code className="text-sm bg-zinc-100 dark:bg-zinc-800 px-1 rounded">keccak256</code> registrado
-          on-chain. Cualquier persona puede verificar que el artículo que lee es exactamente
-          el que se publicó.
-        </p>
-      </section>
+export default function About() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(SLIDES[0].id);
 
-      {/* Cómo funciona */}
-      <section className="mb-12">
-        <h2 className="mb-6 text-xl font-semibold">Cómo funciona</h2>
-        <ol className="space-y-4">
-          {[
-            {
-              n: "1",
-              title: "Publicación",
-              desc: "Cualquier usuario con cartera conectada puede registrar un artículo. El hash de su contenido queda inscrito de forma permanente en la blockchain.",
-            },
-            {
-              n: "2",
-              title: "Validación",
-              desc: "Los validadores con reputación suficiente votan TRUE, FALSE o UNVERIFIABLE. Cuando se alcanza el quórum, el contrato determina el consenso por mayoría.",
-            },
-            {
-              n: "3",
-              title: "Reputación",
-              desc: "Los validadores que aciertan el consenso ganan reputación; los que se equivocan la pierden. Esto incentiva la honestidad y desincentiva los ataques Sybil.",
-            },
-          ].map(({ n, title, desc }) => (
-            <li key={n} className="flex gap-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-sm font-bold text-white dark:bg-white dark:text-zinc-900">
-                {n}
-              </span>
-              <div>
-                <p className="font-medium">{title}</p>
-                <p className="text-sm text-zinc-500 mt-1">{desc}</p>
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    function handleScroll() {
+      if (!root) return;
+      const index = slideIndexFromScroll(root, SLIDES.length);
+      setActive(SLIDES[index].id);
+    }
+
+    root.addEventListener("scroll", handleScroll, { passive: true });
+    return () => root.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const [problema, solucion, verdad, pilares, innovacion, blockchain, slogan, memoria] = SLIDES;
+
+  return (
+    <div className="relative">
+      <SlideDotNav slides={DOT_NAV_SLIDES} active={active} />
+      <SlideArrows containerRef={containerRef} variant="dark" />
+      <div
+        ref={containerRef}
+        className="aurora-bg no-scrollbar h-[calc(100dvh-4rem)] snap-y snap-mandatory overflow-y-auto scroll-smooth text-white"
+      >
+        <SlideShell {...problema}>
+          <div className="mt-2 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+            {PROBLEMAS.map((p) => (
+              <div key={p.title} className="rounded-2xl border border-white/15 bg-white/5 p-5 text-left backdrop-blur-sm">
+                <p className="mb-1.5 font-semibold text-white">{p.title}</p>
+                <p className="text-sm leading-relaxed text-zinc-300">{p.desc}</p>
               </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+            ))}
+          </div>
+        </SlideShell>
 
-      {/* Contratos */}
-      <section className="mb-12 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
-        <h2 className="mb-4 text-xl font-semibold">Contratos inteligentes</h2>
-        <div className="space-y-3 text-sm">
-          {[
-            {
-              name: "PublicationRegistry",
-              desc: "Registro inmutable de hashes de publicaciones. Abierto a cualquier dirección.",
-            },
-            {
-              name: "ValidationRegistry",
-              desc: "Gestiona votos y determina el consenso por quórum.",
-            },
-            {
-              name: "ReputationSystem",
-              desc: "Sistema de reputación con control de roles. Resistencia Sybil incorporada.",
-            },
-          ].map(({ name, desc }) => (
-            <div key={name} className="flex flex-col gap-0.5">
-              <span className="font-mono font-medium">{name}</span>
-              <span className="text-zinc-500">{desc}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+        <SlideShell {...solucion} />
+        <SlideShell {...verdad} />
 
-      {/* Whitepaper / TFG */}
-      <section className="mb-12">
-        <h2 className="mb-4 text-xl font-semibold">Whitepaper / Memoria TFG</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
-          El diseño completo de la arquitectura, las decisiones técnicas y la evaluación
-          del sistema están documentados en la memoria del Trabajo de Fin de Grado.
-        </p>
-        <a
-          href="https://github.com/jrdj1/TFG-NewsEra-memoria"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          Leer la memoria (GitHub)
-        </a>
-      </section>
+        <SlideShell {...pilares}>
+          <div className="mt-2 grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+            {PILARES.map((p) => (
+              <div
+                key={p.label}
+                className="flex flex-col items-center gap-1.5 rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm"
+              >
+                <span className="text-3xl" aria-hidden="true">
+                  {p.icon}
+                </span>
+                <p className="font-semibold text-white">{p.label}</p>
+                <p className="text-xs text-zinc-300">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </SlideShell>
 
-      {/* Autor */}
-      <section className="border-t border-zinc-100 dark:border-zinc-900 pt-8 text-sm text-zinc-500">
-        <p>
-          Desarrollado por <strong className="text-zinc-900 dark:text-white">Jorge Rafael de Julián Vicedo</strong>
-        </p>
-        <p>
-          Grado en Ingeniería Informática &mdash; EPS, Universidad de Alicante
-        </p>
-        <p>
-          Tutor: <strong className="text-zinc-900 dark:text-white">Dr. Higinio Mora Mora</strong> &mdash; Dpto. Tecnología Informática y Computación &mdash; 2026
-        </p>
-      </section>
+        <SlideShell {...innovacion} />
+
+        <SlideShell {...blockchain}>
+          <div className="mt-2 flex flex-wrap justify-center gap-2">
+            {CONTRATOS.map((c) => (
+              <span
+                key={c}
+                className="rounded-full border border-white/30 bg-white/10 px-3 py-1 font-mono text-xs text-white backdrop-blur-sm"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+        </SlideShell>
+
+        <SlideShell {...slogan} className="bg-brand">
+          <Link
+            to="/noticias"
+            className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand shadow-lg transition-transform hover:scale-105"
+          >
+            Entrar a NewsEra
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4">
+              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </SlideShell>
+
+        <SlideShell {...memoria}>
+          <a
+            href="https://github.com/jrdj1/TFG-NewsEra-memoria"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+          >
+            Leer la memoria (GitHub)
+          </a>
+
+          <div className="mt-8 space-y-0.5 text-xs text-zinc-300">
+            <p>
+              Jorge Rafael de Julián Vicedo — Grado en Ingeniería Informática, EPS, Universidad de Alicante
+            </p>
+            <p>Tutor: Dr. Higinio Mora Mora — 2026</p>
+          </div>
+        </SlideShell>
+      </div>
     </div>
   );
 }
