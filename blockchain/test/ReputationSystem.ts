@@ -183,4 +183,35 @@ describe("ReputationSystem", () => {
       expect(await reputation.canValidate(other.address)).to.be.false;
     });
   });
+
+  // ── Caso límite: increaseReputation/decreaseReputation sobre una dirección
+  // nunca registrada (usado por ValidationRegistry para recompensar al autor
+  // de una publicación, que nunca pasa por registerValidator) ──────────────
+
+  describe("increaseReputation/decreaseReputation sobre direcciones no registradas", () => {
+    let VALIDATOR_ROLE: string;
+
+    beforeEach(async () => {
+      VALIDATOR_ROLE = await reputation.VALIDATOR_ROLE();
+      await reputation.grantRole(VALIDATOR_ROLE, roleHolder.address);
+    });
+
+    it("incrementa la reputacion de una direccion nunca registrada sin marcarla como validador registrado", async () => {
+      expect(await reputation.isRegisteredValidator(other.address)).to.be.false;
+
+      await reputation.connect(roleHolder).increaseReputation(other.address, 8n);
+
+      expect(await reputation.getReputation(other.address)).to.equal(8n);
+      expect(await reputation.isRegisteredValidator(other.address)).to.be.false;
+    });
+
+    it("una direccion nunca registrada puede llegar a canValidate=true por acumulación de recompensas — la resistencia Sybil depende solo del umbral de reputación, no del flag de registro", async () => {
+      await reputation.connect(roleHolder).increaseReputation(other.address, 8n);
+      await reputation.connect(roleHolder).increaseReputation(other.address, 8n);
+
+      expect(await reputation.getReputation(other.address)).to.equal(16n);
+      expect(await reputation.canValidate(other.address)).to.be.true;
+      expect(await reputation.isRegisteredValidator(other.address)).to.be.false;
+    });
+  });
 });

@@ -488,6 +488,29 @@ describe("ValidationRegistry", () => {
     });
   });
 
+  // ── Caso límite: acoplamiento con PublicationRegistry al alcanzar DEFINITIVE ──
+  // submitValidation no comprueba que el contentHash esté registrado en
+  // PublicationRegistry antes de aceptar votos; _checkConsensus sí necesita
+  // leer el autor (getPublication) para aplicar la recompensa/penalización
+  // de publicación la primera vez que la ronda cierra en DEFINITIVE. No
+  // estaba cubierto qué ocurre si se vota sobre un hash nunca registrado.
+
+  describe("acoplamiento con PublicationRegistry", () => {
+    it("revierte toda la transacción de voto (PublicationNotFound) si el hash alcanza DEFINITIVE sin estar registrado en PublicationRegistry", async () => {
+      const unregisteredHash = h("nunca-publicado-en-publication-registry");
+
+      await registry.connect(v[0]).submitValidation(unregisteredHash, TRUE_VOTE);
+      await registry.connect(v[1]).submitValidation(unregisteredHash, TRUE_VOTE);
+      await expect(registry.connect(v[2]).submitValidation(unregisteredHash, TRUE_VOTE))
+        .to.be.revertedWithCustomError(publication, "PublicationNotFound")
+        .withArgs(unregisteredHash);
+
+      // La transacción entera revierte: ni siquiera el tercer voto queda registrado.
+      expect(await registry.roundVoteCount(unregisteredHash, 0)).to.equal(2n);
+      expect(await registry.consensusState(unregisteredHash)).to.equal(PENDING);
+    });
+  });
+
   // ── Sprint 6 — recompensa por publicación ────────────────────────────────
 
   describe("recompensa por publicación", () => {

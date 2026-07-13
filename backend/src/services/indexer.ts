@@ -122,7 +122,11 @@ interface ReputationEventContext {
  * magnitud del delta para distinguir voto (±5/±3) de publicación (+8/−8/−15)
  * dentro de un ConsensusReached.
  */
-async function classifyReputationEvent(
+/**
+ * Exportada (además de usada internamente) para poder testearla de forma
+ * unitaria mockeando `publicClient` — ver `test/unit/indexer.classify.test.ts`.
+ */
+export async function classifyReputationEvent(
   log: any,
   delta: number,
 ): Promise<ReputationEventContext> {
