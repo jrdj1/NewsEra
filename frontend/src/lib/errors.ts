@@ -8,6 +8,8 @@ const REVERT_MESSAGES: Record<string, string> = {
   PublicationAlreadyExists: "Ya existe una publicación registrada con este contenido exacto.",
   PublicationNotFound: "No se encontró ninguna publicación con ese hash.",
   NotEligibleForPrediction: "Ya tienes reputación suficiente para votar — usa el voto real en vez de predecir.",
+  PredictionTargetNotDefinitive: "Todavía no puedes predecir sobre este artículo: su resultado no está fijado.",
+  AlreadyPredicted: "Ya has predicho sobre este artículo — no puedes hacerlo de nuevo.",
 };
 
 /** Traduce errores de revert de Solidity (y de la API) a lenguaje natural. */
