@@ -187,8 +187,8 @@ export default function Intro() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">Bienvenido a</p>
           <h1 className="text-4xl font-black tracking-tight sm:text-7xl">NewsEra</h1>
           <p className="max-w-sm text-balance text-sm text-zinc-300 sm:max-w-md sm:text-lg">
-            El periódico comunitario donde decides tú, no una redacción ni un algoritmo —
-            con las reglas escritas en blockchain, no en la letra pequeña de una empresa.
+            El periódico donde la verdad no tiene dueño: la decide la gente, con las reglas
+            escritas en blockchain — no en la letra pequeña de una empresa.
           </p>
 
           <div className="hidden flex-wrap justify-center gap-3 pt-1 sm:flex sm:gap-4">
