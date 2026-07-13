@@ -1,6 +1,19 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { hasAnsweredSurvey } from "@/lib/surveyApi";
+
+function SurveyLinkOrDone({ to, label }: { to: string; label: string }) {
+  const survey = to.split("/").pop() as "problema" | "producto";
+  if (hasAnsweredSurvey(survey)) {
+    return <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">✅ Ya has respondido — gracias.</p>;
+  }
+  return (
+    <Link to={to}>
+      <Button className="w-full sm:w-auto">{label}</Button>
+    </Link>
+  );
+}
 
 export default function SurveysIntro() {
   return (
@@ -8,7 +21,8 @@ export default function SurveysIntro() {
       <h1 className="mb-2 text-3xl font-bold tracking-tight">Ayúdanos a validar NewsEra</h1>
       <p className="mb-8 text-sm text-zinc-500">
         Este estudio forma parte de un Trabajo Fin de Grado en Ingeniería Informática y consta de
-        dos encuestas cortas, completamente anónimas.
+        dos encuestas cortas, completamente anónimas. Solo se admite una respuesta por persona y
+        por sesión en cada una.
       </p>
 
       <Card className="mb-6 p-6">
@@ -22,9 +36,7 @@ export default function SurveysIntro() {
           </Link>{" "}
           primero.
         </p>
-        <Link to="/encuestas/problema">
-          <Button className="w-full sm:w-auto">Responder a la encuesta 1 →</Button>
-        </Link>
+        <SurveyLinkOrDone to="/encuestas/problema" label="Responder a la encuesta 1 →" />
       </Card>
 
       <Card className="p-6">
@@ -34,9 +46,7 @@ export default function SurveysIntro() {
           listado de noticias, el apartado para publicar y el sistema de votación y puntos de los
           revisores).
         </p>
-        <Link to="/encuestas/producto">
-          <Button className="w-full sm:w-auto">Responder a la encuesta 2 →</Button>
-        </Link>
+        <SurveyLinkOrDone to="/encuestas/producto" label="Responder a la encuesta 2 →" />
       </Card>
     </div>
   );

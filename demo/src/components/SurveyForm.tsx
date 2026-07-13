@@ -1,11 +1,18 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { LikertQuestion } from "@/components/LikertQuestion";
 import { ChoiceQuestion } from "@/components/ChoiceQuestion";
 import { Spinner } from "@/components/ui/states";
-import { submitSurvey, getSurveyTotal, type SurveyId } from "@/lib/surveyApi";
+import {
+  submitSurvey,
+  getSurveyTotal,
+  hasAnsweredSurvey,
+  markSurveyAnswered,
+  type SurveyId,
+} from "@/lib/surveyApi";
 
 export type SurveyQuestion =
   | { id: string; type: "heading"; text: string; description?: string }
@@ -29,6 +36,7 @@ export function SurveyForm({
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [alreadyAnswered] = useState(() => hasAnsweredSurvey(surveyId));
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState<number | null>(null);
 
@@ -50,6 +58,7 @@ export function SurveyForm({
     setError(null);
     try {
       await submitSurvey(surveyId, answers);
+      markSurveyAnswered(surveyId);
       setSubmitted(true);
       setTotal((t) => (t === null ? null : t + 1));
     } catch (err) {
@@ -68,6 +77,30 @@ export function SurveyForm({
         {total !== null && (
           <p className="mt-4 text-xs text-zinc-400">Eres la respuesta número {total} en esta encuesta.</p>
         )}
+        <Link
+          to="/encuestas"
+          className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
+        >
+          ← Volver a las encuestas
+        </Link>
+      </Card>
+    );
+  }
+
+  if (alreadyAnswered) {
+    return (
+      <Card className="mx-auto max-w-2xl p-8 text-center">
+        <p className="mb-2 text-3xl">✅</p>
+        <h1 className="mb-2 text-xl font-bold">Ya has respondido a esta encuesta</h1>
+        <p className="text-sm text-zinc-500">
+          Solo se admite una respuesta por persona y por sesión, para que los datos sean fiables.
+        </p>
+        <Link
+          to="/encuestas"
+          className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
+        >
+          ← Volver a las encuestas
+        </Link>
       </Card>
     );
   }

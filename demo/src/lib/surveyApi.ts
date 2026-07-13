@@ -25,3 +25,27 @@ export async function getSurveyTotal(survey: SurveyId): Promise<number> {
   const body = (await res.json()) as { total: number };
   return body.total;
 }
+
+// Bloqueo de reenvío por sesión de navegador: sessionStorage (no
+// localStorage) a propósito — se olvida al cerrar la pestaña, coherente con
+// "no puedas volver a contestar en esa misma sesión" y no con un bloqueo
+// permanente por dispositivo.
+function answeredKey(survey: SurveyId): string {
+  return `newsera-demo-survey-answered-${survey}`;
+}
+
+export function hasAnsweredSurvey(survey: SurveyId): boolean {
+  try {
+    return sessionStorage.getItem(answeredKey(survey)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markSurveyAnswered(survey: SurveyId): void {
+  try {
+    sessionStorage.setItem(answeredKey(survey), "1");
+  } catch {
+    // sessionStorage no disponible (modo privado estricto) — no bloquea el envío en sí.
+  }
+}
