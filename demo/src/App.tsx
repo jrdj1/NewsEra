@@ -15,6 +15,7 @@ import UserProfile from "@/pages/UserProfile";
 import Profile from "@/pages/Profile";
 import Validate from "@/pages/Validate";
 import ValidatorWelcome from "@/pages/ValidatorWelcome";
+import SurveysIntro from "@/pages/SurveysIntro";
 import SurveyProblem from "@/pages/SurveyProblem";
 import SurveySolution from "@/pages/SurveySolution";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -47,6 +48,7 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/validate" element={<Validate />} />
                 <Route path="/validate/welcome" element={<ValidatorWelcome />} />
+                <Route path="/encuestas" element={<SurveysIntro />} />
                 <Route path="/encuestas/problema" element={<SurveyProblem />} />
                 <Route path="/encuestas/producto" element={<SurveySolution />} />
               </Route>

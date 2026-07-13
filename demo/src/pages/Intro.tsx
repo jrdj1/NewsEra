@@ -211,31 +211,15 @@ export default function Intro() {
               </TiltCard>
             </Link>
 
-            <div className="flex w-64 flex-col gap-2 rounded-2xl border border-white/15 bg-white/5 p-3 text-left shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-56 sm:gap-3 sm:p-4">
-              <p className="text-xs font-semibold text-white sm:text-sm">🙋 Ayúdanos con una breve encuesta</p>
-              <p className="text-[11px] leading-snug text-zinc-300 sm:text-xs sm:leading-relaxed">
-                Cuéntanos tu experiencia con las noticias en internet — más contexto en{" "}
-                <Link to="/about#problema" className="underline underline-offset-2 hover:text-white">
-                  Sobre el proyecto
-                </Link>
-                .
-              </p>
-              <Link
-                to="/encuestas/problema"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 transition-transform hover:scale-105"
-              >
-                Responder encuesta 1 →
-              </Link>
-              <p className="mt-auto text-[10px] leading-snug text-amber-200/90 sm:text-[11px]">
-                ⚠️ Prueba primero la web antes de responder a esta segunda encuesta.
-              </p>
-              <Link
-                to="/encuestas/producto"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/30 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/10"
-              >
-                Responder encuesta 2 →
-              </Link>
-            </div>
+            <Link to="/encuestas">
+              <TiltCard>
+                <div className="relative flex h-40 w-36 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-3 shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-48 sm:gap-3 sm:p-4">
+                  <span className="text-3xl sm:text-5xl">🙋</span>
+                  <p className="text-xs font-semibold text-white sm:text-sm">Ayúdanos contestando a una breve encuesta</p>
+                  <p className="text-[11px] text-zinc-300 sm:text-xs">Participar →</p>
+                </div>
+              </TiltCard>
+            </Link>
           </div>
         </section>
 
