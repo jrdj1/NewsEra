@@ -28,9 +28,14 @@ async function ensureTable(sql: ReturnType<typeof getSql>) {
       id SERIAL PRIMARY KEY,
       survey TEXT NOT NULL,
       answers JSONB NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      source TEXT NOT NULL DEFAULT 'live'
     )
   `;
+  // Columna añadida después de crear la tabla original — IF NOT EXISTS la hace
+  // idempotente también sobre bases de datos ya existentes (ver
+  // docs/encuestas/informe-diseno-experimentos.md §Nota sobre datos piloto).
+  await sql`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'live'`;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -64,8 +69,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (typeof survey !== "string" || !VALID_SURVEYS.has(survey)) {
         return res.status(400).json({ error: "Encuesta desconocida." });
       }
+      // Solo cuenta respuestas reales (source = 'live'); excluye los datos
+      // piloto sintéticos usados para validar el formulario y el análisis
+      // (ver docs/encuestas/informe-diseno-experimentos.md).
       const rows = await sql`
-        SELECT COUNT(*)::int AS total FROM survey_responses WHERE survey = ${survey}
+        SELECT COUNT(*)::int AS total FROM survey_responses WHERE survey = ${survey} AND source = 'live'
       `;
       return res.status(200).json({ total: rows[0]?.total ?? 0 });
     }

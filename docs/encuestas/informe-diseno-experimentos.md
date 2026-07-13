@@ -87,6 +87,12 @@ Ambas encuestas se implementaron literalmente en la demo (`demo/`, ver `demo/REA
 
 El ítem 14 de la Encuesta 2 se reformuló una vez, tras el diseño inicial, para que lo entienda quien no sabe qué es blockchain (quitando la referencia explícita a MetaMask/RainbowKit) — mismo `id`, mismo constructo (fricción de la firma/cartera digital), sin afectar a las respuestas ya guardadas con la redacción anterior salvo en el matiz textual de la pregunta.
 
-**Importante:** en el momento de escribir esto ya existen respuestas reales guardadas en la base de datos para los ítems 1–16 de la Encuesta 2 y 1–7 de la Encuesta 1. Por eso ningún ítem existente se ha reformulado ni renumerado — solo se añaden ítems nuevos al final (Bloque C), para no invalidar las respuestas ya recogidas.
+**Importante:** en el momento de escribir esto ya existen respuestas reales guardadas en la base de datos para los ítems 1–16 de la Encuesta 2 y 1–7 de la Encuesta 1. Por eso ningún ítem existente se ha reformulado ni renumerado — el ítem 14 de la Encuesta 2 se reformuló *in situ* (mismo `id`, ver nota anterior), no se añadió ningún bloque de ítems nuevo.
 
 Una nueva tarjeta en la escena de portada de `/` (`demo/src/pages/Intro.tsx`), junto a la tarjeta "Sobre el proyecto", enlaza a `/encuestas/problema` con el contexto necesario para responder sin haber explorado la demo, seguida de un aviso para probar la web antes de responder a `/encuestas/producto`.
+
+## Nota sobre datos piloto sintéticos (`source = 'seed_pilot'`)
+
+Durante el desarrollo, antes de que la demo estuviera terminada, se insertaron 20 respuestas sintéticas por encuesta (`demo/scripts/seed-surveys.mjs`) — personas ficticias redactadas a mano con perfiles y opiniones variadas (críticas, escépticas, entusiastas), con el único propósito de comprobar que el formulario y el pipeline de análisis (fórmula SUS, cálculo de porcentajes de corte) funcionaban correctamente antes de tener respuestas reales con las que probarlos.
+
+Estas filas están marcadas explícitamente con la columna `source = 'seed_pilot'` en `survey_responses` (frente a `source = 'live'` para las respuestas reales) y **se excluyen siempre de cualquier análisis reportado en la memoria** — el endpoint `GET /api/survey` ya solo cuenta `source = 'live'`, y cualquier consulta de análisis sobre la tabla debe filtrar por ese mismo campo. No se han citado, ni se citarán, como resultados de investigación: su único uso es de verificación técnica del propio instrumento, documentado aquí para que quede constancia expresa de su existencia y de que no forman parte de la muestra.

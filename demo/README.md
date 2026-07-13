@@ -58,6 +58,14 @@ como solución concreta). Ambas están enlazadas desde la última pantalla de
   en cada petición) — sin migraciones formales, a propósito: es una
   funcionalidad satélite, no la base de datos relacional real del proyecto
   (esa es `backend/prisma/schema.prisma`).
+- **Datos piloto sintéticos:** `survey_responses` tiene una columna `source`
+  (`'live'` por defecto para respuestas reales, `'seed_pilot'` para las 20+20
+  respuestas ficticias insertadas por `scripts/seed-surveys.mjs` para probar
+  el formulario y el cálculo antes de tener respuestas reales). El endpoint
+  `GET /api/survey` ya filtra por `source = 'live'`; cualquier análisis nuevo
+  sobre la tabla debe hacer lo mismo. Detalle completo en
+  `docs/encuestas/informe-diseno-experimentos.md` §"Nota sobre datos piloto
+  sintéticos".
 - **Variable de entorno requerida**: `DATABASE_URL` — la rellena
   automáticamente Vercel al conectar el proyecto a una base de datos
   Postgres/Neon desde su dashboard (Storage → Create Database → Postgres);

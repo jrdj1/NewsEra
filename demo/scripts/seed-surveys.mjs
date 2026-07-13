@@ -1,14 +1,24 @@
-// Inserta 20 respuestas simuladas pero realistas en cada una de las 2
-// encuestas de validación (survey_responses en Postgres/Neon), para tener
-// una muestra de partida con la que ilustrar el análisis del Capítulo 6 de
-// la memoria. Cada "persona" está redactada a mano con un perfil distinto
-// (edad, ocupación, alfabetización digital, postura ante la desinformación)
-// para que las respuestas no sean uniformes ni todas positivas — incluye
-// gente crítica, escéptica del proyecto o que no lo entiende bien, no solo
+// Inserta 20 respuestas SINTÉTICAS (redactadas a mano, no de personas reales)
+// en cada una de las 2 encuestas de validación (survey_responses en
+// Postgres/Neon), marcadas con source='seed_pilot'. Su único propósito es
+// servir de dato piloto para comprobar que el formulario y el pipeline de
+// análisis (fórmula SUS, cálculo de porcentajes) funcionan correctamente
+// antes de recoger respuestas reales — NUNCA deben contarse como parte de
+// la muestra real ni citarse como resultados de investigación en la
+// memoria. Ver docs/encuestas/informe-diseno-experimentos.md
+// §"Nota sobre datos piloto sintéticos" para el porqué y las salvaguardas
+// (columna `source`, filtrado explícito en cualquier análisis).
+//
+// Cada "persona" está redactada a mano con un perfil distinto (edad,
+// ocupación, alfabetización digital, postura ante la desinformación) para
+// que las respuestas no sean uniformes ni todas positivas — incluye gente
+// crítica, escéptica del proyecto o que no lo entiende bien, no solo
 // entusiastas.
 //
 // Uso: node --env-file=.env.local scripts/seed-surveys.mjs
-// (ejecutar desde demo/, con DATABASE_URL apuntando a la base de datos real)
+// (ejecutar desde demo/, con DATABASE_URL apuntando a la base de datos real;
+// solo para un entorno de desarrollo/pruebas nuevo — no volver a ejecutar
+// contra la base de datos de producción ya en uso para la recogida real)
 import { neon } from "@neondatabase/serverless";
 
 const connectionString = process.env.DATABASE_URL;
@@ -202,28 +212,24 @@ await sql`
     id SERIAL PRIMARY KEY,
     survey TEXT NOT NULL,
     answers JSONB NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    source TEXT NOT NULL DEFAULT 'live'
   )
 `;
+await sql`ALTER TABLE survey_responses ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'live'`;
 
-// Timestamps repartidos en las últimas 3 semanas, no todos en el mismo instante.
-function spreadTimestamp(index, total) {
-  const now = Date.now();
-  const daysAgo = 21 - Math.floor((index / total) * 21);
-  const jitterMs = Math.floor(Math.random() * 12 * 60 * 60 * 1000);
-  return new Date(now - daysAgo * 24 * 60 * 60 * 1000 - jitterMs).toISOString();
-}
-
+// created_at usa el momento real de inserción (now() por defecto) y
+// source='seed_pilot' explícito: no hay ningún motivo para disfrazar estas
+// filas de respuestas orgánicas — están marcadas y documentadas como lo que
+// son, y se excluyen del análisis real mediante ese mismo campo.
 let inserted = 0;
-for (const [i, answers] of PROBLEMA.entries()) {
-  const createdAt = spreadTimestamp(i, PROBLEMA.length);
-  await sql`INSERT INTO survey_responses (survey, answers, created_at) VALUES ('problema', ${JSON.stringify(answers)}::jsonb, ${createdAt})`;
+for (const answers of PROBLEMA) {
+  await sql`INSERT INTO survey_responses (survey, answers, source) VALUES ('problema', ${JSON.stringify(answers)}::jsonb, 'seed_pilot')`;
   inserted++;
 }
-for (const [i, answers] of PRODUCTO.entries()) {
-  const createdAt = spreadTimestamp(i, PRODUCTO.length);
-  await sql`INSERT INTO survey_responses (survey, answers, created_at) VALUES ('producto', ${JSON.stringify(answers)}::jsonb, ${createdAt})`;
+for (const answers of PRODUCTO) {
+  await sql`INSERT INTO survey_responses (survey, answers, source) VALUES ('producto', ${JSON.stringify(answers)}::jsonb, 'seed_pilot')`;
   inserted++;
 }
 
-console.log(`Insertadas ${inserted} respuestas (20 "problema" + 20 "producto").`);
+console.log(`Insertadas ${inserted} respuestas piloto sintéticas (20 "problema" + 20 "producto"), marcadas source='seed_pilot'.`);
