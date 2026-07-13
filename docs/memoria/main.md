@@ -380,16 +380,20 @@ Identidad visual
 5.3. Métricas de implementación . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 5.4. Evaluación del cumplimiento de objetivos
 . . . . . . . . . . . . . . . . . . . .
-5.5. Consideraciones de diseño: evolución del sistema . . . . . . . . . . . . . . . .
-5.5.1. De abstención a veredicto: el tipo UNVERIFIABLE . . . . . . . . . .
-5.5.2. De única ronda a sistema multironda con reapertura . . . . . . . . . .
-5.5.3. De penalización simple a reputación retroactiva . . . . . . . . . . . . .
-5.5.4. De voto ponderado a voto plano con acceso gated . . . . . . . . . . . .
+5.5. Resultados de los experimentos de validación con usuarios . . . . . . . . . . .
+5.5.1. Experimento 1: intensidad del problema . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . .
+5.5.2. Experimento 2: idoneidad del producto
+5.6. Consideraciones de diseño: evolución del sistema . . . . . . . . . . . . . . . .
+5.6.1. De abstención a veredicto: el tipo UNVERIFIABLE . . . . . . . . . .
+5.6.2. De única ronda a sistema multironda con reapertura . . . . . . . . . .
+5.6.3. De penalización simple a reputación retroactiva . . . . . . . . . . . . .
+5.6.4. De voto ponderado a voto plano con acceso gated . . . . . . . . . . . .
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-5.6.1. Viabilidad técnica del mecanismo de reputación . . . . . . . . . . . . .
-5.6.2. Limitaciones observadas durante la implementación . . . . . . . . . . .
+5.7.1. Viabilidad técnica del mecanismo de reputación . . . . . . . . . . . . .
+5.7.2. Limitaciones observadas durante la implementación . . . . . . . . . . .
 
-5.6. Discusión de resultados
+5.7. Discusión de resultados
 
 6. Conclusiones
 
@@ -404,11 +408,6 @@ Bibliografía
 Lista de Acrónimos y Abreviaturas
 
 Glosario de Términos
-
-A. Catálogo de casos de uso detallados
-
-A.1. FEAT 1. Gestión de cuenta . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-A.2. FEAT 2. Publicar artículo . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 xv
 
@@ -438,8 +437,11 @@ xv
 66
 67
 67
+67
 68
 68
+69
+69
 69
 
 71
@@ -455,18 +457,21 @@ xv
 
 85
 
-89
-89
-93
-
 xvi
 
 Índice general
 
+A. Catálogo de casos de uso detallados
+
+A.1. FEAT 1. Gestión de cuenta . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+A.2. FEAT 2. Publicar artículo . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 A.3. FEAT 3. Explorar contenido . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 A.4. FEAT 4. Verificar artículo . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 A.5. FEAT 5. Información institucional
 
+89
+89
+93
 96
 99
 . . . . . . . . . . . . . . . . . . . . . . . . 103
@@ -474,49 +479,36 @@ A.5. FEAT 5. Información institucional
 B. Instrumentos de los experimentos de validación
 
 105
-B.1. Bloque A — Experimento 1: intensidad del problema . . . . . . . . . . . . . . 105
+B.1. Encuesta 1 — Experimento 1: intensidad del problema . . . . . . . . . . . . . 105
 B.2. Página explicativa . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 106
-B.3. Bloque B — Experimento 2: idoneidad del producto . . . . . . . . . . . . . . 106
-. . . . . . . . . . . . . . . . . . . . 106
-. . . . . . . . . . . . . . 107
-B.4. Recomendaciones de muestra . . . . . . . . . . . . . . . . . . . . . . . . . . . 107
+B.3. Encuesta 2 — Experimento 2: idoneidad del producto . . . . . . . . . . . . . 106
+B.3.1. Bloque A: evaluación de la usabilidad (System Usability Scale) . . . . 106
+B.3.2. Bloque B: confianza en las propiedades de la aplicación . . . . . . . . 107
+B.4. Datos piloto sintéticos y su exclusión del análisis
+. . . . . . . . . . . . . . . . 108
+B.5. Recomendaciones de muestra . . . . . . . . . . . . . . . . . . . . . . . . . . . 108
 
-B.3.1. Parte 1 — System Usability Scale
-B.3.2. Parte 2 — Idoneidad específica del producto
-
-C. Técnicas Avanzadas de LATEX
-
-C.1. Tablas Rotadas (Sideways Tables)
+C. NewsEra explicado para un público no técnico
 
 109
-. . . . . . . . . . . . . . . . . . . . . . . . 109
-C.1.1. Ejemplo de tabla rotada . . . . . . . . . . . . . . . . . . . . . . . . . . 109
-C.1.2. Cuándo usar tablas rotadas . . . . . . . . . . . . . . . . . . . . . . . . 110
-C.2. Páginas en Horizontal (Landscape) . . . . . . . . . . . . . . . . . . . . . . . . 110
-C.2.1. Método recomendado: Comandos de la plantilla . . . . . . . . . . . . . 110
-C.2.2. Diagrama de flujo del sistema (página horizontal) . . . . . . . . . . . . 113
-C.2.3. Segunda página horizontal consecutiva . . . . . . . . . . . . . . . . . . 114
-C.2.4. Cuándo usar páginas landscape . . . . . . . . . . . . . . . . . . . . . . 115
-C.3. Inclusión de Documentos PDF Externos . . . . . . . . . . . . . . . . . . . . . 115
-C.3.1. Sintaxis básica . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 115
-C.3.2. Opciones más utilizadas . . . . . . . . . . . . . . . . . . . . . . . . . . 116
-C.3.3. Ejemplo: Documento PDF incluido . . . . . . . . . . . . . . . . . . . . 116
-C.3.4. Múltiples páginas en una hoja . . . . . . . . . . . . . . . . . . . . . . . 119
-C.4. Figuras de Ancho Completo . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.4.1. Figura que invade márgenes . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.5. Notas al Margen . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.5.1. Uso básico . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.6. Marcas de Agua
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
-C.7. Texto en Columnas . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
-. . . . . . . . . . . . . . . . . . . . . . 120
-C.8. Minipáginas y Cajas . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
-C.8.1. Ejemplo de minipáginas . . . . . . . . . . . . . . . . . . . . . . . . . . 121
-. . . . . . . . . . . . . . . . . . . . . . . . . 121
+C.1. El problema: un punto de control es un punto de fallo . . . . . . . . . . . . . 109
+C.2. La solución: un periódico que no tiene redacción . . . . . . . . . . . . . . . . 109
+C.3. ¿Qué es “verdad” aquí? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 110
+C.4. Los pilares . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 110
+C.5. Lo nuevo: no mejora al árbitro, cambia el juego . . . . . . . . . . . . . . . . . 110
+C.6. La tecnología: un cuaderno que nadie puede tachar . . . . . . . . . . . . . . . 110
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 110
+C.7. En una frase
 
-C.9. Resumen de Paquetes Utilizados
+D. Guía de reproducibilidad y despliegue local
 
-C.7.1. Ejemplo de texto en columnas
+111
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 111
+D.1. Requisitos previos
+. . . . . . . . . . . . . . . . . . . . . . . . 111
+D.2. Puesta en marcha en un solo paso
+D.3. Comandos habituales . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 112
+D.4. Variables de entorno . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 113
 
 Índicedefiguras
 
@@ -554,35 +546,9 @@ reproduce a continuación.
 
 58
 
-C.1.
-
- Diagrama de flujo completo del sistema en página horizontal
-
-. . . . . . . 113
-
 xvii
 
-4
-
-15
-
-20
-27
-
-30
-41
-
-45
-50
-58
-61
-
-63
-64
-65
-65
-
-Índice de tablas
+Índice de tablas
 
 1.1.
 
@@ -612,13 +578,6 @@ del arte.
 5.3.
 5.4.
 
-C.1.
-C.2.
-
-C.3.
-C.4.
-C.5.
-
  Planificación de sprints y objetivos asociados. . . . . . . . . . . . . . . . .
 . . . . . . . . . . . . . . . . . . . . . . .
  Registro de riesgos del proyecto.
@@ -643,13 +602,29 @@ claimRetroactiveReputation (máximo ±3 acumulados).
 . . . . . .
  Grado de cumplimiento de los objetivos específicos del trabajo.
 
- Comparativa completa de características por módulo del sistema desarrollado111
- Matriz de trazabilidad requisitos-módulos (aprovechando el ancho de página
+4
 
-landscape) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 113
- Tabla adicional de ejemplo en segunda página landscape . . . . . . . . . . 114
- Opciones principales de \includepdf . . . . . . . . . . . . . . . . . . . . 116
- Paquetes y comandos LATEX para técnicas avanzadas . . . . . . . . . . . . 121
+15
+
+20
+27
+
+30
+41
+
+45
+50
+58
+61
+
+63
+64
+65
+65
+
+D.1.
+
+ Comandos de make más habituales. . . . . . . . . . . . . . . . . . . . . . . 112
 
 xix
 
@@ -668,15 +643,7 @@ xix
 53
 54
 
-C.1. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 109
-C.2. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 110
-C.3. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 115
-C.4. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.5. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.6. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
-C.7. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
-C.8. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
-C.9. LATEX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
+D.1. bash . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 111
 
 xxi
 
@@ -1992,8 +1959,10 @@ Metodología
 
 Instrumento. Cuestionario posterior a la interacción que combina el System Usability Scale
 (Brooke,  1996)  —diez  ítems  estandarizados,  puntuación  de  0  a  100—  con  preguntas
-específicas sobre claridad de la propuesta de valor, confianza percibida en el mecanismo
-de consenso e intención de uso futura.
+específicas que aíslan, sin nombrar la tecnología subyacente, la confianza percibida en
+cada propiedad arquitectónica (inmutabilidad, consenso colectivo, reputación), la fric-
+ción de la interacción Web3 (firma de transacciones) como constructo independiente, e
+intención de uso futura.
 
 Criterio de éxito. Puntuación SUS media igual o superior a 68 —el umbral de referencia
 habitual para considerar “aceptable” la usabilidad de un sistema (Brooke, 1996)— y al
@@ -2956,7 +2925,7 @@ cada juicio: el incentivo racional de cada validador es evaluar el artículo con
 porque su voto tiene el mismo impacto que el de cualquier otro. La resistencia Sybil la propor-
 ciona el umbral mínimo de reputación para acceder al rol de validador —las cuentas nuevas
 no pueden votar—, sin necesidad de asignar pesos diferenciales. El razonamiento completo
-de esta decisión, incluyendo las alternativas consideradas, se expone en la Sección 5.5.
+de esta decisión, incluyendo las alternativas consideradas, se expone en la Sección 5.6.
 
 UNVERIFIABLE como veredicto de primera clase
 
@@ -2964,7 +2933,7 @@ El tipo de voto UNVERIFIABLE no es una abstención: computa en el cálculo del c
 puede constituir el resultado definitivo de una ronda si obtiene supermayoría, y acarrea las
 mismas consecuencias reputacionales que cualquier otro voto incorrecto respecto al consenso
 final. Esta decisión elimina el incentivo a usarlo como opción dominante de riesgo cero. El
-razonamiento completo se expone en la Sección 5.5.
+razonamiento completo se expone en la Sección 5.6.
 
 Umbrales de certeza: quórum y supermayoría
 
@@ -4548,7 +4517,7 @@ mantenerse por debajo de este umbral en las operaciones de escritura; la verific
 de este objetivo está prevista al completar el Sprint 9, cuando se configure hardhat-gas-
 reporter (HU-9.4). No obstante, el coste real en moneda fiat depende del precio del gas en
 el momento de la transacción, variable que no puede garantizarse en la red principal. Esta
-cuestión se analiza con mayor detalle en el §5.6.1.
+cuestión se analiza con mayor detalle en el §5.7.1.
 
 5.2.3.  Cobertura de tests
 
@@ -4653,7 +4622,7 @@ Opcional  —  no  implementado  en  el  al-
 cance  del  prototipo  actual.  Identificado
 como línea de trabajo futuro.
 Completado — análisis desarrollado en el
-presente capítulo (§5.6) y en las conclu-
+presente capítulo (§5.7) y en las conclu-
 siones (Capítulo 6).
 
 66
@@ -4666,7 +4635,54 @@ Sprint 8. El objetivo opcional OE6 queda fuera del alcance acordado, tal como se
 planificación del §1.5. La evaluación de viabilidad (OE7) se desarrolla en la sección siguiente
 y se complementa con las conclusiones del trabajo.
 
-5.5.  Consideraciones de diseño: evolución del sistema
+5.5.  Resultados de los experimentos de validación con usuarios
+
+Esta  sección  recoge  los  resultados  de  los  dos  experimentos  de  validación  diseñados  en
+el §3.6.5 y cuyo instrumento completo se detalla en el Anexo B. Los datos piloto sintéticos
+generados durante el desarrollo (§B.4) quedan excluidos de los resultados aquí presentados.
+
+5.5.1.  Experimento 1: intensidad del problema
+
+[PENDIENTE — placeholder a la espera de los resultados reales]
+Tamaño muestral: 𝑛 = … respuestas reales recogidas.
+Resultado sobre el criterio de gravedad (ítem 6): … % de la muestra califica el
+problema con 4 o 5 (grave o muy grave) — criterio de éxito: ≥ 60 %.
+Resultado sobre el criterio de método fiable (ítem 7): … % responde “No” o “No
+estoy seguro/a” — criterio de éxito: ≥ 50 %.
+
+Conclusión: [hipótesis validada / no validada / validada parcialmente],
+con el razonamiento correspondiente y, si procede, el contraste con los ítems 1–5
+(contexto cualitativo sobre percepción de captura y manipulación de los canales
+actuales).
+
+5.5.2.  Experimento 2: idoneidad del producto
+
+[PENDIENTE — placeholder a la espera de los resultados reales]
+Tamaño muestral: 𝑛 = … respuestas reales recogidas.
+Puntuación SUS media (Bloque A): … sobre 100 — criterio de éxito: ≥ 68.
+Intención  de  uso  (ítem  15): … %  responde  “Sí”  (… %  adicional  responde  “Tal
+vez”, reportado por separado) — criterio de éxito: ≥ 60 % de respuestas “Sí”.
+
+Confianza en las propiedades arquitectónicas (ítems 11–13): medias de inmutabi-
+lidad/descentralización, consenso colectivo y reputación P2P, respectivamente.
+
+Fricción de la interacción Web3 (ítem 14): media del ítem, contrastada con los
+ítems 11–13 para diagnosticar si un resultado desfavorable proviene de la arqui-
+tectura o de la fricción de firma de transacciones (ver razonamiento en el Anexo B,
+§B.3).
+
+Hallazgos cualitativos (ítem 16, respuesta abierta): temas recurrentes identificados
+en los comentarios libres.
+
+Conclusión: [hipótesis validada / no validada / validada parcialmente],
+con implicaciones para el trabajo futuro (§6.4) si la fricción Web3 resulta ser la
+barrera dominante frente a la arquitectura del sistema.
+
+5.6.  Consideraciones de diseño:  evolución del sistema
+
+67
+
+5.6.  Consideraciones de diseño: evolución del sistema
 
 Esta sección documenta las decisiones de diseño que evolucionaron a lo largo del proceso de
 desarrollo del prototipo. Para cada una se describe el diseño inicial, el problema que motivó
@@ -4674,7 +4690,7 @@ el cambio y la solución adoptada en la versión final. El objetivo es proporcio
 del razonamiento de diseño sin mezclar la narrativa de evolución con la descripción técnica
 del sistema, que figura en el Capítulo 4 en su forma definitiva.
 
-5.5.1.  De abstención a veredicto: el tipo UNVERIFIABLE
+5.6.1.  De abstención a veredicto: el tipo UNVERIFIABLE
 
 Diseño  inicial. El  tipo  de  voto  UNVERIFIABLE fue  concebido  originalmente  como  una
 abstención: los votos de este tipo no influirían en el cómputo del consenso ni acarrearían con-
@@ -4695,7 +4711,7 @@ la comunidad luego califica como claramente verdadero o falso acarrea la misma p
 que haber votado erróneamente. Esto elimina el incentivo a usarlo como refugio de riesgo
 cero.
 
-5.5.2.  De única ronda a sistema multironda con reapertura
+5.6.2.  De única ronda a sistema multironda con reapertura
 
 Diseño  inicial. El  sistema  de  validación  fue  concebido  como  de  única  ronda:  una  vez
 que una votación alcanzaba el quórum y producía un resultado (definitivo o disputado), el
@@ -4708,11 +4724,6 @@ del  sistema  de  reputación:  la  calidad  de  un  juicio  se  mide  por  su  
 escrutinio de nuevos participantes independientes a lo largo del tiempo. Si el consenso queda
 bloqueado tras la primera votación, ese principio se convierte en letra muerta. Además, la
 experiencia de sistemas de verificación de hechos reales muestra que la información disponible
-
-5.5.  Consideraciones de diseño:  evolución del sistema
-
-67
-
 sobre un artículo puede cambiar: surgen pruebas nuevas, se corrige contexto o se detectan
 manipulaciones no visibles en el momento original de la votación.
 
@@ -4720,6 +4731,10 @@ También se consideró mantener la votación permanentemente abierta —cualquie
 podría votar en cualquier momento—, pero este diseño introduce el problema del free rider:
 un validador puede esperar a ver hacia dónde se dirige el consenso antes de votar, eliminando
 el valor informativo del juicio independiente.
+
+68
+
+Resultados
 
 Solución adoptada. Se adoptó un mecanismo de reapertura por solicitudes: la vo-
 tación se cierra al alcanzar el quórum (como en el diseño original), pero cualquier validador
@@ -4729,7 +4744,7 @@ ronda de votación independiente. Los votos de cada ronda son inmutables: no pue
 dificarse una vez emitidos, lo que preserva el valor informativo de cada juicio. El número de
 rondas posibles no está limitado.
 
-5.5.3.  De penalización simple a reputación retroactiva
+5.6.3.  De penalización simple a reputación retroactiva
 
 Diseño inicial. Los efectos reputacionales se aplicaban únicamente al cierre de cada ron-
 da y afectaban exclusivamente a los participantes de esa ronda: los que votaron la opción
@@ -4753,7 +4768,7 @@ de gas en _checkConsensus escalara de forma proporcional al número total de par
 históricos de un artículo. El validador activa el cálculo cuando lo desee, pagando únicamente
 el gas de sus propios ajustes.
 
-5.5.4.  De voto ponderado a voto plano con acceso gated
+5.6.4.  De voto ponderado a voto plano con acceso gated
 
 Diseño considerado. Una alternativa analizada es el voto ponderado por reputación:
 que el voto de un validador con alta reputación acumulada compute con más peso que el de
@@ -4764,16 +4779,15 @@ Problema identificado. El voto ponderado destruye la propiedad epistémica centr
 sistema: la independencia de los votos. En un sistema de voto plano, cada validador tiene
 incentivo para evaluar el artículo con su propio criterio, porque su voto computa igual que el
 de cualquier otro. En un sistema ponderado, la estrategia racional pasa a ser observar hacia
-
-68
-
-Resultados
-
 dónde se dirigen los validadores de alta reputación y sumarse a ellos antes de que el consenso
 cierre, ya que la probabilidad de obtener la recompensa depende más de alinearse con los
 actores dominantes que de emitir un juicio correcto. El resultado es un comportamiento
 de manada que convierte el sistema en un mecanismo de ratificación del criterio de una élite
 establecida, en lugar de una agregación de juicios independientes.
+
+5.7.  Discusión de resultados
+
+69
 
 Este problema se agrava en combinación con el mecanismo de reapertura: los validadores
 de rondas iniciales que acumularon alta reputación tendrían mayor capacidad para resistir el
@@ -4791,9 +4805,9 @@ hipotético escalado a una comunidad de validadores muy amplia, la votación cua
 que reduce la dominancia de los grandes acumuladores sin eliminarla por completo; esta línea
 queda identificada como trabajo futuro.
 
-5.6.  Discusión de resultados
+5.7.  Discusión de resultados
 
-5.6.1.  Viabilidad técnica del mecanismo de reputación
+5.7.1.  Viabilidad técnica del mecanismo de reputación
 
 Los costes de gas medidos en la Tabla 5.2 indican que las operaciones del ReputationSystem
 son técnicamente viables en la red de pruebas Sepolia. Sin embargo, la extrapolación a la red
@@ -4821,15 +4835,15 @@ que  su  escalabilidad  a  producción  requiere  una  estrategia  de  despliegu
 revisión del modelo de cobros que permita subsidiar las transacciones de reputación para los
 validadores activos.
 
-5.6.  Discusión de resultados
-
-69
-
-5.6.2.  Limitaciones observadas durante la implementación
+5.7.2.  Limitaciones observadas durante la implementación
 
 A lo largo de los sprints de desarrollo se identificaron las siguientes limitaciones e impedi-
 
 mentos técnicos relevantes para la evaluación del prototipo:
+
+70
+
+Resultados
 
 • Alcance acotado a la capa de contratos. Los sprints de implementación completa-
 
@@ -4854,7 +4868,7 @@ red principal.
 local que simula el comportamiento de la EVM sin las condiciones reales de una testnet
 pública (latencia de bloques variable, competencia por gas, censura de mempool).
 
-6.  Conclusiones
+6.  Conclusiones
 
 Este capítulo sintetiza los resultados del presente TFG sobre el diseño e implementación de
 NewsEra, una plataforma descentralizada para la validación y difusión de información veraz
@@ -5370,6 +5384,10 @@ Sirvent-Llamas, A., Mora, H., et al. (2025). Blockchain-Based Anti-Doping System
 Integrity.  International  Journal  of  Sports  Medicine.  https : / / doi . org / 10 . 1177 /
 17479541251394511
 
+Vosoughi, S., Roy, D., & Aral, S. (2018). The Spread of True and False News Online. Science,
+
+359(6380), 1146-1151. https://doi.org/10.1126/science.aap9559
+
 Wang, X., Xie, H., Ji, S., Liu, L., & Huang, D. (2023). Blockchain-based fake news traceability
 and verification mechanism. Heliyon, 9(7), e17084. https://doi.org/10.1016/j.heliyon.
 2023.e17084
@@ -5403,7 +5421,7 @@ Application Binary Interface. 19, 22,
 Atomicity, Consistency, Isolation, Durability.
 American Psychological Association.
 Application  Programming  Interface.  xv,  13,  18,  19,
-22, 23, 34, 42, 49, 52, 55, 63, 65, 69, 77, , 92
+22, 23, 34, 42, 49, 52, 55, 63, 65, 70, 77, , 92
 Amazon Web Services.
 
 AWS
@@ -5444,7 +5462,7 @@ Deep Learning.
 Domain Name System.
 Escuela Politécnica Superior.
 Extract, Transform, Load.
-Ethereum Virtual Machine. 9, 10, 21, 69, 71, 73, 75,
+Ethereum Virtual Machine. 9, 10, 21, 70, 71, 73, 75,
 78,
 Generative Adversarial Network.
 GAN
@@ -5520,7 +5538,7 @@ Peer-to-Peer. 3,
 Platform as a Service.
 Role-Based Access Control.
 Representational State Transfer. 13, 19, 23, 37, 55,
-63, 69,
+63, 70,
 Recurrent Neural Network.
 Really Simple Syndication.
 Software as a Service.
@@ -5528,11 +5546,11 @@ Software Development Kit.
 Single Page Application. 22, 34, 36, 38, 59,
 Structured Query Language.
 Secure Sockets Layer.
-System Usability Scale. 26, , 106, 107
+System Usability Scale. 26, 66, , 106–108
 Transmission Control Protocol.
 Test-Driven Development.
 Trabajo Fin de Grado. ix, 3, 17, 20, 32, 71, 103, 109
-Trabajo Fin de Máster. , 109
+Trabajo Fin de Máster.
 Transport Layer Security.
 Universidad de Alicante.
 User Datagram Protocol.
@@ -5579,7 +5597,7 @@ B
 
 backend Parte del software que procesa la entrada desde el frontend, gestiona la lógica de
 negocio y se comunica con la base de datos. También conocido como lado del servidor.
-3, 5, 21, 23, 29, 32–34, 36–38, 54, 55, 59–61, 69, 90, 92, 96
+3, 5, 21, 23, 29, 32–34, 36–38, 54, 55, 59–61, 70, 90, 92, 96
 
 C
 
@@ -5601,7 +5619,7 @@ E
 
 entorno Bloque de código en LATEX delimitado por \begin{nombre} y \end{nombre}. De-
 
-fine un contexto especial para el contenido. , 109
+fine un contexto especial para el contenido.
 
 escalabilidad Capacidad de un sistema para manejar una cantidad creciente de trabajo, o
 su potencial para ser ampliado para acomodar ese crecimiento. Puede ser vertical (más
@@ -5629,7 +5647,7 @@ y desarrollo de software.
 
 frontend Parte del software que interactúa directamente con el usuario. Incluye la interfaz
 gráfica, formularios y todos los elementos visuales de una aplicación. 19, 21, 23, 29, 33,
-34, 37, 38, 52, 69, 95, 96
+34, 37, 38, 52, 70, 95, 96
 
 H
 
@@ -5657,7 +5675,7 @@ M
 
 macro Comando definido por el usuario en LATEX que representa una secuencia de instruc-
 
-ciones. Permite automatizar tareas repetitivas y crear abstracciones. , 109
+ciones. Permite automatizar tareas repetitivas y crear abstracciones.
 
 microservicio Estilo arquitectónico que estructura una aplicación como una colección de
 servicios pequeños, autónomos y débilmente acoplados. Cada microservicio implementa
@@ -6534,50 +6552,49 @@ Postcondiciones: ninguna escritura.
 
 B.  Instrumentos de los experimentos de validación
 
-Este anexo recoge el contenido íntegro de los dos experimentos de validación descritos en la
-Sección 3.6.5 (hipótesis y criterios de éxito), listos para su implementación dentro de la demo
-construida específicamente para este fin. Los resultados obtenidos al ejecutarlos se recogen
-en el Capítulo 5.
+Este anexo recoge el contenido íntegro, ya implementado y en producción, de los dos ex-
+perimentos  de  validación  descritos  en  la  Sección  3.6.5  (hipótesis  y  criterios  de  éxito).  Los
+resultados obtenidos al ejecutarlos se recogen en el Capítulo 5.
 
-STICKY-NOTE  Orden de administración Ambos bloques se administran en una única sesión, en el
-orden fijo descrito a continuación: primero el Bloque A (Experimento 1), después una
-página explicativa de las mecánicas del proyecto y un recorrido interactivo por la demo,
-y finalmente el Bloque B (Experimento 2). Este orden es deliberado: preguntar por la
-gravedad percibida del problema después de mostrar la solución contaminaría la respuesta
-con la propia propuesta de valor que se le acaba de presentar al participante.
+STICKY-NOTE  Orden de administración Las dos encuestas se administran en una única sesión, en el
+orden fijo descrito a continuación: primero la Encuesta 1 (Experimento 1, intensidad del
+problema), después una página explicativa del funcionamiento de NewsEra y un recorrido
+interactivo por el prototipo, y finalmente la Encuesta 2 (Experimento 2, idoneidad del
+producto). Este orden es deliberado: preguntar por la gravedad percibida del problema
+después de  mostrar  la  solución  contaminaría  la  respuesta  con  la  propia  propuesta  de
+valor que se le acaba de presentar al participante.
 
-B.1.  Bloque A — Experimento 1: intensidad del problema
+B.1.  Encuesta 1 — Experimento 1: intensidad del problema
 
-Se administra antes de cualquier mención a NewsEra. Introducción mostrada al participan-
-te: “Antes de continuar, queremos conocer tu experiencia con las noticias y la información
-que consumes online. No hay respuestas correctas ni incorrectas.”
+Se administra antes de cualquier mención a NewsEra. Introducción mostrada al partici-
+pante:  “Muchas  gracias  por  participar  en  este  estudio.  Las  respuestas  son  completamente
+anónimas y se utilizarán exclusivamente con fines de investigación académica en el marco de
+un Trabajo Fin de Grado en Ingeniería Informática. Por favor, responde con total sinceridad
+en base a tu experiencia diaria en internet.”
 
-Escala Likert de 5 puntos (1 = Totalmente en desacuerdo, 5 = Totalmente de acuerdo),
+Bloque A: tu experiencia con las noticias actuales
 
-salvo donde se indica lo contrario:
+Escala Likert de 5 puntos (1 = Totalmente en desacuerdo, 5 = Totalmente de acuerdo):
 
-1. Con  frecuencia  encuentro  en  redes  sociales  o  internet  noticias  que  sospecho  que  son
+1. Con frecuencia encuentro en las redes sociales o en los diarios digitales noticias que me
 
-falsas o engañosas.
+parecen dudosas, falsas o exageradas.
 
-2. Confío en que las plataformas donde consumo noticias me muestran información veraz.
+2. Confío en que los medios de comunicación tradicionales (tanto públicos como privados)
+ofrecen la información de forma completamente independiente, sin dejarse influir por
+partidos políticos o empresas que los financian.
 
-3. Alguna vez he compartido o creído como cierta una noticia que después resultó ser falsa.
+3. Confío en que las grandes plataformas de internet (redes sociales, buscadores) muestran
+las publicaciones de manera neutral y transparente, sin ocultar o potenciar contenidos
+según sus propios intereses.
 
-4. Me resulta difícil distinguir por mi cuenta qué información es fiable y cuál no.
+4. En alguna ocasión he compartido, interactuado o dado por buena una noticia en internet
 
-5. (Ítem de contraste directo contra el criterio de gravedad.) En general, ¿qué
-gravedad le das al problema de la desinformación hoy en día? (1 = Nada grave, 5 =
-Muy grave)
+que más tarde resultó ser falsa o un bulo manipulado.
 
-6. (Ítem  de  contraste  directo  contra  el  criterio  de  método  fiable.) ¿Dispones
-actualmente de un método que consideres fiable para verificar si una noticia es cierta?
-(Sí / No / No estoy seguro)
-
-Los ítems 1–4 aportan contexto cualitativo y permiten detectar inconsistencias en las res-
-puestas; los ítems 5 y 6 son los que se contrastan directamente contra el criterio de éxito
-fijado en §3.6.5 (al menos el 60 % califica el problema con 4 o 5 en el ítem 5; al menos el 50 %
-responde “No” o “No estoy seguro” en el ítem 6).
+5. Cuando dudo de una noticia en internet, me resulta muy difícil, pesado o casi imposible
+comprobar  por  mí  mismo/a  quién  la  escribió  originalmente,  si  ha  sido  modificada  a
+escondidas o si las fuentes que cita son reales.
 
 105
 
@@ -6585,47 +6602,87 @@ responde “No” o “No estoy seguro” en el ítem 6).
 
 Instrumentos de los experimentos de validación
 
+Bloque B: gravedad del problema
+
+6. (Ítem de contraste directo contra el criterio de gravedad.) En general, ¿qué
+nivel  de  gravedad  le  otorgas  al  problema  de  que  la  información  de  actualidad  esté
+controlada por unos pocos grupos de poder o manipulada en las redes sociales? (1 =
+Nada grave, 5 = Muy grave)
+
+7. (Ítem  de  contraste  directo  contra  el  criterio  de  método  fiable.)  ¿Conoces
+o utilizas actualmente algún método o herramienta digital que te permita saber con
+absoluta certeza si un texto de internet ha sido modificado de forma oculta desde que
+se publicó? (Sí / No / No estoy seguro/a)
+
+Los ítems 1–5 aportan contexto cualitativo sobre la percepción de captura y manipulación
+de los canales de información actuales, y permiten detectar inconsistencias en las respuestas;
+los ítems 6 y 7 son los que se contrastan directamente contra el criterio de éxito fijado en
+§3.6.5 (al menos el 60 % califica el problema con 4 o 5 en el ítem 6; al menos el 50 % responde
+“No” o “No estoy seguro/a” en el ítem 7).
+
 B.2.  Página explicativa
 
-Entre  el  Bloque  A  y  el  Bloque  B  se  presenta  al  participante  una  página  que  explica  el
+Entre la Encuesta 1 y la Encuesta 2 se presenta al participante una página que explica el
 funcionamiento de NewsEra (publicación, validación comunitaria, reputación) y un recorrido
-interactivo por la demo. El contenido de esta página se mantiene deliberadamente descrip-
-tivo, no promocional: un tono de venta contaminaría las medidas de confianza percibida y
-usabilidad del Bloque B, que dejarían de evaluar la interfaz para evaluar la persuasión del
-texto.
+interactivo por el prototipo. El contenido de esta página se mantiene deliberadamente des-
+criptivo, no promocional: un tono de venta contaminaría las medidas de confianza percibida
+y usabilidad de la Encuesta 2, que dejarían de evaluar la interfaz para evaluar la persuasión
+del texto. Además, siguiendo el principio de abstracción funcional, se evita el vocabulario
+técnico de la arquitectura Web3 (“blockchain”, “smart contract”, “wallet”): las propiedades
+del sistema se explican por sus beneficios perceptibles (“nadie puede borrar ni modificar lo
+publicado”, “la veracidad la decide una votación de la comunidad”, “ganas o pierdes puntos
+según lo bien que acierten tus valoraciones”), para no sesgar ni confundir a una muestra sin
+conocimientos previos de la tecnología subyacente.
 
-B.3.  Bloque B — Experimento 2: idoneidad del producto
+B.3.  Encuesta 2 — Experimento 2: idoneidad del producto
 
-Se administra inmediatamente después de que el participante complete el recorrido inter-
+Se administra únicamente después de que el participante haya interactuado con el prototipo
 
-activo por la demo.
+(listado de artículos, publicación, sistema de votación y reputación de los revisores).
 
-B.3.1.  Parte 1 — System Usability Scale
+B.3.1.  Bloque A: evaluación de la usabilidad (System Usability Scale)
 
-Los diez ítems estándar del SUS (Brooke, 1996), sin alterar el orden ni la alternancia entre
-enunciados positivos y negativos —alterarlos invalida la comparabilidad de la puntuación con
-la literatura de referencia—. Escala 1-5 (1 = Totalmente en desacuerdo, 5 = Totalmente de
-acuerdo):
+Los diez ítems estándar del SUS (Brooke, 1996), con una única adaptación léxica deliberada
+—se sustituye el término abstracto “sistema” por “página web” o “aplicación” para facilitar
+una  lectura  natural—,  sin  alterar  el  orden  ni  la  alternancia  entre  enunciados  positivos  y
+negativos: alterarlos sí invalidaría la comparabilidad de la puntuación con la literatura de
+referencia. Escala 1-5 (1 = Totalmente en desacuerdo, 5 = Totalmente de acuerdo):
 
-1. Creo que me gustaría usar este sistema con frecuencia.
+1. Creo que me gustaría utilizar esta página web con frecuencia para informarme.
 
-2. He encontrado el sistema innecesariamente complejo.
+B.3.  Encuesta 2 — Experimento 2:  idoneidad del producto
 
-3. Me ha parecido que el sistema era fácil de usar.
+107
 
-4. Creo que necesitaría el apoyo de alguien con conocimientos técnicos para poder usarlo.
+2. He encontrado que la página web es innecesariamente compleja.
 
-5. Me ha parecido que las distintas funciones del sistema estaban bien integradas.
+3. Me ha parecido que la página web es fácil de usar.
 
-6. He encontrado demasiada inconsistencia en el sistema.
+4. Creo que necesitaría la ayuda de una persona experta para poder manejarme en esta
 
-7. Me imagino que la mayoría de la gente aprendería a usar este sistema muy rápidamente.
+página web.
 
-8. He encontrado el sistema muy incómodo de usar.
+5. Me ha parecido que las distintas funciones de la aplicación (leer, publicar, votar) están
 
-9. Me he sentido muy seguro/a usando el sistema.
+muy bien integradas entre sí.
 
-10. Necesité aprender muchas cosas antes de poder manejarme con el sistema.
+6. He percibido demasiadas contradicciones o cosas incoherentes al navegar por la página
+
+web.
+
+7. Imagino que la mayoría de la gente aprendería a utilizar esta página web de forma muy
+
+rápida.
+
+8. Navegar y realizar acciones en esta página web me ha resultado incómodo o pesado.
+
+9. Me he sentido muy seguro/a y con el control de la situación al confirmar acciones dentro
+
+de la página web.
+
+10. He necesitado aprender o entender demasiadas cosas antes de poder empezar a usar
+
+esta página web de forma cómoda.
 
 Cálculo de la puntuación (estándar de Brooke, no debe alterarse): para los ítems impares
 (1,  3,  5,  7,  9),  puntuación  parcial  =  respuesta  −1;  para  los  ítems  pares  (2,  4,  6,  8,  10),
@@ -6633,1421 +6690,302 @@ puntuación parcial = 5− respuesta. La suma de las diez puntuaciones parciales
 por 2.5, da la puntuación SUS final en una escala de 0 a 100. El criterio de éxito fijado en
 §3.6.5 es una media ≥ 68.
 
-B.4.  Recomendaciones de muestra
+B.3.2.  Bloque B: confianza en las propiedades de la aplicación
 
-107
+Escala 1-5 salvo donde se indica. Cada ítem aísla, sin nombrar la tecnología subyacente,
+una propiedad arquitectónica distinta del sistema —de modo que un resultado desfavorable
+pueda diagnosticarse con precisión (¿es la arquitectura la que no convence, o solo la fricción
+de la interacción Web3?)—:
 
-B.3.2.  Parte 2 — Idoneidad específica del producto
+11. (Inmutabilidad y descentralización — PublicationRegistry.) Me genera mucha
+confianza saber que, una vez que se publica una noticia en esta web, queda registrada
+de forma que NADIE (ni gobiernos, ni empresas, ni los propios creadores de la web)
+puede borrarla o modificarla a escondidas.
 
-Escala 1-5 salvo donde se indica:
+12. (Consenso colectivo — ValidationRegistry.) Me parece acertado que la veracidad
+de una noticia se decida mediante una votación transparente de revisores independien-
+tes, en lugar de dejar la decisión en manos del director de un medio o de los filtros de
+una red social.
 
-11. He entendido con claridad para qué sirve NewsEra tras ver la demo.
+13. (Reputación  P2P  —  ReputationSystem.) El  sistema  de  “puntos  de  reputación”
+(donde un revisor gana puntos si acierta con la comunidad y los pierde si se equivoca de
+forma continuada) me parece una forma justa y transparente de dar más peso a quienes
+demuestran un historial honesto.
 
-12. Confío en que el mecanismo de validación comunitaria (votos y reputación) produce un
+108
 
-veredicto fiable.
+Instrumentos de los experimentos de validación
 
-13. Publicar un artículo me ha parecido un proceso claro.
+14. (Fricción de la interacción Web3, aislada del resto de propiedades.) Tener que
+confirmar cada voto o publicación con una firma digital (una especie de “llave” personal
+que demuestra que eres tú) me ha resultado un paso raro o molesto para el uso normal
+de la web.
 
-14. Validar un artículo (votar sobre su veracidad) me ha parecido un proceso claro.
+15. (Ítem de contraste directo contra el criterio de intención de uso.) ¿Utilizarías
+de forma habitual NewsEra para consultar actualidad verificada si la página web contara
+con periodistas y publicaciones diarias? (Sí / No / Tal vez)
 
-15. (Ítem de contraste directo contra el criterio de intención de uso.) ¿Usarías
-
-NewsEra si estuviera disponible? (Sí / Tal vez / No)
-
-16. ¿Qué es lo que más te ha gustado? (respuesta abierta, opcional)
-
-17. ¿Qué cambiarías o mejorarías? (respuesta abierta, opcional)
+16. En tus propias palabras, ¿qué es lo que más te aporta o convence de esta página web?
+¿Cuál  crees  que  es  su  mayor  dificultad  para  el  público  general?  (respuesta  abierta,
+opcional)
 
 El  ítem  15  se  contrasta  contra  el  criterio  de  éxito  de  §3.6.5  (al  menos  el  60 %  expresa
 intención  de  uso).  Solo  las  respuestas  “Sí”  cuentan  como  intención  de  uso  positiva  en  el
 cálculo del porcentaje; las respuestas “Tal vez” se reportan por separado, sin mezclarlas en
-el mismo porcentaje.
+el mismo porcentaje. Si el ítem 14 puntúa alto en desacuerdo (fricción percibida) mientras
+los ítems 11-13 puntúan alto en acuerdo (confianza en las propiedades), el hallazgo indicaría
+que el problema no está en la arquitectura de NewsEra sino en la fricción de entrada de las
+tecnologías Web3 actuales —una distinción con implicaciones directas para el trabajo futuro
+(§6.4).
 
-B.4.  Recomendaciones de muestra
+B.4.  Datos piloto sintéticos y su exclusión del análisis
 
-El Bloque A no depende de la interacción con la demo y puede difundirse de forma inde-
-pendiente (redes sociales, foros) para ampliar su alcance sin coste adicional; se recomienda un
-tamaño muestral mínimo de 50 participantes. El Bloque B exige completar el recorrido inter-
-activo por la demo; se recomienda un mínimo de 30 participantes. La literatura de usabilidad
-considera que muestras de 12-15 participantes ya son suficientes para detectar los problemas
-de usabilidad más graves (Brooke, 1996), pero una muestra mayor da mayor fiabilidad a la
-media SUS reportada en la memoria.
+Durante  el  desarrollo,  antes  de  que  el  prototipo  estuviera  terminado,  se  insertaron  20
+respuestas sintéticas por encuesta —perfiles ficticios redactados a mano, con posturas variadas
+(críticas, escépticas, entusiastas)— con el único propósito de comprobar que el formulario y
+el cálculo de la puntuación SUS funcionaban correctamente antes de disponer de respuestas
+reales.  Estas  filas  quedan  marcadas  de  forma  explícita  en  la  base  de  datos  y  se  excluyen
+sistemáticamente de cualquier resultado reportado en el Capítulo 5; no se han utilizado, ni
+se utilizarán, como dato de investigación.
 
-C.  Técnicas Avanzadas de LATEX
+B.5.  Recomendaciones de muestra
 
-Este anexo presenta técnicas avanzadas de LATEX que pueden ser útiles en la elaboración
-de un TFG o Trabajo Fin de Máster (TFM): tablas rotadas, páginas en horizontal, inclusión
-de documentos PDF externos, y otras funcionalidades. Estas técnicas aprovechan diversas
-macros y entornos especializados.
+La Encuesta 1 no depende de la interacción con el prototipo y puede difundirse de forma
+independiente (redes sociales, foros) para ampliar su alcance sin coste adicional; se recomienda
+un tamaño muestral mínimo de 50 participantes. La Encuesta 2 exige completar el recorrido
+interactivo por el prototipo; se recomienda un mínimo de 30 participantes. La literatura de
+usabilidad  considera  que  muestras  de  12-15  participantes  ya  son  suficientes  para  detectar
+los problemas de usabilidad más graves (Brooke, 1996), pero una muestra mayor da mayor
+fiabilidad a la media SUS reportada en la memoria.
 
-INFO-CIRCLE  Contenido de este anexo
+C.  NewsEra explicado para un público no técnico
 
-• Tablas rotadas con sidewaystable
+Los capítulos anteriores describen NewsEra con el rigor técnico que exige una memoria de
+TFG: contratos inteligentes, estructuras de datos, mecanismos de consenso. Este anexo tiene
+un propósito distinto y complementario: explicar el proyecto a un lector sin conocimientos
+previos  de  blockchain,  evitando  deliberadamente  el  vocabulario  técnico  de  la  arquitectura
+Web3. No es una simplificación por comodidad, sino una pieza funcional del propio traba-
+jo: es, en esencia, la misma explicación —adaptada a prosa formal— que se muestra a los
+participantes del Experimento 2 (§B.2) antes de interactuar con el prototipo, y que también
+presenta la página “Sobre el proyecto” del propio sistema (UC 42). Que ambos textos coin-
+cidan es intencionado: la claridad expositiva del prototipo y la de esta memoria deben ser la
+misma.
 
-• Páginas en orientación horizontal (landscape)
+C.1.  El problema: un punto de control es un punto de fallo
 
-• Inclusión de documentos PDF externos
+Cuando la verdad de una noticia depende de una redacción, un algoritmo o un gobierno
+concretos,  basta  con  capturar  ese  único  punto  de  control  para  torcerla.  No  hace  falta  un
+villano deliberado: con que ese punto tenga intereses propios —editoriales, comerciales o po-
+líticos— ya es suficiente para que deje de ser neutral. La literatura revisada en el Capítulo 2
+documenta este fenómeno desde ángulos complementarios: el modelo de propaganda de Her-
+man y Chomsky (1988) describe cómo los intereses comerciales de los medios de comunicación
+condicionan estructuralmente qué información llega al público, y McChesney (2008) extiende
+este análisis a la concentración de la propiedad mediática en un número reducido de grupos
+empresariales. A esto se suma un problema adicional, ya no de quién publica sino de cómo
+se propaga: el estudio de Vosoughi et al. (2018), que analizó la difusión de más de cien mil
+historias en Twitter a lo largo de varios años, encontró que las noticias falsas se difunden de
+forma significativamente más rápida y alcanzan a más personas que las verdaderas —la des-
+información no solo puede fabricarse desde un punto de control capturado, sino que además
+viaja mejor que la verdad una vez publicada.
 
-• Figuras de ancho completo
+C.2.  La solución: un periódico que no tiene redacción
 
-• Notas al margen, marcas de agua y texto en columnas
-
-• Minipáginas y cajas para contenido lado a lado
-
-C.1.  Tablas Rotadas (Sideways Tables)
-
-Cuando  una  tabla  tiene  muchas  columnas  y  no  cabe  en  el  ancho  de  página  normal,  se
-puede rotar 90° para aprovechar el alto de la página como ancho. Para ello se usa el entorno
-sidewaystable del paquete rotating.
-
-C.1.1.  Ejemplo de tabla rotada
-
-El siguiente código genera una tabla que ocupa toda la página en horizontal:
-
-Código de tabla rotada
-
-1 \begin{sidewaystable}
-2
-
-\centering
-\caption{Comparativa de características por módulo del sistema}
-\label{tab:comparativa-modulos}
-\begin{tabular}{lcccccccccc}
-
-\toprule
-\textbf{Módulo} & \textbf{Líneas} & \textbf{Clases} & ... \\
-\midrule
-
- ...
-
-3
-
-4
-
-5
-
-6
-
-7
-
-8
-
-9
-
-10
-
-\bottomrule
+NewsEra es un periódico comunitario: nadie decide en su nombre qué es noticia ni qué es
+verdad. Esa decisión se traslada desde una redacción, una plataforma o un gobierno hacia
+miles de personas corrientes. Cómo se vota, cuándo se declara “verdad” y cómo se reparte la
+reputación está escrito en un contrato inteligente —código público que se ejecuta igual para
+todos, sin excepciones ni favores—. Por primera vez, ni siquiera quien creó el sistema puede
+cambiar las reglas del juego de un día para otro sin que la comunidad entera lo note: los
+parámetros que gobiernan el consenso quedan fijados de forma permanente en el momento
+del despliegue (RNF 10, §4.1.3).
 
 109
 
 110
 
-Técnicas Avanzadas de LATEX
+NewsEra explicado para un público no técnico
 
-\end{tabular}
-11
-12 \end{sidewaystable}
+C.3.  ¿Qué es “verdad” aquí?
 
-C.1.2.  Cuándo usar tablas rotadas
+No la dicta una autoridad. La vota un jurado. Cuando se publica un artículo, se abre una
+votación.  La  comunidad  decide,  con  su  propia  reputación  en  juego,  si  es  verdadero,  falso,
+o  si  sencillamente  no  hay  pruebas  suficientes  todavía  —esta  última  no  es  una  opción  de
+“abstención” cómoda, sino un veredicto con las mismas consecuencias que cualquier otro—.
+Hace falta una mayoría de dos tercios —no una simple mitad más uno— para dar el veredicto
+por definitivo, de modo que una votación reñida no se confunda con un consenso real. El
+resultado queda anotado para siempre, junto con quién votó qué.
 
-Las tablas rotadas son útiles cuando:
+C.4.  Los pilares
 
-• La tabla tiene más de 8-10 columnas
+Tres reglas que no se rompen:
 
-• Los encabezados de columna son largos
+• Inmutable. Una vez publicado o votado, nada se borra ni se reescribe.
 
-• Se necesita mostrar datos comparativos extensos
+• Colectivo. Ninguna persona ni entidad decide sola qué es verdad.
 
-• Una tabla horizontal no cabría sin reducir excesivamente el tamaño de fuente
+• Resistente. Sin una autoridad central que capturar, no hay un único punto de fallo.
 
-LIGHTBULB  Alternativa: tabularray Para tablas complejas con celdas combinadas, considera usar
-el paquete tabularray (ya incluido en la plantilla) en lugar de multirow/multicolumn,
-ya que evita conflictos con colortbl en LuaLaTeX.
+C.5.  Lo nuevo: no mejora al árbitro, cambia el juego
 
-C.2.  Páginas en Horizontal (Landscape)
+Los verificadores de hechos tradicionales añaden una capa de revisión encima de un sistema
+que ya tiene sus propios intereses. NewsEra no revisa ese sistema: lo sustituye por uno nuevo,
+donde publicar, votar y ganar reputación siguen exactamente las mismas reglas para quien
+fundó el proyecto que para la primera persona que se registra hoy.
 
-Para insertar páginas en orientación horizontal dentro de un documento vertical, KOMA-
-Script ofrece una solución nativa que gestiona correctamente la orientación y el tamaño de
-página en el PDF. Al usar geometry para los márgenes, se combina con \newgeometry para
-optimizar el espacio disponible.
+C.6.  La tecnología: un cuaderno que nadie puede tachar
 
-C.2.1.  Método recomendado: Comandos de la plantilla
+La blockchain es, en esencia, un registro compartido por miles de ordenadores en vez de
+guardado en un único servidor. Cada anotación nueva se enlaza criptográficamente a todas
+las  anteriores,  de  modo  que  alterar  una  implicaría  rehacer  todo  el  historial  a  la  vista  de
+toda la red —en la práctica, imposible—. Tres piezas de software conforman ese cuaderno en
+NewsEra: una que registra qué se ha publicado (PublicationRegistry), otra que registra
+cómo se ha votado (ValidationRegistry), y una tercera que lleva la cuenta de quién ha
+demostrado buen criterio a lo largo del tiempo (ReputationSystem). El Capítulo 4 detalla
+el funcionamiento exacto de cada una.
 
-La plantilla proporciona comandos simplificados para crear páginas landscape con headers
+C.7.  En una frase
 
-y footers correctamente dimensionados:
+La verdad no tiene dueño. Por primera vez, miles de personas deciden juntas qué es cierto,
 
-Código para página horizontal (método simplificado)
+sin que nadie —ni siquiera quien lo creó— pueda cambiar las reglas a mitad de partida.
 
-1 % Iniciar página landscape con margen de 2cm (valor por defecto)
-2 \BeginLandscapePage[2cm]
-3
-4 % Contenido en landscape (puede ocupar varias páginas)
-5 \section{Diagrama de arquitectura}
-6 \begin{figure}[H]
-\centering
-7
-% Diagrama TikZ o imagen amplia
-\caption{Arquitectura del sistema}
-\label{fig:arquitectura-landscape}
+D.  Guía de reproducibilidad y despliegue local
 
-8
+Este anexo documenta los pasos necesarios para levantar el prototipo completo de NewsEra
+en  un  entorno  local,  con  el  objetivo  de  que  el  tribunal  evaluador  —o  cualquier  lector—
+pueda  verificar  de  forma  directa  el  funcionamiento  del  sistema  descrito  en  el  Capítulo  4,
+sin  depender  de  un  despliegue  público.  El  repositorio  completo  está  disponible  en  https:
+//github.com/jrdj1/NewsEra.
 
-9
+D.1.  Requisitos previos
 
-10
-11 \end{figure}
-12
-13 % Restaurar orientación portrait
-14 \EndLandscapePage
+• Docker Desktop (o Docker Engine + Compose v2), para orquestar las tres capas del
 
-C.2.  Páginas en Horizontal (Landscape)
+sistema sin instalar PostgreSQL ni un nodo Ethereum de forma nativa.
+
+• Node.js  20  LTS,  requerido  para  ejecutar  los  comandos  de  Hardhat,  Prisma  y  los
+
+scripts de utilidad desde el sistema anfitrión.
+
+• GNU  Make y  una  terminal  compatible  con  Git  Bash  en  Windows  —el  ‘Makefile‘
+usa  sintaxis  shell  POSIX  (rm -rf,  bucles  until/done)  que  cmd.exe no  interpreta
+correctamente.
+
+D.2.  Puesta en marcha en un solo paso
+
+El  repositorio  incluye  un  objetivo  de  make que  automatiza  la  secuencia  completa  —le-
+vantar los tres contenedores, desplegar los contratos, sembrar un estado inicial de prueba y
+sincronizar el backend— pensado precisamente para resolver el problema descrito en el §5.61:
+
+Terminal
+
+1 git clone https://github.com/jrdj1/NewsEra.git
+2 cd NewsEra
+3 make fresh-start
+
+Este único comando:
+
+1. Levanta los cuatro contenedores (frontend, backend, nodo Hardhat y PostgreSQL) de-
+
+finidos en docker-compose.yml.
+
+2. Espera a que el nodo Hardhat esté operativo antes de continuar.
+
+3. Despliega los tres contratos inteligentes (PublicationRegistry, ValidationRegistry,
+
+ReputationSystem) mediante Hardhat Ignition.
+
+1Hardhat Network es una cadena efímera en memoria: pierde todo su estado cada vez que el contenedor se
+
+reinicia, por lo que el despliegue de los contratos debe repetirse en cada arranque.
 
 111
 
-o
-l
-l
-o
-r
-r
-a
-s
-e
-d
-
-n
-E
-
-s
-
-m
-0
-8
-1
-
-Check
-
-Check
-
-Check
-
-s
-
-m
-5
-4
-
-s
-
-m
-2
-1
-
-s
-
-m
-3
-2
-
-Check
-
-Check
-
-Check
-
-Check
-
-Check
-
-Check
-
-–
-
-s
-
-m
-8
-
-s
-
-m
-2
-
-s
-
-m
-5
-
-s
-
-m
-0
-5
-3
-
-s
-
-m
-0
-2
-1
-
-s
-
-m
-1
-
-–
-
-B
-M
-8
-2
-1
-
-B
-M
-6
-5
-2
-
-B
-M
-2
-9
-1
-
-B
-M
-4
-8
-3
-
-B
-M
-4
-6
-
-B
-M
-2
-1
-5
-
-B
-M
-6
-9
-
-B
-M
-8
-6
-7
-
-B
-M
-8
-2
-1
-
-B
-M
-2
-3
-
-–
-
-a
-i
-d
-e
-M
-
-a
-t
-l
-A
-
-a
-i
-d
-e
-M
-
-a
-j
-a
-B
-
-a
-j
-a
-B
-
-a
-j
-a
-B
-
-a
-j
-a
-B
-
-a
-t
-l
-A
-
-a
-i
-d
-e
-M
-
-a
-j
-a
-B
-
-–
-
-%
-4
-9
-
-%
-1
-9
-
-%
-8
-8
-
-%
-2
-7
-
-%
-6
-9
-
-%
-8
-9
-
-%
-5
-8
-
-%
-2
-8
-
-%
-0
-9
-
-%
-0
-0
-1
-
-%
-7
-8
-
-9
-8
-
-0
-2
-1
-
-6
-5
-1
-
-9
-8
-
-7
-6
-
-5
-4
-
-8
-3
-
-8
-7
-
-2
-5
-
-4
-3
-
-5
-4
-
-7
-6
-
-8
-9
-
-4
-3
-1
-
-2
-3
-
-8
-1
-
-4
-2
-
-6
-5
-
-8
-2
-
-5
-1
-
-2
-1
-
-8
-1
-
-5
-2
-
-5
-4
-
-8
-
-5
-
-6
-
-4
-1
-
-9
-
-4
-
-0
-5
-4
-.
-2
-
-0
-0
-2
-.
-3
-
-0
-0
-1
-.
-4
-
-0
-0
-6
-.
-5
-
-0
-0
-8
-.
-1
-
-0
-8
-9
-
-0
-0
-2
-.
-1
-
-0
-0
-8
-.
-2
-
-0
-0
-5
-.
-1
-
-0
-5
-6
-
-n
-ó
-i
-c
-a
-c
-i
-t
-n
-e
-t
-u
-A
-
-s
-o
-t
-a
-d
-
-e
-d
-
-e
-s
-a
-B
-
-b
-e
-w
-z
-a
-f
-r
-e
-t
-n
-I
-
-T
-S
-E
-R
-
-I
-P
-A
-
-s
-e
-n
-o
-i
-c
-a
-c
-fi
-i
-t
-o
-N
-
-é
-h
-c
-a
-C
-
-s
-a
-c
-i
-r
-t
-é
-m
-y
-
-s
-g
-o
-L
-
-o
-t
-n
-e
-i
-m
-a
-s
-e
-c
-o
-r
-P
-
-n
-ó
-i
-c
-a
-r
-u
-g
-fi
-n
-o
-C
-
-n
-ó
-i
-c
-a
-t
-r
-o
-p
-x
-E
-
-8
-6
-7
-
-7
-1
-5
-
-6
-4
-1
-
-0
-8
-2
-.
-4
-2
-
-l
-a
-t
-o
-T
-
-o
-d
-a
-l
-l
-o
-r
-r
-a
-s
-e
-d
-
-a
-m
-e
-t
-s
-i
-s
-
-l
-e
-d
-
-o
-l
-
-u
-d
-ó
-m
-
-r
-o
-p
-
-s
-a
-c
-i
-t
-s
-í
-r
-e
-t
-c
-a
-r
-a
-c
-
-e
-d
-
-a
-t
-e
-l
-
-p
-m
-o
-c
-
-a
-v
-i
-t
-a
-r
-a
-p
-m
-o
-C
-
-:
-1
-.
-C
-a
-l
-b
-a
-T
-
-o
-d
-a
-t
-s
-E
-
-a
-i
-c
-n
-e
-t
-a
-L
-
-a
-i
-r
-o
-m
-e
-M
-
-d
-a
-d
-i
-j
-e
-l
-p
-m
-o
-C
-
-a
-r
-u
-t
-r
-e
-b
-o
-C
-
-s
-t
-s
-e
-T
-
-s
-e
-n
-o
-i
-c
-n
-u
-F
-
-s
-e
-s
-a
-l
-C
-
-s
-a
-e
-n
-L
-
-í
-
-o
-l
-u
-d
-ó
-M
-
 112
 
-Técnicas Avanzadas de LATEX
+Guía de reproducibilidad y despliegue local
 
-Ventajas de este método:
+4. Siembra un conjunto de transacciones reales de prueba sobre esos contratos (publica-
 
-• Sintaxis simple con solo dos comandos
+ciones, votos, reputación) para no partir de un sistema vacío.
 
-• El visor PDF muestra la página rotada correctamente (dimensiones reales de página)
+5. Actualiza las variables de entorno del backend con las direcciones de contrato recién
 
-• Los márgenes se optimizan para aprovechar el espacio landscape
+desplegadas.
 
-• Los encabezados y pies de página funcionan con normalidad
+6. Trunca  y  resincroniza  la  base  de  datos  off-chain  para  que  quede  consistente  con  el
 
-• Se puede usar para múltiples páginas consecutivas
+estado on-chain recién sembrado.
 
-C.2.  Páginas en Horizontal (Landscape)
+Al finalizar, el sistema queda accesible en:
+
+• Frontend: http://localhost:8080
+
+• Backend (API REST): http://localhost:3001
+
+• Nodo Hardhat (JSON-RPC): http://localhost:8545
+
+• PostgreSQL: localhost:5433 (usuario, contraseña y base de datos: newsera)
+
+D.3.  Comandos habituales
+
+La Tabla D.1 resume los objetivos de make más relevantes para el desarrollo y la verificación
+del sistema; el listado completo se obtiene con make help o consultando el propio Makefile
+del repositorio.
+
+Tabla D.1: Comandos de make más habituales.
+
+Efecto
+
+Comando
+
+make up
+
+make down
+make logs
+make test
+
+make test-backend
+
+Levanta los cuatro servicios sin redesplegar contratos ni sembrar
+datos
+Detiene todos los servicios
+Sigue los registros de todos los contenedores en tiempo real
+Ejecuta la suite de tests de los contratos inteligentes (Hardhat +
+Chai)
+Ejecuta  los  tests  de  integración  del  backend  (requiere  make
+postgres y detener el contenedor backend, ver nota)
+Ejecuta los tests del frontend (Vitest)
+Calcula la cobertura de los contratos inteligentes
+
+make test-frontend
+make coverage
+make deploy-sepolia Despliega los contratos en la testnet pública Sepolia
+make clean
+
+Detiene  los  servicios  y  elimina  los  volúmenes  de  datos  de  Post-
+greSQL
+
+STICKY-NOTE  Nota sobre make test-backend El contenedor del backend ejecuta su propio inde-
+xador  de  eventos  en  tiempo  real  contra  el  mismo  nodo  Hardhat  y  la  misma  base  de
+datos que usan los tests de integración. Si ambos se ejecutan a la vez, se produce una
+condición de carrera (el indexador procesa eventos justo cuando los tests truncan las ta-
+
+D.4.  Variables de entorno
 
 113
 
-C.2.2.  Diagrama de flujo del sistema (página horizontal)
-
-Esta página está en orientación horizontal para mostrar un diagrama amplio. Los márgenes están optimizados para aprovechar el espacio disponible.
-
-Inicio
-
-Auten-
-ticación
-
-¿Válido?
-
-Sí
-
-Menú
-
-Módulo B
-
-Proceso
-
-Resultado
-
-Módulo A
-
-No
-
-Error
-
-Módulo C
-
-Sí
-
-BD
-
-¿Guar-
-dar?
-
-No
-
-Fin
-
-Figura C.1: Diagrama de flujo completo del sistema en página horizontal
-
-Tabla C.2: Matriz de trazabilidad requisitos-módulos (aprovechando el ancho de página landscape)
-
-RF01 RF02 RF03 RF04 RF05 RF06 RF07 RF08 RF09 RF10 RF11 RF12 RF13
-
-•
-
-•
-
-Módulo A
-Módulo B
-Módulo C
-Módulo D
-Módulo E
-
-•
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-•
-
-114
-
-Técnicas Avanzadas de LATEX
-
-C.2.3.  Segunda página horizontal consecutiva
-
-Esta es una segunda página en orientación horizontal para verificar que varias páginas landscape consecutivas funcionan correctamente. Los encabezados
-
-y pies de página deben mantenerse consistentes en ambas páginas.
-
-Tabla C.3: Tabla adicional de ejemplo en segunda página landscape
-
-ID
-
-Descripción del requisito
-
-Prioridad
-
-Estado
-
-RF01 El sistema debe permitir la autenticación de usuarios me-
-
-Alta
-
-Implementado
-
-diante credenciales
-
-RF02 El sistema debe registrar todas las acciones del usuario en
-
-Media
-
-Implementado
-
-un log
-
-RF03 El sistema debe generar informes en formato PDF
-RF04 El sistema debe soportar múltiples idiomas
-RF05 El  sistema  debe  integrarse  con  servicios  externos  vía  API
-
-Alta
-Baja
-Alta
-
-En progreso
-Pendiente
-Implementado
-
-REST
-
-RF06 El sistema debe validar todos los datos de entrada
-RF07 El sistema debe proporcionar copias de seguridad automá-
-
-Alta
-Media
-
-Implementado
-En progreso
-
-ticas
-
-RF08 El sistema debe soportar diferentes roles de usuario
-
-Alta
-
-Implementado
-
-Verificación: Esta demostración confirma que múltiples páginas landscape funcionan correctamente. Los números de página se incrementan normalmente,
-los encabezados muestran la sección actual y los pies de página mantienen su formato.
-
-C.3.  Inclusión de Documentos PDF Externos
-
-115
-
-C.2.4.  Cuándo usar páginas landscape
-
-Las páginas en horizontal son apropiadas para:
-
-• Diagramas de flujo o arquitectura complejos
-
-• Cronogramas o diagramas de Gantt
-
-• Matrices de trazabilidad
-
-• Capturas de pantalla de aplicaciones
-
-• Tablas muy anchas que no justifican rotación completa
-
-C.3.  Inclusión de Documentos PDF Externos
-
-El paquete pdfpages permite incluir páginas de documentos PDF externos en el documento
-
-LATEX. Esto es útil para adjuntar:
-
-• Artículos o papers de referencia
-
-• Documentación técnica de terceros
-
-• Certificados o autorizaciones
-
-• Manuales de usuario existentes
-
-• Hojas de datos (datasheets)
-
-Exclamation-Triangle  Tamaño del documento Incluir PDFs externos aumenta significativamente el tamaño
-del documento final. Considera comprimir los PDFs antes de incluirlos o enlazarlos como
-anexos digitales separados si el tamaño es crítico.
-
-C.3.1.  Sintaxis básica
-
-Inclusión de PDF externo
-
-1 % Incluir todas las páginas
-2 \includepdf[pages=-]{ruta/documento.pdf}
-3
-4 % Incluir páginas específicas
-5 \includepdf[pages={1,3,5-8}]{documento.pdf}
-6
-7 % Incluir con opciones
-8 \includepdf[
- pages=-,
-9
- scale=0.9,
- pagecommand={\thispagestyle{plain}}
-
-10
-
-11
-12 ]{documento.pdf}
-
-116
-
-Técnicas Avanzadas de LATEX
-
-C.3.2.  Opciones más utilizadas
-
-Tabla C.4: Opciones principales de \includepdf
-
-Opción
-
-Descripción
-
-pages=-
-pages={1,3,5-8}
-scale=0.9
-landscape
-nup=2x2
-
-frame
-pagecommand={}
-addtotoc
-
-Incluye todas las páginas
-Incluye páginas específicas
-Escala el documento (0.9 = 90%)
-Rota las páginas 90 grados
-Coloca varias páginas en una (2 filas × 2 colum-
-nas)
-Añade un marco alrededor de cada página
-Comando a ejecutar en cada página incluida
-Añade entrada al índice de contenidos
-
-C.3.3.  Ejemplo: Documento PDF incluido
-
-A continuación se incluye un documento PDF de ejemplo que ha sido generado indepen-
-
-dientemente. Se incluyen sus dos páginas con un marco y una escala ligeramente reducida:
-
-117
-
-DocumentodeEjemploparaInclusiónGeneradoautomáticamente8defebrerode20261.IntroducciónEsteesundocumentoPDFdeejemploqueseincluiráeneltrabajoprincipalusandoelpaquetepdfpages.2.ContenidodeejemploLoremipsumdolorsitamet,consectetueradipiscingelit.Utpuruselit,vestibulumut,placeratac,adipiscingvitae,felis.Curabiturdictumgravidamauris.Namarculibero,nonummyeget,consectetuerid,vulputatea,magna.Donecvehiculaaugueeuneque.Pellentesquehabitantmorbitristiquesenectusetnetusetmalesuadafamesacturpisegestas.Maurisutleo.Crasviverrametusrhoncussem.Nullaetlectusvestibulumurnafringillaultrices.Phaselluseutellussitamettortorgravidaplacerat.Integersapienest,iaculisin,pretiumquis,viverraac,nunc.Praesentegetsemvelleoultricesbibendum.Aeneanfaucibus.Morbidolornulla,malesuadaeu,pulvinarat,mollisac,nulla.Curabiturauctorsempernulla.Donecvariusorciegetrisus.Duisnibhmi,congueeu,accumsaneleifend,sagittisquis,diam.Duisegetorcisitametorcidignissimrutrum.Namduiligula,fringillaa,euismodsodales,sollicitudinvel,wisi.Morbiauctorloremnonjusto.Namlacuslibero,pretiumat,lobortisvitae,ultricieset,tellus.Donecaliquet,tortorsedaccumsanbibendum,eratligulaaliquetmagna,vitaeornareodiometusami.Morbiacorcietnislhendreritmollis.Suspendisseutmassa.Crasnecante.Pellentesqueanulla.Cumsociisnatoquepenatibusetmagnisdisparturientmontes,nasceturridiculusmus.Aliquamtincidunturna.Nullaullamcorpervestibulumturpis.Pellentesquecursusluctusmauris.3.DatostécnicosFormato:A4Márgenes:2.5cmCompilador:LuaLaTeXNullamalesuadaporttitordiam.Donecfeliserat,conguenon,volutpatat,tincidunttristique,libero.Vivamusviverrafermentumfelis.Donecnonummypellentesqueante.Phasellusadipiscingsemperelit.Proinfermentummassaacquam.Seddiamturpis,molestievitae,placerata,molestienec,leo.Maecenaslacinia.Namipsumligula,eleifendat,accumsannec,suscipita,ipsum.Morbiblanditligulafeugiatmagna.Nunceleifendconsequatlorem.Sedlacinianullavitaeenim.Pellentesquetinciduntpurusvelmagna.Integernonenim.Praesenteuismodnunceupurus.Donecbibendumquamintellus.Nullamcursuspulvinarlectus.Donecetmi.Namvulputatemetuseuenim.Vestibulumpellentesquefeliseumassa.1118
-
-4.SegundapáginaQuisqueullamcorperplaceratipsum.Crasnibh.Morbiveljustovitaelacustinciduntultrices.Loremipsumdolorsitamet,consectetueradipiscingelit.Inhachabitasseplateadictumst.Integertempusconvallisaugue.Etiamfacilisis.Nuncelementumfermentumwisi.Aeneanplacerat.Utimperdiet,enimsedgravidasollicitudin,felisodioplaceratquam,acpulvinarelitpurusegetenim.Nuncvitaetortor.Prointempusnibhsitametnisl.Vivamusquistortorvitaerisusportavehicula.Fuscemauris.Vestibulumluctusnibhatlectus.Sedbibendum,nullaafaucibussemper,leovelitultriciestellus,acvenenatisarcuwisivelnisl.Vestibulumdiam.Aliquampellentesque,auguequissagittisposuere,turpislacusconguequam,inhendreritrisuserosegetfelis.Maecenasegeteratinsapienmattisporttitor.Vestibulumporttitor.Nullafacilisi.Sedaturpiseulacuscommodofacilisis.Morbifringilla,wisiindignissiminterdum,justolectussagittisdui,etvehiculaliberoduicursusdui.Mauristemporligulasedlacus.Duiscursusenimutaugue.Crasacmagna.Crasnulla.Nullaegestas.Curabituraleo.Quisqueegestaswisiegetnunc.Namfeugiatlacusvelest.Curabiturconsectetuer.Suspendissevelfelis.Utloremlorem,interdumeu,tinciduntsitamet,laoreetvitae,arcu.Aeneanfaucibuspedeeuante.Praesentenimelit,rutrumat,molestienon,nonummyvel,nisl.Utlectuseros,malesuadasitamet,fermentumeu,sodalescursus,magna.Doneceupurus.Quisquevehicula,urnasedultriciesauctor,pedeloremegestasdui,etconvalliseliteratsednulla.Donecluctus.Curabituretnunc.Aliquamdolorodio,commodopretium,ultriciesnon,pharetrain,velit.Integerarcuest,nonummyin,fermentumfaucibus,egestasvel,odio.2C.4.  Figuras de Ancho Completo
-
-119
-
-C.3.4.  Múltiples páginas en una hoja
-
-Para ahorrar espacio, se pueden incluir varias páginas del PDF en una sola hoja del docu-
-
-mento:
-
-1 \includepdf[
- pages=-,
-2
- nup=1x2,
- landscape,
- frame,
-
-4
-
-3
-
-5
-6 ]{documento.pdf}
-
-Varias páginas PDF en una hoja
-
-% 1 columna, 2 filas
-% Orientación horizontal
-% Marco visible
-
-C.4.  Figuras de Ancho Completo
-
-A veces es necesario que una figura ocupe todo el ancho de la página, incluso invadiendo
-
-los márgenes. Para ello se combina el entorno figure* con ajustes de geometría.
-
-C.4.1.  Figura que invade márgenes
-
-Figura de ancho completo
-
-1 \begin{figure}[H]
-\centering
-2
-\makebox[\textwidth][c]{%
-
-3
-
-4
-
-5
-
-6
-
-\includegraphics[width=1.2\textwidth]{imagen_ancha}
-
-}
-\caption{Imagen que ocupa más que el ancho del texto}
-\label{fig:imagen-ancha}
-
-7
-8 \end{figure}
-
-C.5.  Notas al Margen
-
-Las notas al margen son útiles para añadir comentarios breves sin interrumpir el flujo del
-
-texto principal.
-
-C.5.1.  Uso básico
-
-1 Texto principal del párrafo.\marginpar{Nota breve al margen}
-
-Notas al margen
-
-Este es un ejemplo de texto con una nota al margen.
-Las notas al margen se colocan automáticamente en el lado exterior de la página (derecho
-
-en páginas impares, izquierdo en pares) cuando se usa impresión a doble cara.
-
-Esta
-es
-una  nota  al
-margen
-con
-información
-adicional.
-
-120
-
-Técnicas Avanzadas de LATEX
-
-C.6.  Marcas de Agua
-
-Para documentos en borrador o confidenciales, se pueden añadir marcas de agua usando el
-
-paquete draftwatermark o background.
-
-Marca de agua con draftwatermark
-
-1 % En el preámbulo:
-2 \usepackage{draftwatermark}
-3 \SetWatermarkText{BORRADOR}
-4 \SetWatermarkScale{1.5}
-5 \SetWatermarkColor[gray]{0.9}
-
-C.7.  Texto en Columnas
-
-Para secciones específicas que requieran formato en múltiples columnas (como glosarios o
-
-listas de referencias), se puede usar el entorno multicols:
-
-Texto en dos columnas
-
-1 \begin{multicols}{2}
-2
-3 \end{multicols}
-
- Contenido distribuido en dos columnas...
-
-C.7.1.  Ejemplo de texto en columnas
-
-Términos de red:
-
-• Router
-
-• Switch
-
-• Firewall
-
-• Gateway
-
-• DNS Server
-
-• DHCP Server
-
-Protocolos:
-
-• TCP/IP
-
-• HTTP/HTTPS
-
-• FTP/SFTP
-
-• SSH
-
-• SMTP
-
-• DNS
-
-C.8.  Minipáginas y Cajas
-
-Las minipáginas permiten crear bloques de contenido lado a lado:
-
-Dos minipáginas lado a lado
-
-1 \begin{minipage}[t]{0.45\textwidth}
-2
-
- Contenido izquierdo...
-
-C.9.  Resumen de Paquetes Utilizados
-
-121
-
-3 \end{minipage}
-4 \hfill
-5 \begin{minipage}[t]{0.45\textwidth}
-6
-7 \end{minipage}
-
- Contenido derecho...
-
-C.8.1.  Ejemplo de minipáginas
-
-Ventajas del sistema:
-
-Limitaciones conocidas:
-
-• Alta disponibilidad
-
-• Requiere conexión a Internet
-
-• Escalabilidad horizontal
-
-• No compatible con IE11
-
-• Bajo coste de mantenimiento
-
-• Máximo 1000 usuarios simultáneos
-
-• Interfaz intuitiva
-
-• Sin soporte para móviles legacy
-
-• Documentación completa
-
-• Idiomas: solo ES/EN
-
-C.9.  Resumen de Paquetes Utilizados
-
-Tabla C.5: Paquetes y comandos LATEX para técnicas avanzadas
-
-Paquete/Clase
-
-Uso
-
-Comando principal
-
-rotating
-KOMA-Script
-pdfpages
-multicol
-geometry
-scrlayer-scrpage Encabezados/pies
-draftwatermark
-
-Tablas rotadas
-Páginas landscape
-Incluir PDFs
-Múltiples columnas
-Márgenes personalizados
-
-Marcas de agua
-
-\begin{sidewaystable}
-\KOMAoptions{paper=landscape}
-\includepdf[options]{file}
-\begin{multicols}{n}
-\newgeometry{...}
-Configuración KOMA
-\SetWatermarkText{...}
+blas). Antes de ejecutar make test-backend conviene detener el contenedor con make
+stop-backend —la propia suite de tests arranca su instancia del backend en proceso,
+sin necesitar el contenedor activo— y volver a levantarlo al terminar con make backend.
+
+D.4.  Variables de entorno
+
+Cada carpeta del proyecto (blockchain/, backend/, frontend/) es un proyecto Node.js
+independiente  con  su  propio  .env,  generado  a  partir  del  .env.example correspondiente.
+make fresh-start rellena automáticamente las direcciones de contrato en backend/.env
+tras  el  despliegue;  el  resto  de  variables  (claves  de  Sepolia,  credenciales  de  Pinata)  deben
+configurarse manualmente solo si se desea desplegar en la testnet pública, no para el uso local
+descrito en este anexo. El detalle completo de cada variable se documenta en el README.md
+del repositorio.
 
