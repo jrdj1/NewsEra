@@ -10,10 +10,12 @@
 
 Se ejecutaron las 4 fases de pruebas planificadas, cada una diseñada e implementada por un agente dedicado, verificada de forma independiente (no solo aceptando el autoinforme del agente — se re-ejecutaron los comandos reales y se contrastaron los números) antes de dar paso a la siguiente fase. Las 4 fases cumplieron sus criterios de éxito. No hubo ninguna fase que requiriera más de una iteración de corrección para llegar a verde.
 
-Durante el proceso se encontraron y corrigieron **3 hallazgos reales** (no cosméticos):
+Durante el proceso se encontraron y corrigieron **5 hallazgos reales** (no cosméticos) — los 2 últimos se dejaron documentados sin corregir al cierre de la Fase 4 por no ser bloqueantes, y se corrigieron a continuación a petición explícita tras revisar el informe final:
 1. Una condición de carrera entre el indexador en vivo del contenedor Docker y los tests de integración (Fase 2).
 2. Un error off-by-one en el cálculo de `fromBlock` que reprocesaba eventos ya gestionados (Fase 2).
 3. Dos errores de revert de Solidity alcanzables desde la UI (`PredictionTargetNotDefinitive`, `AlreadyPredicted`) sin traducción a lenguaje natural — el usuario habría visto un mensaje genérico en vez de una explicación útil (Fase 4, RI 7).
+4. La lista de errores de revert conocidos en `docs/ERS.md` (RI 7) estaba desactualizada desde Sprint 6 — no incluía los 3 errores de predicciones (`NotEligibleForPrediction`, `PredictionTargetNotDefinitive`, `AlreadyPredicted`) ni los de publicaciones.
+5. `Profile.tsx` no exponía `isLoading`/`isError` por sección, a diferencia de `Feed.tsx`/`Article.tsx`.
 
 ## 2. Resultado por fase
 
@@ -46,10 +48,10 @@ Dos tests nuevos reprocesaban un bloque ya gestionado por el test anterior contr
 ### 3.3 Errores de revert sin traducir (Fase 4, RI 7)
 `PredictionTargetNotDefinitive` y `AlreadyPredicted` —ambos alcanzables desde `/validate` en modo predicción— no tenían entrada en `REVERT_MESSAGES` (`frontend/src/lib/errors.ts`). Un usuario real que los disparase habría visto el mensaje de fallback genérico ("Ha ocurrido un error inesperado...") en vez de una explicación de la causa real. Corregido sin tocar el test de Fase 1, que sigue en verde.
 
-**Nota adicional:** la Fase 4 detectó que la lista de "errores de revert conocidos" en `docs/ERS.md` (RI 7) está desactualizada desde Sprint 6 (no incluye los errores de predicciones). No se corrigió el ERS en este ciclo (fuera de alcance de la fase de pruebas) — queda como recomendación de mantenimiento de documentación.
+**Actualización:** la lista de RI 7 en `docs/ERS.md` se corrigió tras el cierre de la Fase 4, añadiendo `PublicationAlreadyExists`, `PublicationNotFound`, `NotEligibleForPrediction`, `PredictionTargetNotDefinitive` y `AlreadyPredicted`, con referencia cruzada al informe de resultados de Fase 4.
 
-### 3.4 Inconsistencia de patrón en `Profile.tsx` (Fase 4, RNF 14/RI 5 — no bloqueante)
-A diferencia de `Feed.tsx`/`Article.tsx`, los hooks de datos remotos en `Profile.tsx` no exponen `isLoading`/`isError` individualmente por sección. No se llega a incumplir RNF 14 en sentido estricto (nunca hay pantalla en blanco, siempre hay `EmptyState`), pero es menos explícito que el resto de páginas auditadas. Documentado como hallazgo, no corregido en este ciclo por no ser bloqueante.
+### 3.4 Inconsistencia de patrón en `Profile.tsx` (Fase 4, RNF 14/RI 5 — corregido)
+A diferencia de `Feed.tsx`/`Article.tsx`, los hooks de datos remotos en `Profile.tsx` (y el componente `RetroactiveClaims`) no exponían `isLoading`/`isError` individualmente por sección. No llegaba a incumplir RNF 14 en sentido estricto (nunca hubo pantalla en blanco, siempre había `EmptyState`), pero era menos explícito que el resto de páginas auditadas. **Corregido tras el cierre de la Fase 4:** cada pestaña ahora renderiza `LoadingState`/`ErrorState` (con reintento) antes de caer al `EmptyState` o al listado, igual que el resto de páginas. Verificado: `tsc -b` limpio, 25/25 tests de frontend en verde, build de producción correcto.
 
 ## 4. Qué queda explícitamente fuera de alcance (decisiones de diseño, no huecos accidentales)
 

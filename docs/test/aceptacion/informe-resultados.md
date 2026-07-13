@@ -216,20 +216,20 @@ Las listas paginadas (validaciones, reaperturas, publicaciones, favoritos, recla
 <EmptyState message="Todavía no has publicado ningún artículo." />
 <EmptyState message="No tienes artículos guardados en favoritos." />
 ```
-**Hallazgo (no bloqueante):** los hooks de datos remotos usados en `Profile.tsx`
-(`useEnrichedProfile`, `useUserDetail`, `useReputationHistory`, `useValidatorHistory`, `useReopenRequests`,
-`useActivity`, `usePublications`, `useFavorites`) se desestructuran solo por `data`, sin capturar ni renderizar
-`isLoading`/`isError` de cada uno individualmente. En la práctica el efecto visible es una lista vacía momentánea
-(cubierta por `EmptyState`) mientras carga, en vez de un `LoadingState` explícito por sección, y no hay manejo
-visible de fallo de red por sección (a diferencia de `Feed.tsx`/`Article.tsx`, que sí tienen `ErrorState` con
-reintento). No es una pantalla en blanco (RNF 14 no se incumple en sentido estricto: siempre hay algún contenido
-o el `EmptyState`), pero es una inconsistencia de patrón frente a las otras 3 páginas auditadas. Se documenta
-como hallazgo real de esta fase, no se oculta ni se corrige en este ciclo (fuera del umbral de "necesario para
-cerrar Fase 4": ninguna vista queda en blanco).
+**Hallazgo (no bloqueante, corregido posteriormente):** los hooks de datos remotos usados en `Profile.tsx`
+(`useReputationHistory`, `useValidatorHistory`, `useReopenRequests`, `useActivity`, `usePublications`,
+`useFavorites`) se desestructuraban solo por `data`, sin capturar ni renderizar `isLoading`/`isError` de cada
+uno individualmente — inconsistencia de patrón frente a `Feed.tsx`/`Article.tsx`. No llegaba a incumplir RNF 14
+en sentido estricto (nunca hubo pantalla en blanco), pero se documentó como hallazgo real.
 
-**Resultado global RNF 14 / RI 5: CUMPLE en 3 de 4 páginas con el patrón completo (loading + error + empty);
-la 4ª (`Profile.tsx`) cumple el criterio estricto de "nunca pantalla en blanco" pero con manejo de
-error/carga por sección menos explícito que el resto — hallazgo documentado, no bloqueante.**
+**Corrección aplicada (fuera de Fase 4, a petición explícita tras el cierre de esta fase):** cada pestaña de
+`Profile.tsx` (y el componente `RetroactiveClaims`) ahora desestructura también `isLoading`/`isError`/`refetch`
+de su hook y renderiza `<LoadingState>`/`<ErrorState onRetry={...}>` antes de caer al `<EmptyState>` o al
+listado, igual que `Feed.tsx`/`Article.tsx`. Verificado: `npx tsc -b` limpio, `npx vitest run` sigue en
+25/25, `npm run build` correcto.
+
+**Resultado global RNF 14 / RI 5: CUMPLE en las 4 páginas auditadas con el patrón completo
+(loading + error + empty).**
 
 ---
 

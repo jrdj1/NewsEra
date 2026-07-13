@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge, consensusTone } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { EmptyState } from "@/components/ui/states";
+import { EmptyState, LoadingState, ErrorState } from "@/components/ui/states";
 import { PublicationCard } from "@/components/PublicationCard";
 import { ReputationHistoryList } from "@/components/ReputationHistoryList";
 import { ActivityList } from "@/components/ActivityList";
@@ -134,7 +134,12 @@ function ProfileAvatar({ url, name, size = "h-16 w-16" }: { url?: string | null;
 }
 
 function RetroactiveClaims({ address }: { address: string }) {
-  const { data: history } = useValidatorHistory(address, 1, 100);
+  const {
+    data: history,
+    isLoading: historyLoading,
+    isError: historyError,
+    refetch: refetchHistory,
+  } = useValidatorHistory(address, 1, 100);
   const items = history?.items ?? [];
   const uniqueHashes = useMemo(() => [...new Set(items.map((i) => i.contentHash))], [items]);
 
@@ -164,6 +169,12 @@ function RetroactiveClaims({ address }: { address: string }) {
     tx.write({ ...validationRegistry, functionName: "claimRetroactiveReputation", args: [hash] });
   }
 
+  if (historyLoading) {
+    return <LoadingState label="Cargando reclamaciones..." />;
+  }
+  if (historyError) {
+    return <ErrorState onRetry={() => refetchHistory()} />;
+  }
   if (eligible.length === 0) {
     return <EmptyState message="No tienes reclamaciones retroactivas pendientes." />;
   }
@@ -283,12 +294,42 @@ export default function Profile() {
 
   const { data: profile } = useEnrichedProfile(address);
   const { data: detail } = useUserDetail(address);
-  const { data: reputationHistory } = useReputationHistory(address);
-  const { data: history } = useValidatorHistory(address);
-  const { data: reopenRequests } = useReopenRequests(address);
-  const { data: activity } = useActivity(address, activityPage, 10);
-  const { data: publications } = usePublications(address ? { author: address } : {});
-  const { data: favorites } = useFavorites(address);
+  const {
+    data: reputationHistory,
+    isLoading: reputationHistoryLoading,
+    isError: reputationHistoryError,
+    refetch: refetchReputationHistory,
+  } = useReputationHistory(address);
+  const {
+    data: history,
+    isLoading: historyLoading,
+    isError: historyError,
+    refetch: refetchHistory,
+  } = useValidatorHistory(address);
+  const {
+    data: reopenRequests,
+    isLoading: reopenRequestsLoading,
+    isError: reopenRequestsError,
+    refetch: refetchReopenRequests,
+  } = useReopenRequests(address);
+  const {
+    data: activity,
+    isLoading: activityLoading,
+    isError: activityError,
+    refetch: refetchActivity,
+  } = useActivity(address, activityPage, 10);
+  const {
+    data: publications,
+    isLoading: publicationsLoading,
+    isError: publicationsError,
+    refetch: refetchPublications,
+  } = usePublications(address ? { author: address } : {});
+  const {
+    data: favorites,
+    isLoading: favoritesLoading,
+    isError: favoritesError,
+    refetch: refetchFavorites,
+  } = useFavorites(address);
 
   if (!isConnected || !address) {
     return (
@@ -395,22 +436,40 @@ export default function Profile() {
               <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
                 Evolución de reputación
               </h2>
-              <ReputationHistoryList entries={reputationHistory?.items ?? []} />
+              {reputationHistoryLoading ? (
+                <LoadingState label="Cargando reputación..." />
+              ) : reputationHistoryError ? (
+                <ErrorState onRetry={() => refetchReputationHistory()} />
+              ) : (
+                <ReputationHistoryList entries={reputationHistory?.items ?? []} />
+              )}
             </div>
           )}
 
           {tab === "actividad" && (
-            <ActivityList
-              entries={activity?.items ?? []}
-              page={activityPage}
-              totalPages={activity ? Math.max(1, Math.ceil(activity.total / activity.limit)) : 1}
-              onPageChange={setActivityPage}
-            />
+            <>
+              {activityLoading ? (
+                <LoadingState label="Cargando actividad..." />
+              ) : activityError ? (
+                <ErrorState onRetry={() => refetchActivity()} />
+              ) : (
+                <ActivityList
+                  entries={activity?.items ?? []}
+                  page={activityPage}
+                  totalPages={activity ? Math.max(1, Math.ceil(activity.total / activity.limit)) : 1}
+                  onPageChange={setActivityPage}
+                />
+              )}
+            </>
           )}
 
           {tab === "validaciones" && (
             <div>
-              {!history || history.items.length === 0 ? (
+              {historyLoading ? (
+                <LoadingState label="Cargando validaciones..." />
+              ) : historyError ? (
+                <ErrorState onRetry={() => refetchHistory()} />
+              ) : !history || history.items.length === 0 ? (
                 <EmptyState message="Todavía no has votado ningún artículo." />
               ) : (
                 <Card className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -431,7 +490,11 @@ export default function Profile() {
 
           {tab === "reaperturas" && (
             <div>
-              {!reopenRequests || reopenRequests.length === 0 ? (
+              {reopenRequestsLoading ? (
+                <LoadingState label="Cargando reaperturas..." />
+              ) : reopenRequestsError ? (
+                <ErrorState onRetry={() => refetchReopenRequests()} />
+              ) : !reopenRequests || reopenRequests.length === 0 ? (
                 <EmptyState message="No has solicitado ninguna reapertura." />
               ) : (
                 <Card className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -450,7 +513,11 @@ export default function Profile() {
 
           {tab === "publicaciones" && (
             <div>
-              {!publications || publications.items.length === 0 ? (
+              {publicationsLoading ? (
+                <LoadingState label="Cargando publicaciones..." />
+              ) : publicationsError ? (
+                <ErrorState onRetry={() => refetchPublications()} />
+              ) : !publications || publications.items.length === 0 ? (
                 <EmptyState message="Todavía no has publicado ningún artículo." />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -464,7 +531,11 @@ export default function Profile() {
 
           {tab === "favoritos" && (
             <div>
-              {!favorites || favorites.items.length === 0 ? (
+              {favoritesLoading ? (
+                <LoadingState label="Cargando favoritos..." />
+              ) : favoritesError ? (
+                <ErrorState onRetry={() => refetchFavorites()} />
+              ) : !favorites || favorites.items.length === 0 ? (
                 <EmptyState message="No tienes artículos guardados en favoritos." />
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">

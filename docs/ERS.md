@@ -127,7 +127,7 @@ Los seis casos de uso de mayor complejidad (transacción on-chain o verificació
 - **RI 4.** Diseño responsive, legible en dispositivos móviles (RNF 13).
 - **RI 5.** Estados de carga y error explícitos en toda vista que dependa de datos remotos (backend o blockchain).
 - **RI 6.** Toda acción que requiera firma de cartera muestra el hash de transacción y su estado (pendiente / confirmada / fallida) mediante `useWaitForTransactionReceipt`.
-- **RI 7.** Los errores de revert conocidos (`InsufficientReputation`, `AlreadyValidated`, `VotingNotOpen`, `ReopenNotAvailable`, `AlreadyRequestedReopen`, `NothingToClaim`) se traducen a mensajes en lenguaje natural; nunca se muestra el error crudo de Solidity al usuario.
+- **RI 7.** Los errores de revert conocidos (`InsufficientReputation`, `AlreadyValidated`, `VotingNotOpen`, `ReopenNotAvailable`, `AlreadyRequestedReopen`, `NothingToClaim`, `PublicationAlreadyExists`, `PublicationNotFound`, `NotEligibleForPrediction`, `PredictionTargetNotDefinitive`, `AlreadyPredicted`) se traducen a mensajes en lenguaje natural; nunca se muestra el error crudo de Solidity al usuario. Lista actualizada en la Fase 4 de pruebas de aceptación (`docs/test/aceptacion/informe-resultados.md` §6): la enumeración original quedó desactualizada desde Sprint 6 (predicciones) y no incluía los 3 últimos.
 
 ### Interfaces externas
 - **RI 8.** Interfaz con la cartera del usuario vía wagmi + RainbowKit (MetaMask, WalletConnect).
