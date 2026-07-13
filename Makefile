@@ -56,7 +56,7 @@ fresh-start: ## Levanta todo, redespliega contratos, siembra estado de prueba y 
 	node scripts/update-env-addresses.js
 	@echo "Parando el backend antes de truncar (evita bloqueos de Postgres por conexiones abiertas)..."
 	$(COMPOSE) stop backend
-	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state, reputation_events, tags, publication_tags RESTART IDENTITY CASCADE;" 2>/dev/null
+	-docker exec newsera-db psql -U newsera -d newsera -c "TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state, reputation_events, tags, publication_tags, publication_links RESTART IDENTITY CASCADE;" 2>/dev/null
 	@echo "Arrancando el backend con la BD limpia y las direcciones correctas..."
 	$(COMPOSE) up -d backend
 	@echo "Esperando a que el indexador procese el historial sembrado (maximo 30s)..."

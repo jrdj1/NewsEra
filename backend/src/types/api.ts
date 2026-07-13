@@ -11,6 +11,10 @@ export interface CreatePublicationBody {
   title: string;
   body: string;
   tags?: string[];
+  /** Hashes de otras publicaciones citadas — persistidos en PublicationLink
+   * además de estar ya embebidos como texto en `body` (que compone el hash
+   * on-chain, RD6). */
+  links?: string[];
 }
 
 export interface ReopenRequestBody {

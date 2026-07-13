@@ -3,6 +3,9 @@ import { prisma } from "../lib/prisma.js";
 export type PublicationSort = "recent" | "votes" | "state";
 
 const TAG_LINKS_INCLUDE = { tagLinks: { include: { tag: true } } } as const;
+const PUBLICATION_LINKS_INCLUDE = {
+  links: { include: { linkedPublication: { select: { contentHash: true, title: true } } } },
+} as const;
 
 /** Aplana la relación `tagLinks` (join con Tag) de vuelta a `tags: string[]`
  * — la forma que espera el resto de la API, sin filtrar la tabla de unión
@@ -14,6 +17,16 @@ function shapeTags<T extends { tagLinks: { tag: { name: string } }[] }>(
   return { ...rest, tags: tagLinks.map((l) => l.tag.name) };
 }
 
+/** Aplana la relación `links` (join `PublicationLink`) a la forma pública
+ * `links: { contentHash, title }[]` — igual que `shapeTags`, sin filtrar la
+ * tabla de unión hacia fuera de la capa de repositorio. */
+function shapeLinks<T extends { links: { linkedPublication: { contentHash: string; title: string } }[] }>(
+  p: T,
+): Omit<T, "links"> & { links: { contentHash: string; title: string }[] } {
+  const { links, ...rest } = p;
+  return { ...rest, links: links.map((l) => l.linkedPublication) };
+}
+
 /** Datos de creación anidada para `PublicationTag`: `connectOrCreate` por
  * nombre — reutiliza la fila de Tag si ya existe (etiquetas libres, sin
  * catálogo cerrado) o la crea al vuelo. Dedupe defensivo: un mismo nombre
@@ -22,6 +35,15 @@ function tagLinksCreateData(tags: string[]) {
   return [...new Set(tags)].map((name) => ({
     tag: { connectOrCreate: { where: { name }, create: { name } } },
   }));
+}
+
+/** Datos de creación anidada para `PublicationLink`: a diferencia de las
+ * etiquetas, el destino debe ser una publicación ya existente (lo exige la
+ * FK) — el selector del frontend (ArticleLinkPicker) solo permite elegir
+ * artículos reales, así que aquí basta con `create` simple, no
+ * `connectOrCreate`. Dedupe defensivo por la misma razón que en tags. */
+function publicationLinksCreateData(linkedContentHashes: string[]) {
+  return [...new Set(linkedContentHashes)].map((linkedContentHash) => ({ linkedContentHash }));
 }
 
 export interface ListPublicationsParams {
@@ -83,9 +105,10 @@ export const publicationRepository = {
         rounds: { orderBy: { round: "asc" } },
         validations: { orderBy: { round: "asc" } },
         ...TAG_LINKS_INCLUDE,
+        ...PUBLICATION_LINKS_INCLUDE,
       },
     });
-    return publication ? shapeTags(publication) : null;
+    return publication ? shapeLinks(shapeTags(publication)) : null;
   },
 
   async existsByHash(contentHash: string): Promise<boolean> {
@@ -99,15 +122,21 @@ export const publicationRepository = {
     body: string;
     authorAddress: string;
     tags: string[];
+    links?: string[];
     ipfsCid?: string;
   }) {
-    const { tags, ...rest } = data;
+    const { tags, links = [], ...rest } = data;
     // currentRound: 0 — las rondas on-chain empiezan en 0 (ver upsertFromChain).
     const created = await prisma.publication.create({
-      data: { ...rest, currentRound: 0, tagLinks: { create: tagLinksCreateData(tags) } },
-      include: TAG_LINKS_INCLUDE,
+      data: {
+        ...rest,
+        currentRound: 0,
+        tagLinks: { create: tagLinksCreateData(tags) },
+        links: { create: publicationLinksCreateData(links) },
+      },
+      include: { ...TAG_LINKS_INCLUDE, ...PUBLICATION_LINKS_INCLUDE },
     });
-    return shapeTags(created);
+    return shapeLinks(shapeTags(created));
   },
 
   async upsertFromChain(data: { contentHash: string; authorAddress: string }) {
@@ -138,18 +167,19 @@ export const publicationRepository = {
    */
   async setContent(
     contentHash: string,
-    data: { title: string; body: string; tags: string[]; ipfsCid?: string },
+    data: { title: string; body: string; tags: string[]; links?: string[]; ipfsCid?: string },
   ) {
-    const { tags, ...rest } = data;
+    const { tags, links = [], ...rest } = data;
     const updated = await prisma.publication.update({
       where: { contentHash },
       data: {
         ...rest,
         tagLinks: { deleteMany: {}, create: tagLinksCreateData(tags) },
+        links: { deleteMany: {}, create: publicationLinksCreateData(links) },
       },
-      include: TAG_LINKS_INCLUDE,
+      include: { ...TAG_LINKS_INCLUDE, ...PUBLICATION_LINKS_INCLUDE },
     });
-    return shapeTags(updated);
+    return shapeLinks(shapeTags(updated));
   },
 
   async updateConsensusState(contentHash: string, consensusState: string, currentResult: string | null = null) {

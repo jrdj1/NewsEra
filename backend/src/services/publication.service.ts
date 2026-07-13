@@ -54,7 +54,7 @@ export const publicationService = {
   },
 
   async create(body: CreatePublicationBody) {
-    const { contentHash, ipfsCid, title, body: articleBody, tags = [] } = body;
+    const { contentHash, ipfsCid, title, body: articleBody, tags = [], links = [] } = body;
 
     if (await publicationRepository.existsByHash(contentHash)) {
       throw new AppError("CONFLICT", `Ya existe una publicación registrada con hash ${contentHash}`);
@@ -65,6 +65,15 @@ export const publicationService = {
         "UNPROCESSABLE",
         "keccak256(body) no coincide con el contentHash indicado",
       );
+    }
+
+    for (const linkedHash of links) {
+      if (!(await publicationRepository.existsByHash(linkedHash))) {
+        throw new AppError(
+          "UNPROCESSABLE",
+          `El enlace interno ${linkedHash} no corresponde a ninguna publicación existente`,
+        );
+      }
     }
 
     let onChainAuthor: string;
@@ -89,6 +98,7 @@ export const publicationService = {
       body: articleBody,
       authorAddress: onChainAuthor,
       tags,
+      links,
       ipfsCid,
     });
   },

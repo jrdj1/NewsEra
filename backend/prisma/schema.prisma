@@ -8,23 +8,25 @@ generator client {
 }
 
 model Publication {
-  id                 Int              @id @default(autoincrement())
-  contentHash        String           @unique
+  id                 Int               @id @default(autoincrement())
+  contentHash        String            @unique
   title              String
   body               String
   authorAddress      String
   ipfsCid            String?
-  consensusState     String           @default("PENDING")
+  consensusState     String            @default("PENDING")
   currentResult      String?
-  currentRound       Int              @default(1)
-  reopenRequestCount Int              @default(0)
-  createdAt          DateTime         @default(now())
+  currentRound       Int               @default(1)
+  reopenRequestCount Int               @default(0)
+  createdAt          DateTime          @default(now())
   validations        Validation[]
   reopenRequests     ReopenRequest[]
   rounds             Round[]
   favorites          Favorite[]
   follows            Follow[]
   tagLinks           PublicationTag[]
+  links              PublicationLink[] @relation("LinksFrom")
+  linkedBy           PublicationLink[] @relation("LinksTo")
 
   @@map("publications")
 }
@@ -53,6 +55,24 @@ model PublicationTag {
 
   @@id([contentHash, tagId])
   @@map("publication_tags")
+}
+
+// Enlaces internos citados entre publicaciones (antes solo texto libre
+// dentro de `body`, bajo un encabezado "## Enlaces relacionados" — sin
+// constancia estructurada ni forma de consultarlos: Article.tsx los
+// mostraba como texto plano, no como enlaces reales). Autorreferencia
+// N:M sobre Publication: cada fila dice "el artículo A cita al artículo
+// B". El texto en `body` no desaparece (compone el hash keccak256 on-chain,
+// RD6) — esta tabla es la vista estructurada de ese mismo dato.
+model PublicationLink {
+  contentHash       String
+  linkedContentHash String
+  createdAt         DateTime    @default(now())
+  publication       Publication @relation("LinksFrom", fields: [contentHash], references: [contentHash])
+  linkedPublication Publication @relation("LinksTo", fields: [linkedContentHash], references: [contentHash])
+
+  @@id([contentHash, linkedContentHash])
+  @@map("publication_links")
 }
 
 model Round {

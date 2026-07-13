@@ -83,6 +83,8 @@ export interface Publication {
   voteCount?: number;
   rounds?: Round[];
   validations?: Validation[];
+  /** Enlaces internos citados — solo presente en el detalle (GET /:hash). */
+  links?: { contentHash: string; title: string }[];
 }
 
 export interface Validator {

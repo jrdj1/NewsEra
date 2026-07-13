@@ -47,7 +47,7 @@ function uniqueBody(label: string): string {
 
 async function resetDb() {
   await prisma.$executeRawUnsafe(
-    `TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state RESTART IDENTITY CASCADE;`,
+    `TRUNCATE publications, rounds, validations, validators, reopen_requests, retroactive_claims, favorites, follows, notifications, user_profiles, indexer_state, reputation_events, tags, publication_tags, publication_links RESTART IDENTITY CASCADE;`,
   );
 }
 

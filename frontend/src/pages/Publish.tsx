@@ -79,6 +79,7 @@ export default function Publish() {
         title,
         body: fullBody,
         tags,
+        links: linkedArticles.map((l) => l.contentHash),
       })
       .then(() => {
         clearDraft();
