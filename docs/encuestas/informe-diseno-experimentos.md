@@ -79,11 +79,13 @@ Esto permitirá justificar científicamente en la memoria que el problema de New
 El texto completo de las 2 encuestas vive en archivos propios de esta misma carpeta, no aquí, para no duplicar contenido:
 
 - [`encuesta-1-problema.md`](./encuesta-1-problema.md) — Estudio sobre el Consumo de Noticias e Información Digital (antes de ver la web).
-- [`encuesta-2-producto.md`](./encuesta-2-producto.md) — Cuestionario de Evaluación de la Web NewsEra (después de usar la web), con un **Bloque C** añadido para evaluar comprensión básica de las propiedades de blockchain aplicadas a NewsEra.
+- [`encuesta-2-producto.md`](./encuesta-2-producto.md) — Cuestionario de Evaluación de la Web NewsEra (después de usar la web).
 
 ## Nota de implementación
 
-Ambas encuestas se implementaron literalmente en la demo (`demo/`, ver `demo/README.md` §"Encuestas de validación"), con los identificadores de cada pregunta (`item1`..`item16` en la Encuesta 2, más `item17`..`item19` del Bloque C) alineados con la numeración de los archivos de encuesta, para poder cruzar las respuestas JSONB crudas almacenadas en Postgres con estos documentos al calcular la puntuación SUS y los criterios de éxito — el cálculo de la fórmula SUS y los porcentajes de corte no se hacen en el cliente, son parte del análisis posterior de los datos recogidos (Capítulo 6 de la memoria).
+Ambas encuestas se implementaron literalmente en la demo (`demo/`, ver `demo/README.md` §"Encuestas de validación"), con los identificadores de cada pregunta (`item1`..`item16`) alineados con la numeración de los archivos de encuesta, para poder cruzar las respuestas JSONB crudas almacenadas en Postgres con estos documentos al calcular la puntuación SUS y los criterios de éxito — el cálculo de la fórmula SUS y los porcentajes de corte no se hacen en el cliente, son parte del análisis posterior de los datos recogidos (Capítulo 6 de la memoria).
+
+El ítem 14 de la Encuesta 2 se reformuló una vez, tras el diseño inicial, para que lo entienda quien no sabe qué es blockchain (quitando la referencia explícita a MetaMask/RainbowKit) — mismo `id`, mismo constructo (fricción de la firma/cartera digital), sin afectar a las respuestas ya guardadas con la redacción anterior salvo en el matiz textual de la pregunta.
 
 **Importante:** en el momento de escribir esto ya existen respuestas reales guardadas en la base de datos para los ítems 1–16 de la Encuesta 2 y 1–7 de la Encuesta 1. Por eso ningún ítem existente se ha reformulado ni renumerado — solo se añaden ítems nuevos al final (Bloque C), para no invalidar las respuestas ya recogidas.
 
