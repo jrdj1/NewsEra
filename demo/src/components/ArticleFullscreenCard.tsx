@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import type { Publication } from "@/lib/api";
 import { ConsensusBadge } from "@/components/ui/ConsensusBadge";
 import { useEnrichedProfile } from "@/hooks/useProfile";
@@ -23,11 +23,23 @@ function AuthorLink({ address }: { address: string }) {
   );
 }
 
+/** Evita que un clic en un enlace/botón interno (autor, votos, acciones de
+ * voto) también dispare la navegación al artículo completo del contenedor. */
+function stopPropagation(e: MouseEvent) {
+  e.stopPropagation();
+}
+
 /**
- * Tarjeta de artículo a pantalla completa (menos la altura del header fijo),
- * pensada para un feed de scroll-snap vertical estilo TikTok. Puramente
+ * Tarjeta de artículo a pantalla completa: `h-full`, no un `calc(100dvh-…)`
+ * fijo, para encajar siempre con la altura real de su contenedor con scroll
+ * — que varía según la página tenga barra de filtros, cabecera de
+ * reputación, etc. por encima. Un valor fijo aquí desincronizaría el
+ * snap-scroll en cuanto esa altura cambiara.
+ * Pensada para un feed de scroll-snap vertical estilo TikTok. Puramente
  * presentacional: el pie interactivo (votar, predecir, o nada en el caso de
- * un feed de solo lectura) se inyecta vía `actions`.
+ * un feed de solo lectura) se inyecta vía `actions`. La propia tarjeta tiene
+ * marco propio (no solo texto flotando sobre el fondo) y es clicable en su
+ * totalidad hacia el artículo completo, salvo en modo predicción.
  */
 export function ArticleFullscreenCard({
   publication,
@@ -37,19 +49,46 @@ export function ArticleFullscreenCard({
   publication: Publication;
   actions?: ReactNode;
   /**
-   * Oculta el estado/veredicto de consenso, el recuento de votos y el enlace
-   * al artículo completo. Usado en el feed de predicción: el artículo
-   * objetivo ya es DEFINITIVE (por eso se puede predecir sobre él), así que
-   * mostrar su estado o dejar navegar al detalle revelaría la respuesta
-   * antes de predecir.
+   * Oculta el estado/veredicto de consenso, el recuento de votos, el enlace
+   * al artículo completo y desactiva el clic en la tarjeta. Usado en el feed
+   * de predicción: el artículo objetivo ya es DEFINITIVE (por eso se puede
+   * predecir sobre él), así que mostrar su estado o dejar navegar al detalle
+   * revelaría la respuesta antes de predecir.
    */
   hideConsensus?: boolean;
 }) {
+  const navigate = useNavigate();
+  const clickable = !hideConsensus;
+
+  function goToArticle() {
+    if (clickable) navigate(`/article/${publication.contentHash}`);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (!clickable) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      goToArticle();
+    }
+  }
+
   return (
-    <div className="flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start items-center justify-center overflow-hidden px-4 py-8 sm:px-8">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 overflow-hidden">
+    <div
+      id={publication.contentHash}
+      className="flex h-full w-full shrink-0 snap-start items-center justify-center overflow-hidden px-4 py-8 sm:px-8"
+    >
+      <div
+        role={clickable ? "link" : undefined}
+        tabIndex={clickable ? 0 : undefined}
+        onClick={clickable ? goToArticle : undefined}
+        onKeyDown={clickable ? handleKeyDown : undefined}
+        aria-label={clickable ? `Leer artículo completo: ${publication.title}` : undefined}
+        className={`mx-auto flex w-full max-w-2xl flex-col gap-4 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-colors dark:border-zinc-800 dark:bg-zinc-900/70 ${
+          clickable ? "cursor-pointer hover:border-brand/50 hover:shadow-md" : ""
+        }`}
+      >
         {!hideConsensus && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" onClick={stopPropagation}>
             <ConsensusBadge state={publication.consensusState} result={publication.currentResult} />
             <Link
               to={`/article/${publication.contentHash}/votes`}
@@ -81,7 +120,7 @@ export function ArticleFullscreenCard({
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1" onClick={stopPropagation}>
           <AuthorLink address={publication.authorAddress} />
           {!hideConsensus && (
             <Link
@@ -96,7 +135,11 @@ export function ArticleFullscreenCard({
           )}
         </div>
 
-        {actions && <div className="pt-2">{actions}</div>}
+        {actions && (
+          <div className="pt-2" onClick={stopPropagation}>
+            {actions}
+          </div>
+        )}
       </div>
     </div>
   );

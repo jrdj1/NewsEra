@@ -5,6 +5,8 @@ import { keccak256, toBytes } from "viem";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { TagPicker } from "@/components/TagPicker";
+import { ArticleLinkPicker, type LinkedArticle } from "@/components/ArticleLinkPicker";
 import { useTransactionState } from "@/hooks/useTransactionState";
 import { publicationRegistry, PUBLISH_REPUTATION_REWARD, PUBLISH_REPUTATION_PENALTY_UNVERIFIABLE, PUBLISH_REPUTATION_PENALTY_FALSE } from "@/lib/contracts";
 import { composeArticleBody } from "@/lib/article";
@@ -22,8 +24,8 @@ export default function Publish() {
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
-  const [linksInput, setLinksInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [linkedArticles, setLinkedArticles] = useState<LinkedArticle[]>([]);
   const [references, setReferences] = useState("");
   const [step, setStep] = useState<Step>("editing");
   const [posting, setPosting] = useState(false);
@@ -35,18 +37,11 @@ export default function Publish() {
     if (draft) {
       setTitle(draft.title);
       setBody(draft.body);
-      setTagsInput(draft.tags.join(", "));
+      setTags(draft.tags);
     }
   }, []);
 
-  const tags = tagsInput
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-  const links = linksInput
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
+  const links = linkedArticles.map((l) => `/article/${l.contentHash}`);
 
   const fullBody = composeArticleBody({ body, links, references });
   const contentHash = fullBody ? keccak256(toBytes(fullBody)) : undefined;
@@ -84,6 +79,7 @@ export default function Publish() {
         title,
         body: fullBody,
         tags,
+        links: linkedArticles.map((l) => l.contentHash),
       })
       .then(() => {
         clearDraft();
@@ -131,15 +127,16 @@ export default function Publish() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Etiquetas (separadas por coma)</label>
-            <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="política, tecnología, salud" />
+            <label className="mb-1 block text-sm font-medium">Etiquetas</label>
+            <TagPicker value={tags} onChange={setTags} />
+            <p className="mt-1 text-xs text-zinc-400">
+              Elige entre las que ya usa la comunidad o escribe una nueva y pulsa Intro.
+            </p>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              Enlaces internos a otros artículos (uno por línea, ej. /article/0x...)
-            </label>
-            <Textarea value={linksInput} onChange={(e) => setLinksInput(e.target.value)} rows={3} />
+            <label className="mb-1 block text-sm font-medium">Enlaces internos a otros artículos</label>
+            <ArticleLinkPicker value={linkedArticles} onChange={setLinkedArticles} />
           </div>
 
           <div>

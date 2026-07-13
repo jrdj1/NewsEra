@@ -25,3 +25,65 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Fondo "aurora boreal" — usado en la cinemática de inicio (/) y en
+ * /about de la demo, en vez de fotografías o un negro plano. Una capa fija
+ * (no se desplaza con el scroll-snap) con varios degradados radiales en
+ * tonos azules/violetas/cian que se desplazan muy despacio. */
+.aurora-bg {
+  position: relative;
+  /* isolation: isolate crea un contexto de apilamiento propio en este
+     elemento. Sin esto, el ::before de abajo (z-index: -1) no se apila
+     "detrás de este elemento y sus hijos" sino detrás del contexto de
+     apilamiento raíz más cercano (normalmente <body>/<html>), quedando por
+     detrás de fondos sólidos ajenos (p. ej. el body) y sin pintarse nunca:
+     la causa de que el degradado no se viera pese a estar bien calculado. */
+  isolation: isolate;
+  background: #060b1a;
+}
+
+.aurora-bg::before {
+  content: "";
+  position: fixed;
+  inset: -15%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 32% at 20% 20%, rgba(56, 189, 248, 0.85), transparent 70%),
+    radial-gradient(36% 34% at 80% 15%, rgba(129, 140, 248, 0.8), transparent 70%),
+    radial-gradient(50% 40% at 60% 80%, rgba(14, 165, 233, 0.7), transparent 70%),
+    radial-gradient(38% 34% at 10% 85%, rgba(45, 212, 191, 0.6), transparent 70%),
+    radial-gradient(30% 26% at 50% 45%, rgba(167, 139, 250, 0.5), transparent 70%);
+  filter: blur(60px) saturate(1.6);
+  animation: aurora-shift 18s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-shift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(2%, -3%, 0) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg::before {
+    animation: none;
+  }
+}
+
+/* Oculta la barra de scroll nativa en los contenedores de scroll-snap
+ * vertical (/, /about, /noticias, /validate): son redundantes con la
+ * navegación propia (SlideDotNav + SlideArrows), que ya indica posición y
+ * permite avanzar/retroceder — la barra nativa solo añadía un segundo
+ * elemento gris sin ese mismo nivel de detalle. El scroll sigue funcionando
+ * igual (rueda, gestos táctiles, teclado); solo se oculta el indicador. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

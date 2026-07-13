@@ -3,9 +3,14 @@
 Copia independiente del frontend (`../frontend`) pensada **solo para validar la
 idea y el diseño de la interfaz** ante cualquier persona, sin necesitar
 backend, PostgreSQL ni un nodo blockchain reales. No interfiere con el
-proyecto real: vive en su propia carpeta, con su propio `package.json`,
-puerto de desarrollo (`4173`, frente a `5173`/`8080` del proyecto real) y
-sin variables de entorno.
+proyecto real: vive en su propia carpeta, con su propio `package.json` y
+puerto de desarrollo (`4173`, frente a `5173`/`8080` del proyecto real). La
+única variable de entorno real que usa es la de la base de datos de
+encuestas (`DATABASE_URL`, ver más abajo) — el resto de la demo (artículos,
+votos, cartera) sigue sin necesitar ninguna.
+
+Desplegada en Vercel desde esta rama (`demo`) con Root Directory `demo`,
+Build Command `npm run build` y Output Directory `dist`.
 
 ## Cómo funciona
 
@@ -36,6 +41,33 @@ sin variables de entorno.
   hayas hecho. Botón "Reiniciar demo" en `/about` para volver al estado
   original sembrado.
 
+## Encuestas de validación (única parte con base de datos real)
+
+Dos páginas fuera del "modo demo" en memoria: `/encuestas/problema` (valida
+si el problema de la desinformación es percibido como grave) y
+`/encuestas/producto` (valida, tras explorar la demo, si NewsEra convence
+como solución concreta). Ambas están enlazadas desde la última pantalla de
+`/about`.
+
+- Las respuestas se envían a `POST /api/survey` (`demo/api/survey.ts`), una
+  función serverless de Vercel — no pasa por `demoStore` ni por
+  `localStorage`, es la única escritura de la demo que sale del navegador.
+- Persistencia en Postgres vía la integración Neon de Vercel
+  (`@neondatabase/serverless`), con un esquema mínimo de una sola tabla
+  creada de forma perezosa (`CREATE TABLE IF NOT EXISTS survey_responses`
+  en cada petición) — sin migraciones formales, a propósito: es una
+  funcionalidad satélite, no la base de datos relacional real del proyecto
+  (esa es `backend/prisma/schema.prisma`).
+- **Variable de entorno requerida**: `DATABASE_URL` — la rellena
+  automáticamente Vercel al conectar el proyecto a una base de datos
+  Postgres/Neon desde su dashboard (Storage → Create Database → Postgres);
+  no hay que copiarla a mano. Ver `.env.example`.
+- **Solo funciona desplegado en Vercel** (o con `vercel dev` localmente, que
+  sí sirve `demo/api/`). Con `npm run dev`/`npm run preview` normales
+  (Vite puro) no existe `/api`, y el formulario lo refleja con un mensaje
+  de error explícito en vez de fallar en silencio o dejar una pantalla en
+  blanco — comportamiento verificado, no solo asumido.
+
 ## Limitaciones (a propósito)
 
 - El estado persiste en `localStorage`, así que es **local a ese
@@ -65,9 +97,11 @@ npm run build     # genera demo/dist — HTML/CSS/JS 100% estáticos
 
 - **Vercel**: `vercel --cwd demo` o importar el repo señalando `demo` como
   root directory y `npm run build` / `dist` como comandos de build/output.
-- **Netlify**: base directory `demo`, build command `npm run build`,
-  publish directory `demo/dist`.
-- **Cloudflare Pages / GitHub Pages**: mismo build command y carpeta de
-  salida `dist`.
-
-No requiere ninguna variable de entorno.
+  Vercel detecta `demo/api/survey.ts` automáticamente como función
+  serverless — no requiere configuración adicional más allá de conectar la
+  base de datos (ver sección de encuestas arriba).
+- **Netlify / Cloudflare Pages / GitHub Pages**: mismo build command y
+  carpeta de salida `dist`, pero **sin `/api`** — funcionan para el resto de
+  la demo (100% estática), no para las encuestas, que necesitan un runtime
+  serverless. Si se despliega ahí, las dos páginas de encuestas seguirán
+  siendo visitables pero el envío mostrará el error de red esperado.

@@ -4,6 +4,7 @@ import { WagmiProvider } from "wagmi";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { config } from "@/lib/wagmi";
 import Layout from "@/components/layout/Layout";
+import Intro from "@/pages/Intro";
 import Feed from "@/pages/Feed";
 import About from "@/pages/About";
 import Publish from "@/pages/Publish";
@@ -14,6 +15,9 @@ import UserProfile from "@/pages/UserProfile";
 import Profile from "@/pages/Profile";
 import Validate from "@/pages/Validate";
 import ValidatorWelcome from "@/pages/ValidatorWelcome";
+import SurveysIntro from "@/pages/SurveysIntro";
+import SurveyProblem from "@/pages/SurveyProblem";
+import SurveySolution from "@/pages/SurveySolution";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const queryClient = new QueryClient();
@@ -33,7 +37,8 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route element={<Layout />}>
-                <Route path="/" element={<Feed />} />
+                <Route path="/" element={<Intro />} />
+                <Route path="/noticias" element={<Feed />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/publish" element={<Publish />} />
                 <Route path="/article/:hash" element={<Article />} />
@@ -43,6 +48,9 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/validate" element={<Validate />} />
                 <Route path="/validate/welcome" element={<ValidatorWelcome />} />
+                <Route path="/encuestas" element={<SurveysIntro />} />
+                <Route path="/encuestas/problema" element={<SurveyProblem />} />
+                <Route path="/encuestas/producto" element={<SurveySolution />} />
               </Route>
             </Routes>
           </BrowserRouter>

@@ -298,10 +298,10 @@ const notifications: NotificationEntry[] = [
   {
     id: notificationIdSeq++,
     userAddress: DEMO_ADDRESS,
-    contentHash: publications[2].contentHash,
-    type: "CONSENSUS_REACHED",
+    contentHash: "",
+    type: "DEMO_INFO",
     read: false,
-    createdAt: isoDate(2),
+    createdAt: isoDate(0),
   },
 ];
 
@@ -428,7 +428,14 @@ export const demoStore = {
     return publications.find((p) => p.contentHash === hash);
   },
 
-  createPublication(data: { contentHash: string; title: string; body: string; tags: string[]; ipfsCid?: string }) {
+  createPublication(data: {
+    contentHash: string;
+    title: string;
+    body: string;
+    tags: string[];
+    links?: string[];
+    ipfsCid?: string;
+  }) {
     const publication: Publication = {
       id: publications.length + 1,
       contentHash: data.contentHash,
@@ -445,6 +452,12 @@ export const demoStore = {
       voteCount: 0,
       rounds: [{ id: 1, contentHash: data.contentHash, round: 0, state: "PENDING", result: null, completed: false }],
       validations: [],
+      links: (data.links ?? [])
+        .map((hash) => {
+          const target = publications.find((p) => p.contentHash === hash);
+          return target ? { contentHash: target.contentHash, title: target.title } : null;
+        })
+        .filter((l): l is { contentHash: string; title: string } => l !== null),
     };
     publications.unshift(publication);
     persistState();

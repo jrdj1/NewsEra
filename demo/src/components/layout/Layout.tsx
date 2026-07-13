@@ -1,10 +1,11 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 
-// El feed de Inicio y la página de Validar son a pantalla completa
+// La cinemática de apertura, las Noticias, la página de Validar y "Sobre
+// el proyecto" (8 pantallas a modo de cinemática) son a pantalla completa
 // (scroll-snap) — un footer por debajo rompería esa ilusión, añadiendo
 // scroll extra donde no debería haberlo.
-const FULLSCREEN_ROUTES = ["/", "/validate"];
+const FULLSCREEN_ROUTES = ["/", "/noticias", "/validate", "/about"];
 
 export default function Layout() {
   const { pathname } = useLocation();

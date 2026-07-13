@@ -18,24 +18,50 @@ export function NotificationPanel({ address, onClose }: { address: string; onClo
             <EmptyState message="No tienes notificaciones nuevas." />
           </div>
         ) : (
-          items.map((n) => (
-            <Link
-              key={n.id}
-              to={`/article/${n.contentHash}`}
-              onClick={() => {
-                if (!n.read) markRead.mutate(n.id);
-                onClose();
-              }}
-              className={`block border-b border-zinc-50 px-4 py-3 text-sm transition-colors last:border-0 hover:bg-zinc-50 dark:border-zinc-900 dark:hover:bg-zinc-900 ${
-                n.read ? "text-zinc-400" : "font-medium text-zinc-900 dark:text-white"
-              }`}
-            >
-              {describeNotification(n)}
-              <span className="mt-1 block text-xs text-zinc-400">
-                {new Date(n.createdAt).toLocaleString()}
-              </span>
-            </Link>
-          ))
+          items.map((n) => {
+            const itemClassName = `block border-b border-zinc-50 px-4 py-3 text-left text-sm transition-colors last:border-0 hover:bg-zinc-50 dark:border-zinc-900 dark:hover:bg-zinc-900 ${
+              n.read ? "text-zinc-400" : "font-medium text-zinc-900 dark:text-white"
+            }`;
+            const body = (
+              <>
+                {describeNotification(n)}
+                <span className="mt-1 block text-xs text-zinc-400">
+                  {new Date(n.createdAt).toLocaleString()}
+                </span>
+              </>
+            );
+
+            // DEMO_INFO no corresponde a ningún artículo real — no navega,
+            // solo se marca como leída.
+            if (n.type === "DEMO_INFO") {
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => {
+                    if (!n.read) markRead.mutate(n.id);
+                  }}
+                  className={`w-full ${itemClassName}`}
+                >
+                  {body}
+                </button>
+              );
+            }
+
+            return (
+              <Link
+                key={n.id}
+                to={`/article/${n.contentHash}`}
+                onClick={() => {
+                  if (!n.read) markRead.mutate(n.id);
+                  onClose();
+                }}
+                className={itemClassName}
+              >
+                {body}
+              </Link>
+            );
+          })
         )}
       </div>
     </div>
