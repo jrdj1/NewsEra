@@ -188,3 +188,23 @@ sólidos ajenos — invisible en la práctica pese a calcularse bien.
 ## 5. Pendiente de definir en la implementación
 
 Todo lo anterior está implementado — sin pendientes abiertos por ahora.
+
+---
+
+## 6. Encuestas de validación (`/encuestas/problema`, `/encuestas/producto`)
+
+Pieza aparte, añadida después de cerrar la cinemática y `/about`: dos
+formularios cortos (6 preguntas Likert 1–5 + 1 pregunta abierta opcional
+cada uno) que validan, respectivamente, la **intensidad del problema** que
+resuelve NewsEra y la **idoneidad de NewsEra como solución concreta**,
+siguiendo el formato estándar de validación de hipótesis estilo Lean
+Startup. Enlazadas desde la última pantalla de `/about` (`#memoria`), justo
+donde ya se pide la reflexión final antes de cerrar la sesión de la persona
+visitante.
+
+A diferencia de todo lo demás en esta demo, **no viven en memoria**: es la
+única funcionalidad con escritura real fuera del navegador — ver
+`README.md` §"Encuestas de validación" y `demo/api/survey.ts`. Se mantienen
+fuera de la cinemática de `/` a propósito: no son parte del "mapa del
+tesoro" de la app (no enseñan una función de NewsEra), son instrumentación
+de validación del propio TFG.

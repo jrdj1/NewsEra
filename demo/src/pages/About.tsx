@@ -215,6 +215,21 @@ export default function About() {
             Leer la memoria (GitHub)
           </a>
 
+          <div className="mt-6 flex flex-col items-center gap-2 sm:flex-row">
+            <Link
+              to="/encuestas/problema"
+              className="rounded-lg border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            >
+              📋 ¿Te afecta el problema? Cuéntanoslo
+            </Link>
+            <Link
+              to="/encuestas/producto"
+              className="rounded-lg border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            >
+              💬 ¿Qué te parece la solución?
+            </Link>
+          </div>
+
           <div className="mt-8 space-y-0.5 text-xs text-zinc-300">
             <p>
               Jorge Rafael de Julián Vicedo — Grado en Ingeniería Informática, EPS, Universidad de Alicante
