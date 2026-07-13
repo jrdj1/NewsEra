@@ -43,6 +43,8 @@ const NOTIFICATION_MESSAGES: Record<NotificationEntry["type"], (hash: string) =>
   REOPENED: () => "Se ha reabierto la votación de un artículo que sigues.",
   CONSENSUS_REACHED: () => "Se alcanzó consenso en un artículo que sigues o votaste.",
   RETROACTIVE_APPLIED: () => "Se aplicó un ajuste retroactivo de reputación en un artículo que votaste.",
+  DEMO_INFO: () =>
+    "🧪 Esto es una demo: los artículos, usuarios y votos son datos de prueba, no reales. La cartera está simulada (sin MetaMask real) y no hay transacciones en blockchain de verdad — todo se guarda solo en este navegador. Publicar, votar, predecir, favoritos y notificaciones funcionan, pero no hay backend, IPFS ni red real detrás.",
 };
 
 export function describeNotification(notification: NotificationEntry): string {

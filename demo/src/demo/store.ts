@@ -298,10 +298,10 @@ const notifications: NotificationEntry[] = [
   {
     id: notificationIdSeq++,
     userAddress: DEMO_ADDRESS,
-    contentHash: publications[2].contentHash,
-    type: "CONSENSUS_REACHED",
+    contentHash: "",
+    type: "DEMO_INFO",
     read: false,
-    createdAt: isoDate(2),
+    createdAt: isoDate(0),
   },
 ];
 

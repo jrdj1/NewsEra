@@ -277,7 +277,10 @@ export interface NotificationEntry {
   id: number;
   userAddress: string;
   contentHash: string;
-  type: "REOPENED" | "CONSENSUS_REACHED" | "RETROACTIVE_APPLIED";
+  // "DEMO_INFO" no existe en la API real (ver frontend/src/lib/api.ts) — es
+  // un tipo exclusivo de la demo para el aviso fijo de "esto es una demo",
+  // que no enlaza a ningún artículo real.
+  type: "REOPENED" | "CONSENSUS_REACHED" | "RETROACTIVE_APPLIED" | "DEMO_INFO";
   read: boolean;
   createdAt: string;
 }
