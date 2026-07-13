@@ -117,7 +117,7 @@ const QUESTIONS: SurveyQuestion[] = [
   {
     id: "item14",
     type: "likert",
-    text: "El proceso de tener que conectar un monedero digital (como MetaMask/RainbowKit) y confirmar con él cada voto o publicación me resulta una barrera demasiado extraña o molesta para el uso cotidiano de la web.",
+    text: 'Tener que confirmar cada voto o publicación con una firma digital (una especie de "llave" personal que demuestra que eres tú) me ha resultado un paso raro o molesto para el uso normal de la web.',
     lowLabel: "Totalmente en desacuerdo",
     highLabel: "Totalmente de acuerdo",
   },

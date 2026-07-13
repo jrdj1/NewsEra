@@ -74,65 +74,19 @@ Esto permitirá justificar científicamente en la memoria que el problema de New
 
 ---
 
-## Anexo A — Encuesta 1: Estudio sobre el Consumo de Noticias e Información Digital (antes de ver la web)
+## Encuestas
 
-Implementada en `demo/src/pages/SurveyProblem.tsx` (`/encuestas/problema`).
+El texto completo de las 2 encuestas vive en archivos propios de esta misma carpeta, no aquí, para no duplicar contenido:
 
-Muchas gracias por participar en este estudio. Las respuestas son completamente anónimas y se utilizarán exclusivamente con fines de investigación académica en el marco de un Trabajo Fin de Grado en Ingeniería Informática. Por favor, responde con total sinceridad en base a tu experiencia diaria en internet.
-
-### Bloque A: Tu experiencia con las noticias actuales
-
-Indica tu grado de acuerdo con las siguientes afirmaciones (1 = Totalmente en desacuerdo, 5 = Totalmente de acuerdo).
-
-1. Con frecuencia encuentro en las redes sociales o en los diarios digitales noticias que me parecen dudosas, falsas o exageradas.
-2. Confío en que los medios de comunicación tradicionales (tanto públicos como privados) ofrecen la información de forma completamente independiente, sin dejarse influir por partidos políticos o empresas que los financian.
-3. Confío en que las grandes plataformas de internet (redes sociales, buscadores) muestran las publicaciones de manera neutral y transparente, sin ocultar o potenciar contenidos según sus propios intereses.
-4. En alguna ocasión he compartido, interactuado o dado por buena una noticia en internet que más tarde resultó ser falsa o un bulo manipulado.
-5. Cuando dudo de una noticia en internet, me resulta muy difícil, pesado o casi imposible comprobar por mí mismo/a quién la escribió originalmente, si ha sido modificada a escondidas o si las fuentes que cita son reales.
-
-### Bloque B: Gravedad del problema
-
-6. En general, ¿qué nivel de gravedad le otorgas al problema de que la información de actualidad esté controlada por unos pocos grupos de poder o manipulada en las redes sociales? (1 = Nada grave, 5 = Muy grave)
-7. ¿Conoces o utilizas actualmente algún método o herramienta digital que te permita saber con absoluta certeza si un texto de internet ha sido modificado de forma oculta desde que se publicó? (Sí / No / No estoy seguro/a)
-
----
-
-## Anexo B — Encuesta 2: Evaluación de la Plataforma NewsEra (después de usar la web)
-
-Implementada en `demo/src/pages/SurveySolution.tsx` (`/encuestas/producto`).
-
-Responde a este cuestionario únicamente después de haber interactuado o navegado por la versión de pruebas de la página web (revisando el listado de noticias, el apartado para publicar y el sistema de votación y puntos de los revisores).
-
-### Bloque A: Evaluación de la usabilidad de la página web (Escala SUS)
-
-Indica tu grado de acuerdo con las siguientes afirmaciones generales sobre el funcionamiento y diseño de la página web (1 = Totalmente en desacuerdo, 5 = Totalmente de acuerdo).
-
-1. Creo que me gustaría utilizar esta página web con frecuencia para informarme.
-2. He encontrado que la página web es innecesariamente compleja.
-3. Me ha parecido que la página web es fácil de usar.
-4. Creo que necesitaría la ayuda de una persona experta para poder manejarme en esta página web.
-5. Me ha parecido que las distintas funciones de la aplicación (leer, publicar, votar) están muy bien integradas entre sí.
-6. He percibido demasiadas contradicciones o cosas incoherentes al navegar por la página web.
-7. Imagino que la mayoría de la gente aprendería a utilizar esta página web de forma muy rápida.
-8. Navegar y realizar acciones en esta página web me ha resultado incómodo o pesado.
-9. Me he sentido muy seguro/a y con el control de la situación al confirmar acciones dentro de la página web.
-10. He necesitado aprender o entender demasiadas cosas antes de poder empezar a usar esta página web de forma cómoda.
-
-### Bloque B: Confianza en las propiedades de la aplicación
-
-Indica tu nivel de acuerdo con las siguientes afirmaciones sobre el enfoque y las características específicas de NewsEra.
-
-11. Me genera mucha confianza saber que, una vez que se publica una noticia en esta web, queda registrada de forma que NADIE (ni gobiernos, ni empresas, ni los propios creadores de la web) puede borrarla o modificarla a escondidas.
-12. Me parece acertado que la veracidad de una noticia se decida mediante una votación transparente de revisores independientes, en lugar de dejar la decisión en manos del director de un medio o de los filtros de una red social.
-13. El sistema de "puntos de reputación" (donde un revisor gana puntos si acierta con la comunidad y los pierde si se equivoca de forma continuada) me parece una forma justa y transparente de dar más peso a quienes demuestran un historial honesto.
-14. El proceso de tener que conectar un monedero digital (como MetaMask/RainbowKit) y confirmar con él cada voto o publicación me resulta una barrera demasiado extraña o molesta para el uso cotidiano de la web.
-15. ¿Utilizarías de forma habitual NewsEra para consultar actualidad verificada si la página web contara con periodistas y publicaciones diarias? (Sí / No / Tal vez)
-16. En tus propias palabras, ¿qué es lo que más te aporta o convence de esta página web? ¿Cuál crees que es su mayor dificultad para el público general? (texto libre opcional)
-
----
+- [`encuesta-1-problema.md`](./encuesta-1-problema.md) — Estudio sobre el Consumo de Noticias e Información Digital (antes de ver la web).
+- [`encuesta-2-producto.md`](./encuesta-2-producto.md) — Cuestionario de Evaluación de la Web NewsEra (después de usar la web).
 
 ## Nota de implementación
 
-Ambas encuestas se implementaron literalmente en la demo (`demo/`, ver `demo/README.md` §"Encuestas de validación"), con los identificadores de cada pregunta (`item1`..`item16`) alineados con la numeración de este informe, para poder cruzar las respuestas JSONB crudas almacenadas en Postgres con este documento al calcular la puntuación SUS y los criterios de éxito — el cálculo de la fórmula SUS y los porcentajes de corte no se hacen en el cliente, son parte del análisis posterior de los datos recogidos (Capítulo 6 de la memoria).
+Ambas encuestas se implementaron literalmente en la demo (`demo/`, ver `demo/README.md` §"Encuestas de validación"), con los identificadores de cada pregunta (`item1`..`item16`) alineados con la numeración de los archivos de encuesta, para poder cruzar las respuestas JSONB crudas almacenadas en Postgres con estos documentos al calcular la puntuación SUS y los criterios de éxito — el cálculo de la fórmula SUS y los porcentajes de corte no se hacen en el cliente, son parte del análisis posterior de los datos recogidos (Capítulo 6 de la memoria).
+
+El ítem 14 de la Encuesta 2 se reformuló una vez, tras el diseño inicial, para que lo entienda quien no sabe qué es blockchain (quitando la referencia explícita a MetaMask/RainbowKit) — mismo `id`, mismo constructo (fricción de la firma/cartera digital), sin afectar a las respuestas ya guardadas con la redacción anterior salvo en el matiz textual de la pregunta.
+
+**Importante:** en el momento de escribir esto ya existen respuestas reales guardadas en la base de datos para los ítems 1–16 de la Encuesta 2 y 1–7 de la Encuesta 1. Por eso ningún ítem existente se ha reformulado ni renumerado — solo se añaden ítems nuevos al final (Bloque C), para no invalidar las respuestas ya recogidas.
 
 Una nueva tarjeta en la escena de portada de `/` (`demo/src/pages/Intro.tsx`), junto a la tarjeta "Sobre el proyecto", enlaza a `/encuestas/problema` con el contexto necesario para responder sin haber explorado la demo, seguida de un aviso para probar la web antes de responder a `/encuestas/producto`.
