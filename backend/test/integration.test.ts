@@ -461,6 +461,265 @@ describe("backend de integración", () => {
     });
   });
 
+  describe("reapertura y reclamación retroactiva (off-chain, HU-7.2)", () => {
+    async function seedPublication(label: string): Promise<string> {
+      const body = uniqueBody(label);
+      const contentHash = keccak256(toBytes(body));
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const author = accounts[1] as `0x${string}`;
+      const tx = await wallet(author).writeContract({
+        address: PUB,
+        abi: pubAbi,
+        functionName: "registerPublication",
+        args: [contentHash],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+      await app.request("/api/v1/publications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentHash, title: label, body, tags: [] }),
+      });
+      return contentHash;
+    }
+
+    it("POST /publications/:hash/reopen-request registra la solicitud y rechaza duplicado (409)", async () => {
+      const contentHash = await seedPublication("articulo para reopen-request");
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const requester = accounts[5] as string;
+
+      const first = await app.request(`/api/v1/publications/${contentHash}/reopen-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterAddress: requester }),
+      });
+      expect(first.status).toBe(201);
+      const firstJson = await first.json();
+      expect(firstJson.contentHash).toBe(contentHash);
+      expect(firstJson.requesterAddress.toLowerCase()).toBe(requester.toLowerCase());
+
+      const stored = await prisma.reopenRequest.findFirst({ where: { contentHash } });
+      expect(stored).not.toBeNull();
+
+      const duplicate = await app.request(`/api/v1/publications/${contentHash}/reopen-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterAddress: requester }),
+      });
+      expect(duplicate.status).toBe(409);
+    });
+
+    it("POST /publications/:hash/reopen-request devuelve 404 si la publicación no existe", async () => {
+      const fakeHash = keccak256(toBytes(uniqueBody("no existe")));
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const res = await app.request(`/api/v1/publications/${fakeHash}/reopen-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requesterAddress: accounts[5] }),
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("POST /publications/:hash/claim-retroactive registra la reclamación y rechaza el mismo txHash duplicado (409)", async () => {
+      const contentHash = await seedPublication("articulo para claim-retroactive");
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const validatorAddress = accounts[6] as string;
+      const txHash = `0x${"ab".repeat(32)}`;
+
+      const first = await app.request(`/api/v1/publications/${contentHash}/claim-retroactive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ validatorAddress, netDelta: 2, txHash }),
+      });
+      expect(first.status).toBe(201);
+      const firstJson = await first.json();
+      expect(firstJson.netDelta).toBe(2);
+
+      const stored = await prisma.retroactiveClaim.findFirst({ where: { contentHash } });
+      expect(stored).not.toBeNull();
+      expect(stored?.netDelta).toBe(2);
+
+      const duplicate = await app.request(`/api/v1/publications/${contentHash}/claim-retroactive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ validatorAddress, netDelta: -1, txHash }),
+      });
+      expect(duplicate.status).toBe(409);
+    });
+
+    it("POST /publications/:hash/claim-retroactive devuelve 404 si la publicación no existe", async () => {
+      const fakeHash = keccak256(toBytes(uniqueBody("no existe 2")));
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const res = await app.request(`/api/v1/publications/${fakeHash}/claim-retroactive`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ validatorAddress: accounts[6], netDelta: 1 }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/v1/sync/events (HU-7.6, re-sincronización manual)", () => {
+    it("responde 401 sin cabecera Authorization", async () => {
+      const res = await app.request("/api/v1/sync/events", { method: "POST" });
+      expect(res.status).toBe(401);
+      const json = await res.json();
+      expect(json.error.code).toBe("UNAUTHORIZED");
+    });
+
+    it("responde 401 con un token de servicio incorrecto", async () => {
+      const res = await app.request("/api/v1/sync/events", {
+        method: "POST",
+        headers: { Authorization: "Bearer token-incorrecto" },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it("con el token correcto, re-procesa el historial y refleja on-chain->BD un evento no visto antes", async () => {
+      // Publicamos directamente on-chain (sin pasar por POST /publications) para
+      // que la única forma de que la fila exista en Postgres sea el propio
+      // re-procesado disparado por este endpoint.
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const author = accounts[1] as `0x${string}`;
+      const body = uniqueBody("articulo indexado via /sync/events");
+      const contentHash = keccak256(toBytes(body));
+      const tx = await wallet(author).writeContract({
+        address: PUB,
+        abi: pubAbi,
+        functionName: "registerPublication",
+        args: [contentHash],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+
+      const token = process.env.SERVICE_TOKEN ?? "dev-service-token";
+      const res = await app.request("/api/v1/sync/events", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(typeof json.fromBlock).toBe("string");
+      expect(typeof json.processedUntil).toBe("string");
+
+      const publication = await prisma.publication.findUnique({ where: { contentHash } });
+      expect(publication).not.toBeNull();
+      expect(publication?.authorAddress.toLowerCase()).toBe(author.toLowerCase());
+    });
+  });
+
+  describe("actividad y ledger de reputación (GET /validators/:address/activity y /reputation-history)", () => {
+    it("refleja publicación + voto DEFINITIVE reales: /activity lista ambos y /reputation-history registra el efecto reputacional", async () => {
+      const accounts = await publicClient.request({ method: "eth_accounts" });
+      const admin = accounts[0] as `0x${string}`;
+      const author = accounts[1] as `0x${string}`;
+      const voter = privateKeyToAccount(generatePrivateKey());
+
+      // +1n: excluye el bloque actual (ya minado, potencialmente por la
+      // última transacción de un test anterior dentro de la misma suite) —
+      // getContractEvents trata fromBlock como inclusivo, así que sin el +1n
+      // se reprocesarían eventos ya gestionados por el test previo contra una
+      // BD recién truncada por beforeEach, provocando un FK violation si esos
+      // eventos referencian filas que ya no existen. Se captura ANTES de
+      // registrar al votante (y no solo antes de publicar): el indexador
+      // deriva el reputationScore "antes" de cada ReputationUpdated leyendo
+      // la fila de `validators` ya indexada — si el registro inicial
+      // (ReputationUpdated a 10) queda fuera del rango procesado, el delta de
+      // la recompensa por voto ganador se calcularía mal (10→15 = +15 en vez
+      // de +5) y se clasificaría erróneamente como PUBLISH_REWARD.
+      const fromBlock = (await publicClient.getBlockNumber()) + 1n;
+
+      // Registrar al votante con reputación suficiente y financiarlo para gas.
+      const regTx = await wallet(admin).writeContract({
+        address: REP,
+        abi: repAbi,
+        functionName: "registerValidator",
+        args: [voter.address, 10n],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: regTx });
+      const fundTx = await wallet(admin).sendTransaction({ to: voter.address, value: 10n ** 16n });
+      await publicClient.waitForTransactionReceipt({ hash: fundTx });
+
+      const body = uniqueBody("articulo para activity y reputation-history");
+      const contentHash = keccak256(toBytes(body));
+      const pubTx = await wallet(author).writeContract({
+        address: PUB,
+        abi: pubAbi,
+        functionName: "registerPublication",
+        args: [contentHash],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: pubTx });
+      await app.request("/api/v1/publications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentHash, title: "Activity test", body, tags: [] }),
+      });
+
+      // Único votante registrado con quorumThreshold=1 en el módulo Ignition
+      // de desarrollo alcanzaría DEFINITIVE con un solo voto; para no depender
+      // de ese parámetro exacto, registramos y financiamos 2 votantes más y
+      // hacemos que los 3 voten TRUE, garantizando supermayoría con cualquier
+      // quorumThreshold <= 3 configurado en local.
+      const extraVoters = [privateKeyToAccount(generatePrivateKey()), privateKeyToAccount(generatePrivateKey())];
+      for (const v of extraVoters) {
+        const rTx = await wallet(admin).writeContract({
+          address: REP,
+          abi: repAbi,
+          functionName: "registerValidator",
+          args: [v.address, 10n],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: rTx });
+        const fTx = await wallet(admin).sendTransaction({ to: v.address, value: 10n ** 16n });
+        await publicClient.waitForTransactionReceipt({ hash: fTx });
+      }
+
+      for (const v of [voter, ...extraVoters]) {
+        const voteTx = await createWalletClient({
+          account: v,
+          chain: hardhat,
+          transport: http(process.env.RPC_URL_LOCAL),
+        }).writeContract({ address: VAL, abi: valAbi, functionName: "submitValidation", args: [contentHash, 0] });
+        await publicClient.waitForTransactionReceipt({ hash: voteTx });
+      }
+
+      await processHistoricalEvents(fromBlock);
+
+      const publication = await prisma.publication.findUnique({ where: { contentHash } });
+      expect(publication?.consensusState).toBe("DEFINITIVE");
+
+      // /activity del autor incluye la publicación.
+      const authorActivity = await app.request(`/api/v1/validators/${author}/activity?limit=200`);
+      expect(authorActivity.status).toBe(200);
+      const authorActivityJson = await authorActivity.json();
+      expect(
+        authorActivityJson.items.some(
+          (i: { type: string; contentHash: string }) => i.type === "PUBLICATION" && i.contentHash === contentHash,
+        ),
+      ).toBe(true);
+
+      // /activity del votante incluye su voto sobre este artículo.
+      const voterActivity = await app.request(`/api/v1/validators/${voter.address}/activity?limit=200`);
+      expect(voterActivity.status).toBe(200);
+      const voterActivityJson = await voterActivity.json();
+      const voteEntry = voterActivityJson.items.find(
+        (i: { type: string; contentHash: string }) => i.type === "VALIDATION" && i.contentHash === contentHash,
+      );
+      expect(voteEntry).toBeDefined();
+      expect(voteEntry.vote).toBe("TRUE");
+
+      // /reputation-history del votante registra el efecto de esta ronda
+      // (VOTE_REWARD por haber votado la opción ganadora), clasificado por el
+      // indexador a partir del recibo de la transacción (ver indexer.ts).
+      const reputationHistory = await app.request(`/api/v1/validators/${voter.address}/reputation-history`);
+      expect(reputationHistory.status).toBe(200);
+      const reputationHistoryJson = await reputationHistory.json();
+      const voteRewardEvent = reputationHistoryJson.items.find(
+        (e: { contentHash: string | null; reason: string }) =>
+          e.contentHash === contentHash && e.reason === "VOTE_REWARD",
+      );
+      expect(voteRewardEvent).toBeDefined();
+      expect(voteRewardEvent.delta).toBe(5);
+    });
+  });
+
   describe("indexador", () => {
     it("procesa PublicationRegistered y ReputationUpdated y refleja el efecto en la base de datos", async () => {
       const accounts = await publicClient.request({ method: "eth_accounts" });
@@ -471,7 +730,10 @@ describe("backend de integración", () => {
       // las cuentas fijas de Hardhat (que otros tests/ejecuciones ya usan).
       const validator = privateKeyToAccount(generatePrivateKey()).address;
 
-      const fromBlock = await publicClient.getBlockNumber();
+      // +1n: ver comentario equivalente en el test de "actividad y ledger de
+      // reputación" — evita reprocesar el último bloque ya gestionado por un
+      // test anterior de la suite contra una BD recién truncada.
+      const fromBlock = (await publicClient.getBlockNumber()) + 1n;
 
       // Registrar un validador (ReputationUpdated) y publicar un artículo
       // (PublicationRegistered) directamente on-chain, sin pasar por la API.
