@@ -4,6 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAccount } from "wagmi";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useReputationStatus } from "@/hooks/useReputationStatus";
+import { useEnrichedProfile } from "@/hooks/useProfile";
 import { NotificationPanel } from "@/components/notifications/NotificationPanel";
 
 function HomeIcon() {
@@ -91,6 +92,30 @@ const navLinks = [
 
 const ABOUT_LINK = { to: "/about", label: "Sobre Nosotros", end: false, Icon: AboutIcon };
 
+function ProfileAvatarLink({ address }: { address: string }) {
+  const { data: profile } = useEnrichedProfile(address);
+
+  return (
+    <NavLink
+      to="/profile"
+      aria-label="Perfil"
+      className={({ isActive }) =>
+        `flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 transition-colors ${
+          isActive ? "ring-brand" : "ring-transparent hover:ring-zinc-300 dark:hover:ring-zinc-700"
+        }`
+      }
+    >
+      {profile?.avatarUrl ? (
+        <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <span className="flex h-full w-full items-center justify-center bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+          <ProfileIcon />
+        </span>
+      )}
+    </NavLink>
+  );
+}
+
 function NotificationBell({ address }: { address: string }) {
   const [open, setOpen] = useState(false);
   const { data } = useNotifications(address);
@@ -129,25 +154,23 @@ export default function Header() {
         )
       : navLinks;
 
-  const links = isConnected
-    ? [...baseLinks, { to: "/profile", label: "Perfil", end: false, Icon: ProfileIcon }, ABOUT_LINK]
-    : [...baseLinks, ABOUT_LINK];
+  const links = [...baseLinks, ABOUT_LINK];
 
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-zinc-200 bg-white/90 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/90">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-2 sm:px-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-2 sm:gap-3 sm:px-4">
         <Link to="/" className="mr-1 shrink-0 sm:mr-2">
           <img src="/logo.jpg" alt="NewsEra" className="h-9 w-9 rounded-lg object-cover" />
         </Link>
 
-        <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto sm:gap-2">
+        <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto sm:gap-1">
           {links.map(({ to, label, end, Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm ${
+                `flex shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors sm:flex-row sm:gap-1.5 sm:px-2.5 sm:text-sm ${
                   isActive
                     ? "bg-brand/10 text-brand"
                     : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-white"
@@ -160,9 +183,17 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
-          {isConnected && address && <NotificationBell address={address} />}
-          <ConnectButton accountStatus={{ smallScreen: "avatar", largeScreen: "full" }} showBalance={false} />
+        {/* Cuenta: red + cartera, perfil y notificaciones — agrupadas y
+            separadas del menú de navegación con un borde, para que no se
+            confundan con los destinos de contenido (Noticias, Validar...). */}
+        <div className="flex shrink-0 items-center gap-2 border-l border-zinc-200 pl-2 dark:border-zinc-800 sm:gap-3 sm:pl-3">
+          <ConnectButton accountStatus="avatar" showBalance={false} />
+          {isConnected && address && (
+            <>
+              <ProfileAvatarLink address={address} />
+              <NotificationBell address={address} />
+            </>
+          )}
         </div>
       </div>
     </header>

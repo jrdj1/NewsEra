@@ -230,6 +230,25 @@ export default function Article() {
         </div>
       )}
 
+      {/* Enlaces internos citados (UC~32) — acceso directo a cada artículo
+          referenciado, no solo texto plano dentro del cuerpo. */}
+      {publication.links && publication.links.length > 0 && (
+        <Card className="mb-8 p-5">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-zinc-400">
+            Enlaces internos citados
+          </h2>
+          <ul className="space-y-1.5 text-sm">
+            {publication.links.map((l) => (
+              <li key={l.contentHash}>
+                <Link to={`/article/${l.contentHash}`} className="text-brand hover:underline">
+                  {l.title || l.contentHash.slice(0, 12)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       {/* Historial de rondas */}
       {publication.rounds && publication.rounds.length > 0 && (
         <Card className="mb-8 p-5">

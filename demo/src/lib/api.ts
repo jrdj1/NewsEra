@@ -59,7 +59,14 @@ async function route<T>(method: string, path: string, body?: unknown): Promise<T
     }) as T;
   }
   if (method === "POST" && match(pathname, "/api/v1/publications")) {
-    const b = body as { contentHash: string; ipfsCid?: string; title: string; body: string; tags: string[] };
+    const b = body as {
+      contentHash: string;
+      ipfsCid?: string;
+      title: string;
+      body: string;
+      tags: string[];
+      links?: string[];
+    };
     return demoStore.createPublication(b) as T;
   }
   if (method === "GET" && (params = match(pathname, "/api/v1/publications/:hash"))) {
@@ -178,6 +185,8 @@ export interface Publication {
   voteCount?: number;
   rounds?: Round[];
   validations?: Validation[];
+  /** Enlaces internos citados — solo presente en el detalle (GET /:hash). */
+  links?: { contentHash: string; title: string }[];
 }
 
 export interface Validator {
