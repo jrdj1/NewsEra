@@ -34,10 +34,15 @@ export function ConnectButton(_props: unknown) {
     <button
       type="button"
       title="Demo: cartera simulada, sin conexión real"
-      className="flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm dark:bg-zinc-800 sm:h-auto sm:w-auto sm:gap-1.5 sm:rounded-full sm:px-3 sm:py-1.5 sm:text-xs sm:font-medium sm:text-zinc-600 sm:dark:text-zinc-300"
     >
-      <span>🧪 Demo</span>
-      <span className="font-mono text-zinc-400">{shortAddress(DEMO_ADDRESS)}</span>
+      {/* Icono suelto en móvil (mismo tamaño que avatar/notificaciones) — el
+          texto completo solo aporta en escritorio, donde sobra sitio. */}
+      <span aria-hidden="true" className="sm:hidden">
+        🧪
+      </span>
+      <span className="hidden sm:inline">🧪 Demo</span>
+      <span className="hidden font-mono text-zinc-400 sm:inline">{shortAddress(DEMO_ADDRESS)}</span>
     </button>
   );
 }

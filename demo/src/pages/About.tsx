@@ -207,7 +207,7 @@ export default function About() {
 
         <SlideShell {...memoria}>
           <a
-            href="https://github.com/jrdj1/TFG-NewsEra-memoria"
+            href="https://github.com/jrdj1/NewsEra/blob/main/docs/memoria/main.pdf"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
