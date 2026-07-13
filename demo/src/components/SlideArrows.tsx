@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 
 // Cuánto tiempo sin scrollear/tocar la pantalla antes de que las flechas se
 // atenúen en móvil (en escritorio siempre se ven al 100%, ver className).
-const IDLE_DELAY_MS = 2200;
+const IDLE_DELAY_MS = 900;
 
 function ChevronUp() {
   return (
@@ -110,7 +110,7 @@ export function SlideArrows({
         onClick={() => go(-1)}
         disabled={atTop}
         style={fadeStyle}
-        className={`flex h-11 w-11 items-center justify-center rounded-full border-2 shadow-lg backdrop-blur-sm transition-opacity duration-500 disabled:pointer-events-none disabled:opacity-30 sm:h-12 sm:w-12 ${cls}`}
+        className={`flex h-11 w-11 items-center justify-center rounded-full border-2 shadow-lg backdrop-blur-sm transition-opacity duration-300 disabled:pointer-events-none disabled:opacity-30 sm:h-12 sm:w-12 ${cls}`}
       >
         <ChevronUp />
       </button>
@@ -120,7 +120,7 @@ export function SlideArrows({
         onClick={() => go(1)}
         disabled={atBottom}
         style={fadeStyle}
-        className={`flex h-11 w-11 items-center justify-center rounded-full border-2 shadow-lg backdrop-blur-sm transition-opacity duration-500 disabled:pointer-events-none disabled:opacity-30 sm:h-12 sm:w-12 ${cls}`}
+        className={`flex h-11 w-11 items-center justify-center rounded-full border-2 shadow-lg backdrop-blur-sm transition-opacity duration-300 disabled:pointer-events-none disabled:opacity-30 sm:h-12 sm:w-12 ${cls}`}
       >
         <ChevronDown />
       </button>
