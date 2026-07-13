@@ -203,10 +203,11 @@ export default function Intro() {
           <div className="mt-1 flex flex-col items-center gap-3 sm:mt-2 sm:flex-row sm:items-stretch sm:gap-4">
             <Link to="/about#problema">
               <TiltCard>
-                <div className="relative flex h-40 w-36 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-3 shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-48 sm:gap-3 sm:p-4">
-                  <span className="text-3xl font-black text-white sm:text-5xl">N</span>
-                  <p className="text-xs font-semibold text-white sm:text-sm">Descubre la idea completa</p>
-                  <p className="text-[11px] text-zinc-300 sm:text-xs">Sobre el proyecto →</p>
+                <div className="relative flex h-40 w-36 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-white/15 shadow-2xl shadow-black/50 sm:h-64 sm:w-48">
+                  <img src="/logo.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/40" />
+                  <p className="relative text-xs font-semibold text-white sm:text-sm">Descubre la idea completa</p>
+                  <p className="relative text-[11px] text-zinc-200 sm:text-xs">Sobre el proyecto →</p>
                 </div>
               </TiltCard>
             </Link>
