@@ -187,8 +187,8 @@ export default function Intro() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">Bienvenido a</p>
           <h1 className="text-5xl font-black tracking-tight sm:text-7xl">NewsEra</h1>
           <p className="max-w-sm text-balance text-zinc-300 sm:max-w-md sm:text-lg">
-            El periódico comunitario donde decides tú, no una redacción ni un algoritmo —
-            con las reglas escritas en blockchain, no en la letra pequeña de una empresa.
+            El periódico donde la verdad no tiene dueño: la decide la gente, con las reglas
+            escritas en blockchain — no en la letra pequeña de una empresa.
           </p>
 
           <div className="flex flex-wrap justify-center gap-3 pt-1 sm:gap-4">
@@ -203,7 +203,7 @@ export default function Intro() {
           <Link to="/about#problema" className="mt-2">
             <TiltCard>
               <div className="relative flex h-56 w-40 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-48">
-                <span className="text-4xl font-black text-white sm:text-5xl">N</span>
+                <img src="/logo.jpg" alt="" className="h-12 w-12 rounded-lg object-cover sm:h-16 sm:w-16" />
                 <p className="text-sm font-semibold text-white">Descubre la idea completa</p>
                 <p className="text-xs text-zinc-300">Sobre el proyecto →</p>
               </div>

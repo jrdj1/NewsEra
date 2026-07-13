@@ -169,8 +169,10 @@ export default function Header() {
               key={to}
               to={to}
               end={end}
+              aria-label={label}
+              title={label}
               className={({ isActive }) =>
-                `flex shrink-0 flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors sm:flex-row sm:gap-1.5 sm:px-2.5 sm:text-sm ${
+                `flex shrink-0 items-center justify-center gap-1.5 rounded-lg p-2 text-sm font-medium transition-colors sm:px-2.5 sm:py-1.5 ${
                   isActive
                     ? "bg-brand/10 text-brand"
                     : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:hover:bg-zinc-900 dark:hover:text-white"
@@ -178,16 +180,26 @@ export default function Header() {
               }
             >
               <Icon />
-              <span>{label}</span>
+              {/* Etiqueta oculta en móvil (icono + aria-label bastan y dejan
+                  sitio para la cuenta): reaparece en escritorio, donde no
+                  compite por espacio con el resto de la cabecera. */}
+              <span className="hidden sm:inline">{label}</span>
             </NavLink>
           ))}
         </nav>
 
         {/* Cuenta: red + cartera, perfil y notificaciones — agrupadas y
             separadas del menú de navegación con un borde, para que no se
-            confundan con los destinos de contenido (Noticias, Validar...). */}
-        <div className="flex shrink-0 items-center gap-2 border-l border-zinc-200 pl-2 dark:border-zinc-800 sm:gap-3 sm:pl-3">
-          <ConnectButton accountStatus="avatar" showBalance={false} />
+            confundan con los destinos de contenido (Noticias, Validar...).
+            En móvil, accountStatus/showBalance reducen el ConnectButton a
+            solo el avatar (sin dirección/balance) para no comerse el
+            espacio del menú; en escritorio recupera la info completa. */}
+        <div className="flex shrink-0 items-center gap-1.5 border-l border-zinc-200 pl-1.5 dark:border-zinc-800 sm:gap-3 sm:pl-3">
+          <ConnectButton
+            accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
+            chainStatus={{ smallScreen: "none", largeScreen: "icon" }}
+            showBalance={{ smallScreen: false, largeScreen: true }}
+          />
           {isConnected && address && (
             <>
               <ProfileAvatarLink address={address} />
