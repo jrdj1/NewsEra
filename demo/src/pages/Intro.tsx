@@ -182,16 +182,16 @@ export default function Intro() {
         {/* Escena 0 — Portada */}
         <section
           id="portada"
-          className="relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-5 px-6 text-center"
+          className="relative flex h-[calc(100dvh-4rem)] w-full shrink-0 snap-start flex-col items-center justify-center gap-3 px-6 text-center sm:gap-5"
         >
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand">Bienvenido a</p>
-          <h1 className="text-5xl font-black tracking-tight sm:text-7xl">NewsEra</h1>
-          <p className="max-w-sm text-balance text-zinc-300 sm:max-w-md sm:text-lg">
+          <h1 className="text-4xl font-black tracking-tight sm:text-7xl">NewsEra</h1>
+          <p className="max-w-sm text-balance text-sm text-zinc-300 sm:max-w-md sm:text-lg">
             El periódico comunitario donde decides tú, no una redacción ni un algoritmo —
             con las reglas escritas en blockchain, no en la letra pequeña de una empresa.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 pt-1 sm:gap-4">
+          <div className="hidden flex-wrap justify-center gap-3 pt-1 sm:flex sm:gap-4">
             {STATS.map((s) => (
               <div key={s.label} className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 backdrop-blur-sm">
                 <p className="text-base font-black text-brand sm:text-lg">{s.value}</p>
@@ -200,15 +200,43 @@ export default function Intro() {
             ))}
           </div>
 
-          <Link to="/about#problema" className="mt-2">
-            <TiltCard>
-              <div className="relative flex h-56 w-40 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-4 shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-48">
-                <span className="text-4xl font-black text-white sm:text-5xl">N</span>
-                <p className="text-sm font-semibold text-white">Descubre la idea completa</p>
-                <p className="text-xs text-zinc-300">Sobre el proyecto →</p>
-              </div>
-            </TiltCard>
-          </Link>
+          <div className="mt-1 flex flex-col items-center gap-3 sm:mt-2 sm:flex-row sm:items-stretch sm:gap-4">
+            <Link to="/about#problema">
+              <TiltCard>
+                <div className="relative flex h-40 w-36 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-white/15 bg-white/5 p-3 shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-48 sm:gap-3 sm:p-4">
+                  <span className="text-3xl font-black text-white sm:text-5xl">N</span>
+                  <p className="text-xs font-semibold text-white sm:text-sm">Descubre la idea completa</p>
+                  <p className="text-[11px] text-zinc-300 sm:text-xs">Sobre el proyecto →</p>
+                </div>
+              </TiltCard>
+            </Link>
+
+            <div className="flex w-64 flex-col gap-2 rounded-2xl border border-white/15 bg-white/5 p-3 text-left shadow-2xl shadow-black/50 backdrop-blur-md sm:h-64 sm:w-56 sm:gap-3 sm:p-4">
+              <p className="text-xs font-semibold text-white sm:text-sm">🙋 Ayúdanos con una breve encuesta</p>
+              <p className="text-[11px] leading-snug text-zinc-300 sm:text-xs sm:leading-relaxed">
+                Cuéntanos tu experiencia con las noticias en internet — más contexto en{" "}
+                <Link to="/about#problema" className="underline underline-offset-2 hover:text-white">
+                  Sobre el proyecto
+                </Link>
+                .
+              </p>
+              <Link
+                to="/encuestas/problema"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 transition-transform hover:scale-105"
+              >
+                Responder encuesta 1 →
+              </Link>
+              <p className="mt-auto text-[10px] leading-snug text-amber-200/90 sm:text-[11px]">
+                ⚠️ Prueba primero la web antes de responder a esta segunda encuesta.
+              </p>
+              <Link
+                to="/encuestas/producto"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/30 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/10"
+              >
+                Responder encuesta 2 →
+              </Link>
+            </div>
+          </div>
         </section>
 
         {/* Escenas 1..N — el mapa del tesoro */}

@@ -3,11 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { LikertQuestion } from "@/components/LikertQuestion";
+import { ChoiceQuestion } from "@/components/ChoiceQuestion";
 import { Spinner } from "@/components/ui/states";
 import { submitSurvey, getSurveyTotal, type SurveyId } from "@/lib/surveyApi";
 
 export type SurveyQuestion =
+  | { id: string; type: "heading"; text: string; description?: string }
   | { id: string; type: "likert"; text: string; lowLabel: string; highLabel: string }
+  | { id: string; type: "choice"; text: string; options: string[] }
   | { id: string; type: "text"; text: string; placeholder?: string; optional?: boolean };
 
 export function SurveyForm({
@@ -35,7 +38,9 @@ export function SurveyForm({
       .catch(() => setTotal(null));
   }, [surveyId]);
 
-  const requiredQuestions = questions.filter((q) => !(q.type === "text" && q.optional));
+  const requiredQuestions = questions.filter(
+    (q) => q.type !== "heading" && !(q.type === "text" && q.optional),
+  );
   const isComplete = requiredQuestions.every((q) => answers[q.id] !== undefined && answers[q.id] !== "");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -72,34 +77,55 @@ export function SurveyForm({
       <h1 className="mb-2 text-3xl font-bold tracking-tight">{title}</h1>
       <div className="mb-8 text-sm text-zinc-500">{intro}</div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {questions.map((q) => (
-          <Card key={q.id} className="p-5">
-            {q.type === "likert" ? (
-              <LikertQuestion
-                id={q.id}
-                text={q.text}
-                lowLabel={q.lowLabel}
-                highLabel={q.highLabel}
-                value={typeof answers[q.id] === "number" ? (answers[q.id] as number) : undefined}
-                onChange={(value) => setAnswers((a) => ({ ...a, [q.id]: value }))}
-              />
-            ) : (
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  {q.text}
-                  {q.optional && <span className="ml-1.5 font-normal text-zinc-400">(opcional)</span>}
-                </label>
-                <Textarea
-                  rows={3}
-                  placeholder={q.placeholder}
-                  value={typeof answers[q.id] === "string" ? (answers[q.id] as string) : ""}
-                  onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
-                />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {questions.map((q) => {
+          if (q.type === "heading") {
+            return (
+              <div key={q.id} className="pt-2 first:pt-0">
+                <h2 className="text-lg font-bold tracking-tight">{q.text}</h2>
+                {q.description && <p className="mt-1 text-sm text-zinc-500">{q.description}</p>}
               </div>
-            )}
-          </Card>
-        ))}
+            );
+          }
+
+          return (
+            <Card key={q.id} className="p-5">
+              {q.type === "likert" && (
+                <LikertQuestion
+                  id={q.id}
+                  text={q.text}
+                  lowLabel={q.lowLabel}
+                  highLabel={q.highLabel}
+                  value={typeof answers[q.id] === "number" ? (answers[q.id] as number) : undefined}
+                  onChange={(value) => setAnswers((a) => ({ ...a, [q.id]: value }))}
+                />
+              )}
+              {q.type === "choice" && (
+                <ChoiceQuestion
+                  id={q.id}
+                  text={q.text}
+                  options={q.options}
+                  value={typeof answers[q.id] === "string" ? (answers[q.id] as string) : undefined}
+                  onChange={(value) => setAnswers((a) => ({ ...a, [q.id]: value }))}
+                />
+              )}
+              {q.type === "text" && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    {q.text}
+                    {q.optional && <span className="ml-1.5 font-normal text-zinc-400">(opcional)</span>}
+                  </label>
+                  <Textarea
+                    rows={3}
+                    placeholder={q.placeholder}
+                    value={typeof answers[q.id] === "string" ? (answers[q.id] as string) : ""}
+                    onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+                  />
+                </div>
+              )}
+            </Card>
+          );
+        })}
 
         {error && (
           <p className="text-sm text-red-600 dark:text-red-400">

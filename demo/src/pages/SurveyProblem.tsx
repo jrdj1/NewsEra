@@ -1,55 +1,70 @@
 import { Link } from "react-router-dom";
 import { SurveyForm, type SurveyQuestion } from "@/components/SurveyForm";
 
+// Contenido literal de "Encuesta 1: Estudio sobre el Consumo de Noticias e
+// Información Digital" (informe de diseño de experimentos de validación de
+// usuario, TFG NewsEra) — los id conservan el número de ítem del informe
+// (item1..item7) para poder cruzar las respuestas JSONB con ese documento.
 const QUESTIONS: SurveyQuestion[] = [
   {
-    id: "frecuencia_desinformacion",
-    type: "likert",
-    text: "¿Con qué frecuencia te encuentras con noticias o publicaciones que sospechas que son falsas o engañosas en redes sociales?",
-    lowLabel: "Nunca",
-    highLabel: "Muy a menudo",
+    id: "bloque_a",
+    type: "heading",
+    text: "Bloque A: Tu experiencia con las noticias actuales",
+    description:
+      "Indica tu grado de acuerdo con las siguientes afirmaciones (1 = Totalmente en desacuerdo, 5 = Totalmente de acuerdo).",
   },
   {
-    id: "confianza_plataformas",
+    id: "item1",
     type: "likert",
-    text: "¿Cuánto confías en que las plataformas donde consumes noticias (redes sociales, buscadores, medios digitales) filtran eficazmente la desinformación?",
-    lowLabel: "Nada",
-    highLabel: "Totalmente",
+    text: "Con frecuencia encuentro en las redes sociales o en los diarios digitales noticias que me parecen dudosas, falsas o exageradas.",
+    lowLabel: "Totalmente en desacuerdo",
+    highLabel: "Totalmente de acuerdo",
   },
   {
-    id: "preocupacion_discernir",
+    id: "item2",
     type: "likert",
-    text: "¿Cuánto te preocupa no poder distinguir con seguridad qué información es verdadera y cuál es falsa?",
-    lowLabel: "Nada",
-    highLabel: "Mucho",
+    text: "Confío en que los medios de comunicación tradicionales (tanto públicos como privados) ofrecen la información de forma completamente independiente, sin dejarse influir por partidos políticos o empresas que los financian.",
+    lowLabel: "Totalmente en desacuerdo",
+    highLabel: "Totalmente de acuerdo",
   },
   {
-    id: "frecuencia_compartir_falso",
+    id: "item3",
     type: "likert",
-    text: "¿Con qué frecuencia has compartido algo que luego resultó ser falso?",
-    lowLabel: "Nunca",
-    highLabel: "Muy a menudo",
+    text: "Confío en que las grandes plataformas de internet (redes sociales, buscadores) muestran las publicaciones de manera neutral y transparente, sin ocultar o potenciar contenidos según sus propios intereses.",
+    lowLabel: "Totalmente en desacuerdo",
+    highLabel: "Totalmente de acuerdo",
   },
   {
-    id: "confianza_fuente_unica",
+    id: "item4",
     type: "likert",
-    text: "¿Cuánto confías en que un solo medio de comunicación o una sola persona pueda determinar objetivamente si una noticia es verdadera?",
-    lowLabel: "Nada",
-    highLabel: "Totalmente",
+    text: "En alguna ocasión he compartido, interactuado o dado por buena una noticia en internet que más tarde resultó ser falsa o un bulo manipulado.",
+    lowLabel: "Totalmente en desacuerdo",
+    highLabel: "Totalmente de acuerdo",
   },
   {
-    id: "deseo_verificacion_rapida",
+    id: "item5",
     type: "likert",
-    text: "¿Te gustaría tener una forma fiable de verificar rápidamente si una noticia concreta es verdadera antes de compartirla?",
-    lowLabel: "Nada",
-    highLabel: "Mucho",
+    text: "Cuando dudo de una noticia en internet, me resulta muy difícil, pesado o casi imposible comprobar por mí mismo/a quién la escribió originalmente, si ha sido modificada a escondidas o si las fuentes que cita son reales.",
+    lowLabel: "Totalmente en desacuerdo",
+    highLabel: "Totalmente de acuerdo",
   },
   {
-    id: "anecdota",
-    type: "text",
-    text: "Cuéntanos, si quieres, la última vez que dudaste de si una noticia era verdadera o falsa.",
-    placeholder: "Opcional...",
-    optional: true,
+    id: "bloque_b",
+    type: "heading",
+    text: "Bloque B: Gravedad del problema",
+  },
+  {
+    id: "item6",
+    type: "likert",
+    text: "En general, ¿qué nivel de gravedad le otorgas al problema de que la información de actualidad esté controlada por unos pocos grupos de poder o manipulada en las redes sociales?",
+    lowLabel: "Nada grave",
+    highLabel: "Muy grave",
+  },
+  {
+    id: "item7",
+    type: "choice",
+    text: "¿Conoces o utilizas actualmente algún método o herramienta digital que te permita saber con absoluta certeza si un texto de internet ha sido modificado de forma oculta desde que se publicó?",
+    options: ["Sí", "No", "No estoy seguro/a"],
   },
 ];
 
@@ -57,22 +72,24 @@ export default function SurveyProblem() {
   return (
     <SurveyForm
       surveyId="problema"
-      title="¿Qué tan grave es el problema?"
+      title="Estudio sobre el Consumo de Noticias e Información Digital"
       intro={
         <>
-          Antes de hablar de NewsEra, queremos entender tu experiencia real con la desinformación.
-          Son 6 preguntas rápidas (escala 1–5) más una pregunta abierta opcional — no hace falta haber
-          explorado la demo para responder.
+          Muchas gracias por participar en este estudio. Las respuestas son completamente anónimas
+          y se utilizarán exclusivamente con fines de investigación académica en el marco de un
+          Trabajo Fin de Grado en Ingeniería Informática. Por favor, responde con total sinceridad
+          en base a tu experiencia diaria en internet — no hace falta haber explorado la demo
+          todavía.
         </>
       }
       questions={QUESTIONS}
       thankYou={
         <>
           Tus respuestas ayudan a validar si el problema que NewsEra intenta resolver es real y
-          relevante. Si quieres seguir ayudando, explora la demo y cuéntanos qué te parece la solución
-          en la{" "}
+          relevante. Si quieres seguir ayudando, prueba primero la demo (noticias, publicar,
+          validar) y cuéntanos qué te parece la solución en la{" "}
           <Link to="/encuestas/producto" className="text-brand underline underline-offset-2">
-            encuesta de idoneidad del producto
+            segunda encuesta
           </Link>
           .
         </>
