@@ -16,15 +16,15 @@ const SLIDES: SlideDef[] = [
   {
     id: "problema",
     eyebrow: "El problema",
-    headline: "Dos grietas, un mismo síntoma.",
-    body: "No es solo que se cuele alguna mentira de vez en cuando. Es que el propio sistema para separar lo cierto de lo falso tiene grietas estructurales.",
+    headline: "Un punto de control es un punto de fallo.",
+    body: "Cuando la verdad depende de una redacción, un algoritmo o un gobierno concretos, basta con capturar ese único punto para torcerla. No hace falta un villano: con que tenga intereses propios ya sobra para que deje de ser neutral.",
     accent: "text-red-400",
   },
   {
     id: "solucion",
     eyebrow: "La solución",
     headline: "Un periódico que no tiene redacción.",
-    body: 'NewsEra es un periódico comunitario: nadie decide en su nombre qué es noticia ni qué es verdad. Esa decisión se traslada desde una redacción, una plataforma o un gobierno hacia miles de personas corrientes. Cómo se vota, cuándo se declara "verdad" y cómo se reparte la reputación está escrito en un contrato inteligente — código público que se ejecuta igual para todos. Ni siquiera quien lo programó puede cambiarlo de un día para otro sin que la comunidad entera lo note.',
+    body: 'NewsEra es un periódico comunitario: nadie decide en su nombre qué es noticia ni qué es verdad. Esa decisión se traslada desde una redacción, una plataforma o un gobierno hacia miles de personas corrientes. Cómo se vota, cuándo se declara "verdad" y cómo se reparte la reputación está escrito en un contrato inteligente — código público que se ejecuta igual para todos, sin excepciones ni favores. Por primera vez, ni siquiera quien lo creó puede cambiar las reglas del juego de un día para otro sin que la comunidad entera lo note.',
     accent: "text-blue-400",
   },
   {
@@ -57,8 +57,8 @@ const SLIDES: SlideDef[] = [
   {
     id: "slogan",
     eyebrow: "",
-    headline: "La verdad ya no se pide. Se demuestra.",
-    body: "Tú también puedes votar, publicar y decidir.",
+    headline: "La verdad no tiene dueño.",
+    body: "Por primera vez, miles de personas deciden juntas qué es cierto — sin que nadie, ni siquiera quien lo creó, pueda cambiar las reglas a mitad de partida. Tú también puedes votar, publicar y decidir.",
     accent: "text-white",
   },
   {
