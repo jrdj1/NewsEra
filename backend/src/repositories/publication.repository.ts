@@ -2,6 +2,28 @@ import { prisma } from "../lib/prisma.js";
 
 export type PublicationSort = "recent" | "votes" | "state";
 
+const TAG_LINKS_INCLUDE = { tagLinks: { include: { tag: true } } } as const;
+
+/** Aplana la relación `tagLinks` (join con Tag) de vuelta a `tags: string[]`
+ * — la forma que espera el resto de la API, sin filtrar la tabla de unión
+ * hacia fuera de la capa de repositorio. */
+function shapeTags<T extends { tagLinks: { tag: { name: string } }[] }>(
+  p: T,
+): Omit<T, "tagLinks"> & { tags: string[] } {
+  const { tagLinks, ...rest } = p;
+  return { ...rest, tags: tagLinks.map((l) => l.tag.name) };
+}
+
+/** Datos de creación anidada para `PublicationTag`: `connectOrCreate` por
+ * nombre — reutiliza la fila de Tag si ya existe (etiquetas libres, sin
+ * catálogo cerrado) o la crea al vuelo. Dedupe defensivo: un mismo nombre
+ * repetido en `tags` violaría la clave compuesta (contentHash, tagId). */
+function tagLinksCreateData(tags: string[]) {
+  return [...new Set(tags)].map((name) => ({
+    tag: { connectOrCreate: { where: { name }, create: { name } } },
+  }));
+}
+
 export interface ListPublicationsParams {
   page: number;
   limit: number;
@@ -19,7 +41,7 @@ export const publicationRepository = {
       ...(state ? { consensusState: state } : {}),
       ...(result ? { currentResult: result } : {}),
       ...(author ? { authorAddress: author } : {}),
-      ...(tags && tags.length > 0 ? { tags: { hasSome: tags } } : {}),
+      ...(tags && tags.length > 0 ? { tagLinks: { some: { tag: { name: { in: tags } } } } } : {}),
       ...(search
         ? {
             OR: [
@@ -41,12 +63,12 @@ export const publicationRepository = {
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
-        include: { _count: { select: { validations: true } } },
+        include: { _count: { select: { validations: true } }, ...TAG_LINKS_INCLUDE },
       }),
       prisma.publication.count({ where }),
     ]);
 
-    const shaped = items.map(({ _count, ...rest }) => ({ ...rest, voteCount: _count.validations }));
+    const shaped = items.map(({ _count, ...rest }) => ({ ...shapeTags(rest), voteCount: _count.validations }));
     if (sort === "votes") {
       shaped.sort((a, b) => b.voteCount - a.voteCount);
     }
@@ -55,13 +77,15 @@ export const publicationRepository = {
   },
 
   async getByHash(contentHash: string) {
-    return prisma.publication.findUnique({
+    const publication = await prisma.publication.findUnique({
       where: { contentHash },
       include: {
         rounds: { orderBy: { round: "asc" } },
         validations: { orderBy: { round: "asc" } },
+        ...TAG_LINKS_INCLUDE,
       },
     });
+    return publication ? shapeTags(publication) : null;
   },
 
   async existsByHash(contentHash: string): Promise<boolean> {
@@ -77,8 +101,13 @@ export const publicationRepository = {
     tags: string[];
     ipfsCid?: string;
   }) {
+    const { tags, ...rest } = data;
     // currentRound: 0 — las rondas on-chain empiezan en 0 (ver upsertFromChain).
-    return prisma.publication.create({ data: { ...data, currentRound: 0 } });
+    const created = await prisma.publication.create({
+      data: { ...rest, currentRound: 0, tagLinks: { create: tagLinksCreateData(tags) } },
+      include: TAG_LINKS_INCLUDE,
+    });
+    return shapeTags(created);
   },
 
   async upsertFromChain(data: { contentHash: string; authorAddress: string }) {
@@ -90,7 +119,6 @@ export const publicationRepository = {
         authorAddress: data.authorAddress,
         title: "",
         body: "",
-        tags: [],
         // Las rondas on-chain empiezan en 0 (ValidationRegistry.currentRound);
         // se sobrescribe aquí el valor por defecto del schema (1) para que
         // coincida con la ronda real que se abre al registrar la publicación.
@@ -105,16 +133,23 @@ export const publicationRepository = {
    * PublicationRegistered, que solo conoce contentHash/autor). Uso: scripts
    * de seed que registran contenido on-chain sin pasar por el flujo normal
    * `POST /api/v1/publications` (que rechazaría con 409 CONFLICT una fila
-   * que el indexador ya creó).
+   * que el indexador ya creó). Idempotente: sustituye por completo el
+   * conjunto de etiquetas en vez de acumularlas en cada re-siembra.
    */
   async setContent(
     contentHash: string,
     data: { title: string; body: string; tags: string[]; ipfsCid?: string },
   ) {
-    return prisma.publication.update({
+    const { tags, ...rest } = data;
+    const updated = await prisma.publication.update({
       where: { contentHash },
-      data,
+      data: {
+        ...rest,
+        tagLinks: { deleteMany: {}, create: tagLinksCreateData(tags) },
+      },
+      include: TAG_LINKS_INCLUDE,
     });
+    return shapeTags(updated);
   },
 
   async updateConsensusState(contentHash: string, consensusState: string, currentResult: string | null = null) {
@@ -139,17 +174,15 @@ export const publicationRepository = {
   },
 
   /**
-   * Etiquetas distintas ya en uso (las etiquetas son libres — cualquier autor
-   * puede escribir una nueva al publicar, no hay catálogo predefinido — así
-   * que el filtro del feed se puebla con lo que realmente existe en vez de
-   * una lista fija). Volumen de artículos bajo (prototipo): se listan todas
-   * y se deduplican en memoria en vez de un `unnest` SQL a mano.
+   * Etiquetas ya en uso (las etiquetas son libres — cualquier autor puede
+   * escribir una nueva al publicar, no hay catálogo cerrado — así que el
+   * filtro del feed se puebla con lo que realmente existe en vez de una
+   * lista fija). Con persistencia propia en `Tag`, es una consulta directa
+   * a esa tabla en vez de deduplicar en memoria sobre un array por fila.
    */
   async listDistinctTags(): Promise<string[]> {
-    const rows = await prisma.publication.findMany({ select: { tags: true } });
-    const set = new Set<string>();
-    for (const r of rows) for (const t of r.tags) set.add(t);
-    return [...set].sort((a, b) => a.localeCompare(b));
+    const rows = await prisma.tag.findMany({ select: { name: true }, orderBy: { name: "asc" } });
+    return rows.map((r) => r.name);
   },
 
   async findTitlesByHashes(contentHashes: string[]) {
